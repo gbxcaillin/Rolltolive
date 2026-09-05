@@ -1,0 +1,15 @@
+app = "ashfall"
+primary_region = "lhr"
+[build]
+[env]
+  PORT = "8787"
+  PUBLIC_DIR = "/app/public"
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = false
+  min_machines_running = 1
+[[http_service.checks]]
+  path = "/health"
+  interval = "30s"
+  timeout = "5s"

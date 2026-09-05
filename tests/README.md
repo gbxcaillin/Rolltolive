@@ -3,7 +3,7 @@
 Playwright smoke tests that drive the real game in headless Chromium.
 
 ```
-npm i -g playwright && npx playwright install chromium
+npm i playwright && npx playwright install chromium   # run from the repo root
 node server/relay.js 8787 &        # needed by online.test.js and migration.test.js
 node tests/solo.test.js            # menu → select → move → fight → death → restart → hotseat → win
 node tests/online.test.js          # two browsers through the relay: lobby, start, move, fight, end

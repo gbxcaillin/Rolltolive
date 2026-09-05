@@ -17,8 +17,11 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - name: Install Playwright
-        run: npm i -g playwright && npx playwright install --with-deps chromium
+      - name: Install Playwright (local install so require('playwright') resolves)
+        run: |
+          npm init -y > /dev/null
+          npm i --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
       - name: Run headless tests
         run: |
           node server/relay.js 8787 & sleep 1

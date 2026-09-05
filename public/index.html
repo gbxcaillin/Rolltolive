@@ -219,7 +219,7 @@ const SHAKE_HIT = 7, SHAKE_CRIT = 16;
 const FUMBLE_SELF_DAMAGE = 3;
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '5d3a868 20260905-2354';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'e90ca9b 20260905-2355';               // stamped by tools/sync-hosted.sh in the hosted build
 // When served by the hosted relay the game connects back to the same origin; from file:// it points at a local relay.
 const NET_DEFAULT_URL = /^https?:$/.test(location.protocol) ? (location.protocol==='https:'?'wss://':'ws://')+location.host : 'ws://localhost:8787';
 const HI_KEY = 'ashfall_hi';

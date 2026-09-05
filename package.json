@@ -1,6 +1,6 @@
 {
   "name": "ashfall-hosted",
-  "version": "0.1.0+5d3a868",
+  "version": "0.1.0+e90ca9b",
   "private": true,
   "description": "Ashfall — hosted build: static game + WebSocket relay in one dependency-free Node process. Synced from gbxcaillin/Rolltolive; do not edit here.",
   "main": "server/relay.js",

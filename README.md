@@ -34,11 +34,11 @@ each weapon type differently. Medkits are carried. Each class has a passive perk
 | Branch | Role | Edit here? |
 |---|---|---|
 | `main` (and feature branches) | **Offline / test source of truth.** Single-file game, relay, art specs, tests, docs. | Yes |
-| `hosted` (and `hosted/<feature>`) | **Server-hosted build.** Only `public/` (game + art), `server/relay.js` and deploy configs (Dockerfile, Render, Fly). Deploy platforms point here. | No, generated |
+| `hosted` (and `hosted-<feature>`) | **Server-hosted build.** Only `public/` (game + art), `server/relay.js` and deploy configs (Dockerfile, Render, Fly). Deploy platforms point here. | No, generated |
 
 They stay in step automatically: the `sync-hosted` GitHub Action runs the headless tests on every
 push to a source branch, then rebuilds the matching build branch (`main` → `hosted`,
-`feature/x` → `hosted/feature/x`) using the workflow's own token, so no secrets are needed.
+`feature/x` → `hosted-feature-x`) using the workflow's own token, so no secrets are needed.
 Locally, `tools/sync-hosted.sh` does the same in one command.
 
 ## Docs

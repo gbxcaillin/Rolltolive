@@ -1,10 +1,10 @@
 # Every push to a source branch runs the headless tests, then builds the server-hosted version onto a
-# build branch of this same repo: main -> "hosted", feature/x -> "hosted/feature/x".
+# build branch of this same repo: main -> "hosted", feature/x -> "hosted-feature-x".
 # Deploy platforms point at the "hosted" branch. Pushes made by GITHUB_TOKEN do not re-trigger this workflow.
 name: sync-hosted
 on:
   push:
-    branches-ignore: ['hosted', 'hosted/**']
+    branches-ignore: ['hosted', 'hosted-**']
     paths: ['index.html', 'art/**', 'server/**', 'hosted/**', 'NETWORK.md', 'tools/sync-hosted.sh', '.github/workflows/sync-hosted.yml', 'tests/**']
   workflow_dispatch:
 permissions:

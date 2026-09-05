@@ -1,7 +1,7 @@
 # Ashfall — hosted build branch
 
 **Generated branch. Do not edit here.** Everything on this branch is built from the source branch
-(`main` → `hosted`, `feature/x` → `hosted/feature/x`) by `tools/sync-hosted.sh` and the `sync-hosted`
+(`main` → `hosted`, `feature/x` → `hosted-feature-x`) by `tools/sync-hosted.sh` and the `sync-hosted`
 GitHub Action after the headless tests pass. Commits made here are overwritten by the next build.
 
 One Node process, no dependencies: serves the game from `public/` and runs the WebSocket room relay

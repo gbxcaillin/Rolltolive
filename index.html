@@ -196,7 +196,12 @@ const ZONE_DAMAGE = [0,3,5,8,12,18,25];                  // HP/s outside the rin
 const HOTSEAT_TURN = 20;           // seconds per human turn in hotseat mode
 const ENERGY_REGEN = 5;            // energy gained at the start of each combat turn
 const OUT_OF_COMBAT_REGEN = 0.6;   // HP/s regen while exploring
-const POST_COMBAT_IMMUNITY = 4;    // seconds nobody can engage you after a fight
+const POST_COMBAT_IMMUNITY = 4;    // seconds nobody can engage you after fleeing
+const SANCTUARY = 8;               // seconds of immunity for the survivor of a fight
+const SANCTUARY_HOLD = 14;         // immunity keeps refreshing up to this long while an enemy camps next to you
+const DUEL_RADIUS = 110;           // px: third parties are pushed out of this circle around an active fight
+const VULTURE_RANGE = 150;         // px: an enemy this close keeps your sanctuary alive
+const HOST_MIGRATE_TIMEOUT = 6;    // s to wait for a new host before giving up on the round
 const MEDKIT_HEAL = 30;            // HP per medkit (Alchemist doubles it)
 const MEDKIT_MAX = 2;              // carried medkits (Alchemist +1)
 const UPGRADE_COST = 20;           // energy for the Technomancer field upgrade
@@ -205,9 +210,9 @@ const KILL_SCORE = 200;            // × current phase (min 1)
 const CRATE_SCORE = 25;
 const WIN_SCORE = 1000;
 const SURVIVE_SCORE = 2;           // per second alive
-const DICE_ROLL_TIME = 0.85;       // dice tumble duration
-const RESOLVE_TIME = 1.1;          // pause after an action resolves
-const AI_THINK_TIME = 0.55;        // AI "thinking" delay in combat
+const DICE_ROLL_TIME = 0.75;       // dice tumble duration
+const RESOLVE_TIME = 0.95;          // pause after an action resolves
+const AI_THINK_TIME = 0.45;        // AI "thinking" delay in combat
 const SHAKE_HIT = 7, SHAKE_CRIT = 16;
 const FUMBLE_SELF_DAMAGE = 3;
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
@@ -322,22 +327,22 @@ const ABILITIES = {
 };
 
 const CLASSES = [
-  {id:'warden', name:'Warden', title:'Wasteland Ranger', color:'#7bd88f', hp:72, def:13, atk:3, spd:6, en:30, fists:[1,4],
+  {id:'warden', name:'Warden', title:'Wasteland Ranger', color:'#7bd88f', hp:58, def:13, atk:3, spd:6, en:30, fists:[1,6],
    signature:'snare', passive:'keeneye', passiveName:'Keen Eye', passiveDesc:'Spots enemies from three times further away (minimap).',
    affinity:{ranged:'expert',blade:'skilled',blunt:'basic',tech:'basic',arcane:'poor'}, family:'Fighting for a daughter waiting at the checkpoint.'},
-  {id:'techno', name:'Technomancer', title:'Reactor Witch', color:'#2ee6ff', hp:62, def:12, atk:2, spd:5, en:45, fists:[1,4],
+  {id:'techno', name:'Technomancer', title:'Reactor Witch', color:'#2ee6ff', hp:50, def:12, atk:2, spd:5, en:45, fists:[1,6],
    signature:'arc', passive:'tinker', passiveName:'Field Tinker', passiveDesc:'Press Q to upgrade the weapon you carry by one tier (20 EN, once per weapon).',
    affinity:{tech:'expert',arcane:'skilled',ranged:'basic',blade:'poor',blunt:'poor'}, family:'Fighting for a brother locked in the reactor wards.'},
-  {id:'bruiser', name:'Bruiser', title:'Scrapyard Titan', color:'#ff8c42', hp:100, def:15, atk:2, spd:3, en:25, fists:[1,8],
-   signature:'slam', passive:'ironhide', passiveName:'Ironhide', passiveDesc:'Every hit taken deals 2 less damage. Fists hit for 1d8.',
+  {id:'bruiser', name:'Bruiser', title:'Scrapyard Titan', color:'#ff8c42', hp:80, def:15, atk:2, spd:3, en:25, fists:[1,10],
+   signature:'slam', passive:'ironhide', passiveName:'Ironhide', passiveDesc:'Every hit taken deals 2 less damage. Fists hit for 1d10.',
    affinity:{blunt:'expert',blade:'skilled',tech:'basic',ranged:'poor',arcane:'poor'}, family:'Fighting for three kids in the dust camps.'},
-  {id:'hexblade', name:'Hexblade', title:'Cursed Duelist', color:'#b56cff', hp:72, def:13, atk:3, spd:5, en:35, fists:[1,6],
+  {id:'hexblade', name:'Hexblade', title:'Cursed Duelist', color:'#b56cff', hp:58, def:13, atk:3, spd:5, en:35, fists:[1,8],
    signature:'leech', passive:'bloodpact', passiveName:'Blood Pact', passiveDesc:'Kills restore 40% HP instead of 15%.',
    affinity:{blade:'expert',arcane:'skilled',blunt:'basic',ranged:'poor',tech:'poor'}, family:"Fighting to keep a dead partner's promise."},
-  {id:'alch', name:'Alchemist', title:'Field Medic', color:'#ffd166', hp:78, def:12, atk:2, spd:5, en:40, fists:[1,4],
+  {id:'alch', name:'Alchemist', title:'Field Medic', color:'#ffd166', hp:62, def:12, atk:2, spd:5, en:40, fists:[1,6],
    signature:'stim', passive:'medic', passiveName:'Field Medic', passiveDesc:'Medkits heal double, carries one extra, regenerates twice as fast.',
    affinity:{arcane:'expert',ranged:'skilled',tech:'basic',blade:'basic',blunt:'poor'}, family:'Fighting for a father on the transplant list.'},
-  {id:'wraith', name:'Wraith', title:'Ash Scavenger', color:'#ff3e7f', hp:64, def:14, atk:4, spd:8, en:35, fists:[1,6],
+  {id:'wraith', name:'Wraith', title:'Ash Scavenger', color:'#ff3e7f', hp:52, def:14, atk:4, spd:8, en:35, fists:[1,8],
    signature:'venom', passive:'scavenger', passiveName:'Scavenger', passiveDesc:'Moves 15% faster, crate weapons come one tier higher, crates show on the minimap.',
    affinity:{blade:'expert',ranged:'skilled',tech:'basic',blunt:'basic',arcane:'poor'}, family:'Fighting for nobody. Just the way out.'}
 ];
@@ -521,7 +526,7 @@ function makeContestant(id, cls, isHuman, humanIndex, name, netId){
   return { id, name, cls, isHuman, humanIndex, netId:netId||null, x:0, y:0, r:ENT_RADIUS, tx:0, ty:0,
     maxHp:cls.hp, hp:cls.hp, maxEn:cls.en, energy:cls.en, def:cls.def, atk:cls.atk, spd:cls.spd, armor:0,
     weapon:makeWeapon('none',0), medkits:0, kills:0, alive:true, score:0, dmgDealt:0, crates:0,
-    facing:1, walk:0, moving:false, immune:0, flash:0, statuses:[], cds:{}, deathT:0, placement:0, inCombat:false, netIn:{dx:0,dy:0}, netEngage:false,
+    facing:1, walk:0, moving:false, immune:0, immuneHold:0, flash:0, statuses:[], cds:{}, deathT:0, placement:0, inCombat:false, netIn:{dx:0,dy:0}, netEngage:false,
     family: isHuman? cls.family : pick(FAMILIES),
     ai:{state:'wander', target:null, t:0, dir:rnd(0,6.28), pause:false, avoidT:0, avoidDir:0, aggression:rnd(0.35,0.9), decideT:rnd(0,0.5), stuckT:0} };
 }
@@ -653,9 +658,10 @@ function simulateCombat(a,b){
 }
 function finishCombat(winner, loser, fleer, other){
   [winner,loser,fleer,other].forEach(e=>{ if(e){ e.statuses=[]; e.immune=POST_COMBAT_IMMUNITY; e.inCombat=false; e.ai.state='wander'; e.ai.target=null; delete e._second; } });
+  if(winner){ winner.immune=SANCTUARY; winner.immuneHold=SANCTUARY_HOLD; }
   if(fleer){ const ang=Math.atan2(fleer.y-other.y, fleer.x-other.x);
     for(let d=TILE*3; d>0; d-=8){ const x=fleer.x+Math.cos(ang)*d, y=fleer.y+Math.sin(ang)*d; if(x>TILE&&y>TILE&&x<MAP_W*TILE-TILE&&y<MAP_H*TILE-TILE&&!collides(x,y,fleer.r)){ fleer.x=x; fleer.y=y; break; } }
-    fleer.immune=POST_COMBAT_IMMUNITY+2; netToast(`${fleer.name} fled from ${other.name}`,'cyan'); return; }
+    fleer.immune=POST_COMBAT_IMMUNITY+2; fleer.immuneHold=SANCTUARY_HOLD; other.immune=SANCTUARY; other.immuneHold=SANCTUARY_HOLD; netToast(`${fleer.name} fled from ${other.name}`,'cyan'); return; }
   if(winner && loser) killContestant(loser, winner);
 }
 function killContestant(e, killer){
@@ -741,6 +747,9 @@ function updateWorld(dt){
       e.immune=Math.max(0,e.immune-dt); e.moving=false;
       if(e.isHuman && e.alive) e.score+=SURVIVE_SCORE*dt;
       if(e.inCombat) continue;
+      // sanctuary: while an enemy camps next to a fresh survivor, immunity refreshes (up to SANCTUARY_HOLD)
+      if(e.immune>0 && e.immuneHold>0){ e.immuneHold-=dt; if(G.ents.some(o=>o!==e&&o.alive&&!o.inCombat&&dist(o,e)<VULTURE_RANGE)) e.immune=Math.max(e.immune,1.5); }
+      pushOutOfDuels(e,dt);
       if(e.isHuman){
         let d=null; if(controlsLocally(e) && !G.over) d=inputDir(); else if(setup.mode==='online' && e.netId!==Net.id) d=e.netIn;
         if(d && (d.dx||d.dy)){ const sp=PLAYER_SPEED*speedMul(e); moveEntity(e,d.dx*sp,d.dy*sp,dt); e.moving=true; e.walk+=dt; }
@@ -787,6 +796,11 @@ function useMedkit(e){ if(!e||!e.alive||e.inCombat||e.medkits<=0) return false; 
   e.medkits--; const h=Math.min(medkitHeal(e),e.maxHp-e.hp); e.hp+=h; netToastTo(e,`Medkit +${Math.round(h)} HP (${e.medkits} left)`,'green'); if(e===localHuman()){ Audio.sfx.heal(); addFloat(e.x,e.y-20,'+'+Math.round(h),COL.green,1,'world'); } return true; }
 function upgradeWeapon(e){ if(!e||!canUpgrade(e)||e.inCombat) return false; e.energy-=UPGRADE_COST; const w=makeWeapon(e.weapon.type,e.weapon.tier+1); w.upgraded=true; e.weapon=w;
   netToastTo(e,`Tinkered: ${w.name} (T${w.tier})`,'cyan'); if(e===localHuman()){ Audio.sfx.upgrade(); spawnParticles(e.x,e.y-15,24,COL.cyan,140,0.7,3,'world'); } return true; }
+// nobody may stand inside the circle of a fight they are not part of
+function pushOutOfDuels(e,dt){
+  for(const c of combats){ if(c.f.includes(e)) continue; const cx=(c.f[0].x+c.f[1].x)/2, cy=(c.f[0].y+c.f[1].y)/2; const d=Math.hypot(e.x-cx,e.y-cy);
+    if(d<DUEL_RADIUS){ const ang=d<1?rnd(0,6.28):Math.atan2(e.y-cy,e.x-cx); const sp=Math.max(140,(DUEL_RADIUS-d)*6); moveEntity(e,Math.cos(ang)*sp,Math.sin(ang)*sp,dt); e.facing=Math.cos(ang)>0?-1:1; if(!e.isHuman){ e.ai.avoidT=0.6; e.ai.avoidDir=ang; } } }
+}
 function tryEngageFor(e){ if(!e||!e.alive||G.over||e.inCombat) return; const n=nearestEngageable(e); if(n){ e.immune=0; startCombat(e,n); } }
 function updateAI(e,dt){
   const ai=e.ai; ai.decideT-=dt; if(ai.decideT<=0){ ai.decideT=AI_DECIDE_INTERVAL; decideAI(e); }
@@ -815,6 +829,7 @@ function decideAI(e){
   const dz=Math.hypot(e.x-z.cx,e.y-z.cy);
   if(z.phase>0 && dz>z.radius*0.85){ ai.state='zone'; ai.target=null; return; }
   if(ai.state==='hunt' && ai.target && ai.target.alive && !ai.target.inCombat && ai.target.immune<=0 && dist(e,ai.target)<AI_SIGHT*1.4) return;
+  if(ai.state==='loot' && ai.target && combats.some(c=>Math.hypot(c.f[0].x-ai.target.x,c.f[0].y-ai.target.y)<DUEL_RADIUS+20)){ ai.state='wander'; ai.target=null; }
   const aggro=Math.min(1, ai.aggression + z.phase*0.07), sight=AI_SIGHT*(e.cls.passive==='keeneye'?1.6:1);
   let best=null,bd=sight;
   for(const o of G.ents){ if(o===e||!o.alive||o.immune>0||o.inCombat) continue; const d=dist(e,o); if(d>=bd) continue;
@@ -973,7 +988,7 @@ function uiBack(){ const c=viewCombat; if(!c||c.phase!=='await'||!myTurn(c)||c.c
 //  Transport = the only part that talks to the server. Protocol in NETWORK.md; reference relay in server/relay.js.
 // ============================================================================
 const Net = {
-  ws:null, id:null, isHost:false, hostId:null, peers:{}, connected:false, room:'', name:'', url:'',
+  ws:null, id:null, isHost:false, hostId:null, peers:{}, connected:false, room:'', name:'', url:'', migrating:0,
   connect(url, room, name, cb){
     this.close(); this.url=url; this.room=room; this.name=name; this.cb=cb; this.peers={}; this.id=null; this.isHost=false;
     let ws; try{ ws=new WebSocket(url); }catch(e){ cb('Bad server address'); return; }
@@ -986,8 +1001,9 @@ const Net = {
   onRaw(m){
     switch(m.t){
       case 'joined': this.id=m.id; this.hostId=m.host; this.isHost=(m.host===m.id); this.connected=true; this.peers={}; (m.peers||[]).forEach(p=>this.peers[p.id]={id:p.id,name:p.name}); this.peers[this.id]={id:this.id,name:this.name}; this.cb(null); Lobby.onPeers(); break;
-      case 'peer': if(m.on) this.peers[m.id]={id:m.id,name:m.name}; else { delete this.peers[m.id]; if(m.id===this.hostId) Session.onHostLeft(); } Lobby.onPeers(); break;
-      case 'host': this.hostId=m.id; this.isHost=(m.id===this.id); if(G && state!=='lobby') Session.onHostLeft(); else Lobby.onPeers(); break;
+      case 'peer': if(m.on) this.peers[m.id]={id:m.id,name:m.name}; else { delete this.peers[m.id]; if(m.id===this.hostId) Session.onHostDropped(m.id); else Session.onPeerLeft(m.id); } Lobby.onPeers(); break;
+      case 'host': { const was=this.isHost; this.hostId=m.id; this.isHost=(m.id===this.id); this.migrating=0;
+        if(G && state!=='lobby'){ if(this.isHost && !was) Session.promoteToHost(); else toast(`${(this.peers[m.id]||{}).name||'Someone'} is now hosting`,'cyan'); } else Lobby.onPeers(); break; }
       case 'msg': Session.onMsg(m.from, m.data); break;
       case 'error': if(!this.connected) this.cb(m.m||'Server error'); else toast(m.m||'Server error','red'); break;
     }
@@ -1025,15 +1041,24 @@ const Session = {
       case 'upg': { if(!Net.isHost||!G) return; const e=G.ents.find(x=>x.netId===from); upgradeWeapon(e); break; }
     }
   },
-  onHostLeft(){ if(state==='lobby'){ if(Net.isHost){ Lobby.onPeers(); setLobbyStatus('You are now the host'); } return; } toast('The host left. Round over.','red',5); setTimeout(()=>{ if(setup.mode==='online') toMenu(); },1500); },
+  onHostDropped(id){ if(state==='lobby'){ return; } toast('Host dropped — migrating the round...','red',4); Net.migrating=HOST_MIGRATE_TIMEOUT; this.onPeerLeft(id); },
+  onPeerLeft(id){ if(!G) return; const e=G.ents.find(x=>x.netId===id); if(e && e.alive){ botify(e); if(Net.isHost) netToast(`${e.name} lost connection — now a bot`,'red'); } },
+  // The relay named us host mid-round: turn the mirrored state into the authoritative one and carry on.
+  promoteToHost(){
+    if(!G) return; G.snapT=0;
+    for(const e of G.ents){ if(e.tx||e.ty){ e.x=e.tx; e.y=e.ty; } e.netIn={dx:0,dy:0}; e.netEngage=false; e.ai.state='wander'; e.ai.target=null; e.ai.decideT=rnd(0,0.5); if(e.isHuman && e.netId && !Net.peers[e.netId]) botify(e); }
+    for(const c of combats){ c.mirror=false; c.t=c.hostT||0; c.f[0]._second=false; c.f[1]._second=true; c.dice.t=c.dice.rolling?Math.min(c.t,DICE_ROLL_TIME-0.05):0; if(c.phase==='await' && !actorOf(c).isHuman) goRoll(c); if(c.phase==='choose' && !actorOf(c).isHuman) c.t=0; }
+    toast('You are now hosting the round','gold',4); netToast(`${Net.name} took over as host`,'cyan');
+  },
+  onHostLeft(){ toast('The host left. Round over.','red',5); setTimeout(()=>{ if(setup.mode==='online') toMenu(); },1500); },
   onDisconnect(){ if(setup.mode==='online' && (state==='lobby'||G)){ toast('Disconnected from server','red',5); if(state==='lobby') setLobbyStatus('Disconnected'); else toMenu(); } }
 };
 function makeSnapshot(){
   const r1=v=>Math.round(v*10)/10;
   return { t:'snap', tm:r1(G.time), z:[G.zone.cx|0,G.zone.cy|0,G.zone.radius|0,G.zone.phase,r1(G.zone.t)], al:G.alive, b:G.barge?[G.barge.x,G.barge.y]:null,
     cr:G.crates.map(c=>[c.x|0,c.y|0]), over:G.over?1:0,
-    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,e.immune>0?1:0,e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor]),
-    c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
+    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0]),
+    c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,t:r1(c.t),fo:c.forced?1:0,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
 }
 function applySnapshot(s){
   const me=localHuman();
@@ -1044,7 +1069,7 @@ function applySnapshot(s){
     e.tx=r[1]; e.ty=r[2]; if(e!==me){ if(Math.hypot(e.tx-e.x,e.ty-e.y)>160) { e.x=e.tx; e.y=e.ty; } } else if(Math.hypot(e.tx-e.x,e.ty-e.y)>48){ e.x=e.tx; e.y=e.ty; }
     e.hp=r[3]; e.maxHp=r[4]; e.energy=r[5]; e.maxEn=r[6]; e.alive=!!r[7]; if(e!==me){ e.facing=r[8]; e.moving=!!r[9]; }
     if(e.weapon.type!==r[10]||e.weapon.tier!==r[11]){ e.weapon=makeWeapon(r[10],r[11]); if(r[10]==='none') e.weapon.dice=e.cls.fists; } e.weapon.upgraded=!!r[12];
-    e.kills=r[13]; e.immune=r[14]?1:0; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23];
+    e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; }
     if(wasAlive && !e.alive){ e.deathT=0; if(e===me) Audio.sfx.death(); } }
   const seen=new Set();
   for(const v of s.c){ seen.add(v.id); let c=combats.find(x=>x.id===v.id);
@@ -1052,20 +1077,22 @@ function applySnapshot(s){
     if(!c){ c={id:v.id,f:[fa,fb],turn:0,round:1,phase:'intro',t:0,chosen:null,nat:20,dice:{value:20,t:0,angle:0,rolling:false,visible:false,pop:0},log:[],lunge:0,winner:null,loser:null,fleer:null,forced:false,mirror:true}; combats.push(c); }
     if(c.phase!==v.ph||c.turn!==v.turn) c.t=0;
     c.turn=v.turn; c.round=v.round; c.phase=v.ph; c.chosen=v.ch; c.nat=v.nat; if(!v.dr && c.dice.rolling){ c.dice.pop=1; } if(!v.dr) c.dice.value=v.dv; c.dice.rolling=!!v.dr; c.dice.visible=!!v.dvis;
-    c.log=v.log; c.winner=v.w?entById(v.w):null; c.loser=v.l?entById(v.l):null; c.fleer=v.fl?entById(v.fl):null; fa.statuses=v.st[0]; fb.statuses=v.st[1]; fa.cds=v.cd[0]; fb.cds=v.cd[1];
+    c.hostT=v.t; c.forced=!!v.fo; c.log=v.log; c.winner=v.w?entById(v.w):null; c.loser=v.l?entById(v.l):null; c.fleer=v.fl?entById(v.fl):null; fa.statuses=v.st[0]; fb.statuses=v.st[1]; fa.cds=v.cd[0]; fb.cds=v.cd[1];
     if(me && c.f.includes(me) && viewCombat!==c) enterCombatView(c); }
   combats=combats.filter(c=>{ if(seen.has(c.id)) return true; if(c===viewCombat) leaveCombatView(); return false; });
   if(s.over && !G.over) G.over=true;
 }
 function updateClient(dt){
   const me=localHuman(); G.hintT-=dt;
-  if(me && me.alive && !me.inCombat && !G.over){ const d=inputDir(); me.moving=false; if(d.dx||d.dy){ const sp=PLAYER_SPEED*speedMul(me); moveEntity(me,d.dx*sp,d.dy*sp,dt); me.moving=true; me.walk+=dt; }
+  if(me && me.alive && !me.inCombat && !G.over){ const d=inputDir(); me.moving=false; if(d.dx||d.dy){ const sp=PLAYER_SPEED*speedMul(me); moveEntity(me,d.dx*sp,d.dy*sp,dt); me.moving=true; me.walk+=dt; } pushOutOfDuels(me,dt);
     me.x+=(me.tx-me.x)*Math.min(1,dt*2.5); me.y+=(me.ty-me.y)*Math.min(1,dt*2.5);
     G.inT+=dt; const changed=(d.dx!==G.lastIn?.dx||d.dy!==G.lastIn?.dy); if(G.inT>=NET_INPUT_INTERVAL||changed){ G.inT=0; G.lastIn={dx:d.dx,dy:d.dy}; Net.toHost({t:'in',d:[Math.round(d.dx*100)/100,Math.round(d.dy*100)/100]}); } }
   for(const e of G.ents){ if(e===me) continue; if(!e.alive){ e.deathT+=dt; continue; } const k=Math.min(1,dt*10); e.x+=(e.tx-e.x)*k; e.y+=(e.ty-e.y)*k; if(e.moving) e.walk+=dt; }
   if(G.barge) G.barge.t+=dt;
   for(const c of combats){ c.t+=dt; if(c.dice.rolling){ c.dice.angle+=dt*12; if(Math.floor(c.t*20)!==Math.floor((c.t-dt)*20)){ c.dice.value=d20(); if(c===viewCombat) Audio.sfx.dice(); } } c.dice.pop=Math.max(0,c.dice.pop-dt*2); c.lunge=Math.max(0,c.lunge-dt*3); }
 }
+// a disconnected player's survivor keeps fighting as an AI so the round stays whole
+function botify(e){ e.isHuman=false; e.netId=null; if(!/\(bot\)$/.test(e.name)) e.name=e.name.slice(0,9)+' (bot)'; e.netIn={dx:0,dy:0}; e.netEngage=false; e.ai.state='wander'; e.ai.target=null; }
 function startOnlineRound(d){ Net.roster=d.roster; newGame(d.seed, d.roster); clearToasts(); show(null); state='play'; updateTopButtons(); toast('Dropped on the island. Kill or outlast the others.','gold',5); }
 function hostStartRound(){ if(!Net.isHost) return; const roster=buildRoster(); const seed=rint(1,1e9); Net.broadcast({t:'start',seed,roster}); startOnlineRound({seed,roster}); }
 
@@ -1136,9 +1163,10 @@ function drawWorld(g){
     g.fillStyle=COL.gold; g.fillRect(-14,-22,28,16); g.fillStyle=COL.cyan; g.fillRect(-10,-19,8,6); g.fillRect(2,-19,8,6); g.restore(); }
     g.strokeStyle=COL.gold; g.globalAlpha=1-pr; g.lineWidth=3; g.beginPath(); g.arc(b.x,b.y-6,20+pr*60,0,7); g.stroke(); g.globalAlpha=1; txtO(g,'EXTRACTION',b.x,b.y-38,12,COL.gold,'center'); }
   for(const e of G.ents){ if(e.alive) continue; if(drawSprite(g,'fx.skull',e.x,e.y+3,{})) continue; g.save(); g.translate(e.x,e.y); g.globalAlpha=0.8; g.fillStyle='#1c1a22'; g.beginPath(); g.arc(0,-6,7,0,7); g.fill(); g.fillRect(-7,-6,14,6); g.fillStyle='#e8e0d0'; g.beginPath(); g.arc(-2.5,-7,1.8,0,7); g.arc(2.5,-7,1.8,0,7); g.fill(); g.fillRect(-4,0,8,3); g.restore(); }
+  for(const c of combats){ const cx=(c.f[0].x+c.f[1].x)/2, cy=(c.f[0].y+c.f[1].y)/2; g.fillStyle='rgba(255,62,127,0.10)'; g.beginPath(); g.arc(cx,cy,DUEL_RADIUS,0,7); g.fill(); g.strokeStyle='rgba(255,62,127,0.55)'; g.setLineDash([6,6]); g.lineWidth=2; g.beginPath(); g.arc(cx,cy,DUEL_RADIUS,timeNow,timeNow+6.28); g.stroke(); g.setLineDash([]); txtO(g,'DUEL',cx,cy-DUEL_RADIUS-8,10,COL.pink,'center',800); }
   const al=aliveEnts().sort((a,b)=>a.y-b.y);
   for(const e of al){
-    if(e.immune>0){ g.strokeStyle='rgba(255,255,255,0.5)'; g.setLineDash([4,4]); g.lineWidth=1.5; g.beginPath(); g.arc(e.x,e.y-12,20,0,7); g.stroke(); g.setLineDash([]); }
+    if(e.immune>0){ const sanct=e.immuneHold>0; g.strokeStyle=sanct?'rgba(92,255,157,0.8)':'rgba(255,255,255,0.5)'; g.setLineDash([4,4]); g.lineWidth=sanct?2.5:1.5; g.beginPath(); g.arc(e.x,e.y-12,20+(sanct?Math.sin(timeNow*6)*2:0),0,7); g.stroke(); g.setLineDash([]); if(sanct) txtO(g,`SAFE ${Math.ceil(e.immune)}`,e.x,e.y-80,9,COL.green,'center',800); }
     if(e.inCombat){ g.strokeStyle=COL.pink; g.setLineDash([3,5]); g.lineWidth=2; g.beginPath(); g.arc(e.x,e.y-12,22,timeNow*2,timeNow*2+5.2); g.stroke(); g.setLineDash([]); }
     if(e===me){ g.strokeStyle=COL.white; g.lineWidth=2; g.beginPath(); g.ellipse(e.x,e.y+1,14,6,0,0,7); g.stroke(); }
     drawFigure(g,e.x,e.y,e,1);
@@ -1169,6 +1197,8 @@ function drawHUD(g){
   txt(g, z.phase<ZONE_RADII.length-1? `PHASE ${z.phase} · ${fmtTime(ZONE_PHASE_TIME-z.t)}` : 'FINAL RING', cx+50,py+12,12,outside?COL.red:COL.white,'center');
   txt(g, outside? '!! OUTSIDE THE ASHFALL !!' : (z.phase===0? 'Ashfall begins soon' : `burn ${ZONE_DAMAGE[z.phase]}/s outside`), cx,py+30,10,outside?COL.red:'#8e97ad','center',700);
   if(outside && Math.sin(timeNow*10)>0){ g.strokeStyle='rgba(255,60,60,0.5)'; g.lineWidth=8; g.strokeRect(4,4,W-8,H-8); }
+  if(e && e.alive && e.immune>0 && e.immuneHold>0){ const vult=G.ents.find(o=>o!==e&&o.alive&&!o.inCombat&&dist(o,e)<VULTURE_RANGE);
+    txtO(g, vult? `SANCTUARY ${Math.ceil(e.immune)}s · ${vult.name} is circling you — move!` : `SANCTUARY ${Math.ceil(e.immune)}s · nobody can engage you`, cx, py+56, 12, vult?COL.orange:COL.green, 'center'); }
   const sy=narrow?132:52, sw=narrow?200:222; g.fillStyle='rgba(10,14,26,0.72)'; g.beginPath(); g.roundRect(W-sw-8,sy,sw,36,8); g.fill();
   txt(g,`SCORE ${Math.round(e?e.score:0)}`,W-sw,sy+11,13,COL.gold); txt(g,`BEST ${hiScore}`,W-sw,sy+27,10,'#8e97ad','left',700);
   txt(g,`K ${e?e.kills:0}`,W-16,sy+11,12,COL.white,'right');
@@ -1364,6 +1394,7 @@ let last=performance.now(), acc=0;
 function update(dt){
   updateToasts(dt); updateFx(dt); timeNow+=dt;
   if(state==='play' && G){
+    if(Net.migrating>0){ Net.migrating-=dt; if(Net.migrating<=0){ Net.migrating=0; Session.onHostLeft(); return; } }
     if(isClient()) updateClient(dt); else updateWorld(dt);
     const me=localHuman(); if(setup.mode==='online' && me && !me.alive && !G.spectating && !G.over) showEnd(false);
     if(viewCombat) refreshPanel();

@@ -24,7 +24,7 @@ All messages are JSON text frames.
 | C→S | `{ "t":"join", "room":"ASH-1", "name":"Kes" }` | Join or create a room. First member becomes host. |
 | S→C | `{ "t":"joined", "id":"p3", "host":"p1", "peers":[{"id":"p1","name":"Kes"}] }` | Your id, the host id, current members. |
 | S→room | `{ "t":"peer", "id":"p3", "name":"Kes", "on":true }` | Member joined (`on:true`) or left (`on:false`). |
-| S→room | `{ "t":"host", "id":"p2" }` | Host changed (old host left). |
+| S→room | `{ "t":"host", "id":"p2" }` | Host changed (old host left). Send it **after** the old host's `peer off`. |
 | C→S | `{ "t":"msg", "to":"all" \| "host" \| "<peerId>", "data":{…} }` | Relay `data` to everyone else, the host, or one peer. |
 | S→C | `{ "t":"msg", "from":"p1", "data":{…} }` | A relayed message. |
 | C→S | `{ "t":"leave" }` | Leave the room (closing the socket also works). |
@@ -64,8 +64,8 @@ Client → host:
 ```json
 { "t":"snap", "tm":83.2, "z":[cx,cy,radius,phase,phaseT], "al":7, "b":[x,y] | null, "over":0,
   "cr":[[x,y],…],
-  "e":[[id,x,y,hp,maxHp,en,maxEn,alive,facing,moving,wType,wTier,wUpg,kills,immune,inCombat,def,atk,score,medkits,dmgDealt,crates,placement,armor],…],
-  "c":[{ "id":3, "f":[idA,idB], "turn":0, "round":2, "ph":"choose", "ch":null, "nat":14,
+  "e":[[id,x,y,hp,maxHp,en,maxEn,alive,facing,moving,wType,wTier,wUpg,kills,immuneSecs,inCombat,def,atk,score,medkits,dmgDealt,crates,placement,armor,immuneHold,aggression,isHuman],…],
+  "c":[{ "id":3, "f":[idA,idB], "turn":0, "round":2, "ph":"choose", "ch":null, "nat":14, "t":0.4, "fo":0,
          "dv":14, "dr":0, "dvis":1, "log":[{text,color}], "w":0, "l":0, "fl":0,
          "st":[[statuses of A],[statuses of B]], "cd":[{cooldowns A},{cooldowns B}] }] }
 ```
@@ -80,8 +80,15 @@ more than 48 px from the host's view.
 - Fights do not pause the island. A fighter is frozen and cannot be engaged by a third party; the
   Ashfall does not burn fighters until the fight ends.
 - A player who dies keeps receiving snapshots and spectates until the round ends.
-- If the host disconnects the round ends for everyone (a migrating host would have no simulation
-  state). If your server can persist state, host migration is the first thing to add.
+- **Host migration.** Every snapshot carries enough state to take over (positions, HP, energy,
+  weapons, medkits, timers, AI aggression, every fight's phase/dice/log/statuses/cooldowns). When
+  the server announces a new host (`{"t":"host"}`), that client promotes its mirrored state to the
+  authoritative one and keeps simulating from the last snapshot; other clients just keep sending
+  to `"host"`. At most 100 ms of play is lost. If no `host` message arrives within 6 s of the host's
+  `peer off`, clients give up and return to the menu.
+- **Dropped players.** A disconnected player's survivor is converted to an AI bot (name suffixed
+  "(bot)") so the round stays whole; the same happens to the old host's survivor after migration.
+  Reconnecting to reclaim a bot is not implemented yet.
 - Dice are rolled on the host only. Clients never decide an outcome.
 
 ## 4. Deploying

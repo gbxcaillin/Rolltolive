@@ -35,7 +35,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 | Mode | Humans | AI | Notes |
 |---|---|---|---|
 | Solo | 1 | 9 | Standard round. The island keeps running while you fight. |
-| Online | 1–10 devices | fill to 10 | Host-authoritative over a WebSocket room relay (`NETWORK.md`). Everyone moves at once; fights run in parallel; the dead spectate. |
+| Online | 1–10 devices | fill to 10 | Host-authoritative over a WebSocket room relay (`NETWORK.md`). Everyone moves at once; fights run in parallel; the dead spectate. If the host drops, the next player is promoted and the round continues; a dropped player's survivor becomes a bot. |
 | Hotseat 2P / 3P / 4P | 2–4 | fill to 10 | Local pass-and-play on one device. 20 s walking turns, then pass. Anyone attacked plays their own defense. The island pauses during a fight so the device can be handed over. |
 
 ## 3. Controls (shown on screen at load)
@@ -71,7 +71,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 
 ## 6. Progression: fists → weapon → moves
 
-Everyone lands with **Attack** (bare fists: 1d4, Hexblade and Wraith 1d6, Bruiser 1d8, plus ATK),
+Everyone lands with **Attack** (bare fists: 1d6, Hexblade and Wraith 1d8, Bruiser 1d10, plus ATK),
 **one signature ability**, and **Flee**. That is the whole action bar at the start.
 
 Weapons found in crates or taken from the dead add moves. Each weapon type carries two moves.
@@ -92,12 +92,12 @@ Medkits are inventory (2 carried, Alchemist 3): usable on the map (H) or as a co
 
 | Class | HP | DEF | ATK | SPD | EN | Fists | Signature | Passive perk | Expert / skilled with |
 |---|---|---|---|---|---|---|---|---|---|
-| **Warden** | 72 | 13 | +3 | 6 | 30 | 1d4 | Snare Trap: 1d6, target loses next turn | Keen Eye: spots enemies 3× further on the minimap | ranged / blade |
-| **Technomancer** | 62 | 12 | +2 | 5 | 45 | 1d4 | Arc Bolt: 2d6, +2 hit | Field Tinker: Q upgrades your weapon one tier (20 EN, once per weapon) | tech / arcane |
-| **Bruiser** | 100 | 15 | +2 | 3 | 25 | 1d8 | Ground Slam: 1d10, target −3 DEF | Ironhide: every hit taken −2 damage | blunt / blade |
-| **Hexblade** | 72 | 13 | +3 | 5 | 35 | 1d6 | Soul Leech: 2d6, heal half | Blood Pact: kills heal 40 % | blade / arcane |
-| **Alchemist** | 78 | 12 | +2 | 5 | 40 | 1d4 | Stim Shot: heal 3d6+2 | Field Medic: medkits heal double, +1 carried, 2× regen | arcane / ranged |
-| **Wraith** | 64 | 14 | +4 | 8 | 35 | 1d6 | Venom Strike: 1d6 + 3 poison/turn ×3 | Scavenger: +15 % speed, crate weapons +1 tier, crates on minimap | blade / ranged |
+| **Warden** | 58 | 13 | +3 | 6 | 30 | 1d6 | Snare Trap: 1d6, target loses next turn | Keen Eye: spots enemies 3× further on the minimap | ranged / blade |
+| **Technomancer** | 50 | 12 | +2 | 5 | 45 | 1d6 | Arc Bolt: 2d6, +2 hit | Field Tinker: Q upgrades your weapon one tier (20 EN, once per weapon) | tech / arcane |
+| **Bruiser** | 80 | 15 | +2 | 3 | 25 | 1d10 | Ground Slam: 1d10, target −3 DEF | Ironhide: every hit taken −2 damage | blunt / blade |
+| **Hexblade** | 58 | 13 | +3 | 5 | 35 | 1d8 | Soul Leech: 2d6, heal half | Blood Pact: kills heal 40 % | blade / arcane |
+| **Alchemist** | 62 | 12 | +2 | 5 | 40 | 1d6 | Stim Shot: heal 3d6+2 | Field Medic: medkits heal double, +1 carried, 2× regen | arcane / ranged |
+| **Wraith** | 52 | 14 | +4 | 8 | 35 | 1d8 | Venom Strike: 1d6 + 3 poison/turn ×3 | Scavenger: +15 % speed, crate weapons +1 tier, crates on minimap | blade / ranged |
 
 Poor fits: Warden–arcane, Technomancer–blade/blunt, Bruiser–ranged/arcane, Hexblade–ranged/tech,
 Alchemist–blunt, Wraith–arcane. Everything else is basic.
@@ -114,6 +114,15 @@ Alchemist–blunt, Wraith–arcane. Everything else is basic.
 
 Crates: weapon 45 % (tier rises with the Ashfall phase), medkit 25 %, armor plate 12 % (+1 DEF,
 max +3), power cell 8 %, supply cache 10 %.
+
+### Duels and sanctuary (anti-vulture rules)
+
+A fight is a **duel circle** (110 px). Anyone who is not part of it is pushed out and AI will not
+path into it, so nobody can stand on top of a fight waiting for it to end. When it ends, the
+survivor gets **sanctuary**: 8 s in which they cannot be engaged, shown as a green ring and a
+countdown. If an enemy stays within 150 px, sanctuary keeps refreshing (to a cap of 14 s) so a
+camper cannot time the exact instant it expires; the HUD names the circling enemy so the survivor
+can walk away. Pressing Engage yourself ends your own sanctuary early: attacking is always a choice.
 
 ## 8. Dice rules
 
@@ -182,7 +191,7 @@ constant (`GAME_TITLE`) so it can be switched in seconds.
 
 ## 13. Roadmap after v1
 
-- Host migration and reconnect for online rounds; server-side dice for anti-cheat.
+- Reconnect to reclaim a botified survivor; server-side dice for anti-cheat.
 - Persistent progression: unlock cosmetics and a 7th class.
 - More island biomes, day/night, weather that modifies rolls.
 - Team rounds (family pairs) and 2v2 encounters.

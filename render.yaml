@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ashfall
+    runtime: node
+    plan: free
+    buildCommand: ""
+    startCommand: node server/relay.js
+    healthCheckPath: /health
+    envVars:
+      - key: PUBLIC_DIR
+        value: ./public

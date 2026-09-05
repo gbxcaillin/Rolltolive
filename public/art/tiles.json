@@ -1,0 +1,118 @@
+{
+  "category": "tiles",
+  "$comment": "One sheet per tile type. frames = number of variants; the engine picks a variant per tile from a stable hash. Tiles are 32\u00d732, anchor bottom-centre.",
+  "assets": [
+    {
+      "id": "tile.deep",
+      "file": "tiles/deep.png",
+      "status": "needed",
+      "description": "Deep water. Dark navy, almost flat, subtle swell.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.water",
+      "file": "tiles/water.png",
+      "status": "needed",
+      "description": "Shallow water. Blue with light wave highlights; the engine draws foam edges itself.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.sand",
+      "file": "tiles/sand.png",
+      "status": "needed",
+      "description": "Beach sand. Warm ochre, sparse pebbles.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.grass",
+      "file": "tiles/grass.png",
+      "status": "needed",
+      "description": "Grass. Two green tones, small tufts.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.forest",
+      "file": "tiles/forest.png",
+      "status": "needed",
+      "description": "Forest canopy. Dense dark-green tree tops with highlights (blocks nothing, slows walking).",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 4,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.rock",
+      "file": "tiles/rock.png",
+      "status": "needed",
+      "description": "Rock/cliff. Solid, grey-blue faceted boulders. Impassable.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 3,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.ruin",
+      "file": "tiles/ruin.png",
+      "status": "needed",
+      "description": "Ruined building block. Dark slate walls, rust-orange lit windows. Impassable.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 3,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "tile.ash",
+      "file": "tiles/ash.png",
+      "status": "needed",
+      "description": "Ashfall ground. Dark grey ash with dying embers.",
+      "kind": "sheet",
+      "frameW": 32,
+      "frameH": 32,
+      "frames": 3,
+      "anchor": [
+        0.5,
+        1
+      ]
+    }
+  ]
+}

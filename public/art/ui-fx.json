@@ -1,0 +1,294 @@
+{
+  "category": "ui-fx",
+  "$comment": "Interface and effects. dice.d20: frames 0\u201319 are the settled faces 1\u201320 (frame 0 = face 1), frames 20+ are tumbling frames used while rolling. Ability icons appear inside the combat buttons at 22px.",
+  "assets": [
+    {
+      "id": "dice.d20",
+      "file": "ui/d20.png",
+      "status": "needed",
+      "description": "Icosahedral d20, gold with dark facets and readable numbers; 20 face frames + 8 tumble frames.",
+      "kind": "sheet",
+      "frameW": 96,
+      "frameH": 96,
+      "frames": 28,
+      "fps": 12,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "bg.combat",
+      "file": "ui/combat_bg.png",
+      "status": "needed",
+      "description": "Encounter backdrop: ruined shoreline at dusk under ashfall, dark centre so figures read. Stretched to the viewport.",
+      "kind": "image",
+      "frameW": 1280,
+      "frameH": 720,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "ui.logo",
+      "file": "ui/logo.png",
+      "status": "needed",
+      "description": "Title wordmark ('Ashfall' by default; see GAME_TITLE in index.html).",
+      "kind": "image",
+      "frameW": 800,
+      "frameH": 240,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.attack",
+      "file": "icons/ability_attack.png",
+      "status": "needed",
+      "description": "Ability icon: Attack (fist/weapon strike).",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.flee",
+      "file": "icons/ability_flee.png",
+      "status": "needed",
+      "description": "Ability icon: Flee (running figure).",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.medkit",
+      "file": "icons/ability_medkit.png",
+      "status": "needed",
+      "description": "Ability icon: Medkit (cross on a pouch).",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.snare",
+      "file": "icons/ability_snare.png",
+      "status": "needed",
+      "description": "Ability icon: Snare Trap.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.arc",
+      "file": "icons/ability_arc.png",
+      "status": "needed",
+      "description": "Ability icon: Arc Bolt.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.slam",
+      "file": "icons/ability_slam.png",
+      "status": "needed",
+      "description": "Ability icon: Ground Slam.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.leech",
+      "file": "icons/ability_leech.png",
+      "status": "needed",
+      "description": "Ability icon: Soul Leech.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.stim",
+      "file": "icons/ability_stim.png",
+      "status": "needed",
+      "description": "Ability icon: Stim Shot.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.venom",
+      "file": "icons/ability_venom.png",
+      "status": "needed",
+      "description": "Ability icon: Venom Strike.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.cleave",
+      "file": "icons/ability_cleave.png",
+      "status": "needed",
+      "description": "Ability icon: Cleave.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.flurry",
+      "file": "icons/ability_flurry.png",
+      "status": "needed",
+      "description": "Ability icon: Flurry.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.crush",
+      "file": "icons/ability_crush.png",
+      "status": "needed",
+      "description": "Ability icon: Crushing Blow.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.stagger",
+      "file": "icons/ability_stagger.png",
+      "status": "needed",
+      "description": "Ability icon: Stagger.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.aimed",
+      "file": "icons/ability_aimed.png",
+      "status": "needed",
+      "description": "Ability icon: Aimed Shot.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.volley",
+      "file": "icons/ability_volley.png",
+      "status": "needed",
+      "description": "Ability icon: Volley.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.ember",
+      "file": "icons/ability_ember.png",
+      "status": "needed",
+      "description": "Ability icon: Ember Bolt.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.hex",
+      "file": "icons/ability_hex.png",
+      "status": "needed",
+      "description": "Ability icon: Hex of Rot.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.overclock",
+      "file": "icons/ability_overclock.png",
+      "status": "needed",
+      "description": "Ability icon: Overclock.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "icon.drones",
+      "file": "icons/ability_drones.png",
+      "status": "needed",
+      "description": "Ability icon: Drone Swarm.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}

@@ -1,0 +1,684 @@
+{
+  "category": "characters",
+  "$comment": "Six survivor classes. Every animation is a horizontal sheet of frameW\u00d7frameH frames, anchor at the feet. hand = [x,y] offset from the feet (logical px, right-facing) where a held weapon sprite is drawn; sprites face RIGHT, the engine mirrors them. Overworld draws at scale 1, combat at scale 2\u20134.",
+  "assets": [
+    {
+      "id": "char.warden.idle",
+      "file": "characters/warden_idle.png",
+      "status": "needed",
+      "description": "Warden: idle (breathing loop). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#7bd88f"
+    },
+    {
+      "id": "char.warden.walk",
+      "file": "characters/warden_walk.png",
+      "status": "needed",
+      "description": "Warden: walk (run cycle). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#7bd88f"
+    },
+    {
+      "id": "char.warden.attack",
+      "file": "characters/warden_attack.png",
+      "status": "needed",
+      "description": "Warden: attack (one strike/shot, returns to idle pose). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#7bd88f"
+    },
+    {
+      "id": "char.warden.hit",
+      "file": "characters/warden_hit.png",
+      "status": "needed",
+      "description": "Warden: hit (flinch). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#7bd88f"
+    },
+    {
+      "id": "char.warden.death",
+      "file": "characters/warden_death.png",
+      "status": "needed",
+      "description": "Warden: death (collapse, last frame held). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#7bd88f"
+    },
+    {
+      "id": "portrait.warden",
+      "file": "portraits/warden.png",
+      "status": "needed",
+      "description": "Warden portrait bust for the class-select card and lobby. Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "char.techno.idle",
+      "file": "characters/techno_idle.png",
+      "status": "needed",
+      "description": "Technomancer: idle (breathing loop). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#2ee6ff"
+    },
+    {
+      "id": "char.techno.walk",
+      "file": "characters/techno_walk.png",
+      "status": "needed",
+      "description": "Technomancer: walk (run cycle). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#2ee6ff"
+    },
+    {
+      "id": "char.techno.attack",
+      "file": "characters/techno_attack.png",
+      "status": "needed",
+      "description": "Technomancer: attack (one strike/shot, returns to idle pose). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#2ee6ff"
+    },
+    {
+      "id": "char.techno.hit",
+      "file": "characters/techno_hit.png",
+      "status": "needed",
+      "description": "Technomancer: hit (flinch). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#2ee6ff"
+    },
+    {
+      "id": "char.techno.death",
+      "file": "characters/techno_death.png",
+      "status": "needed",
+      "description": "Technomancer: death (collapse, last frame held). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#2ee6ff"
+    },
+    {
+      "id": "portrait.techno",
+      "file": "portraits/techno.png",
+      "status": "needed",
+      "description": "Technomancer portrait bust for the class-select card and lobby. Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "char.bruiser.idle",
+      "file": "characters/bruiser_idle.png",
+      "status": "needed",
+      "description": "Bruiser: idle (breathing loop). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff8c42"
+    },
+    {
+      "id": "char.bruiser.walk",
+      "file": "characters/bruiser_walk.png",
+      "status": "needed",
+      "description": "Bruiser: walk (run cycle). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff8c42"
+    },
+    {
+      "id": "char.bruiser.attack",
+      "file": "characters/bruiser_attack.png",
+      "status": "needed",
+      "description": "Bruiser: attack (one strike/shot, returns to idle pose). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff8c42"
+    },
+    {
+      "id": "char.bruiser.hit",
+      "file": "characters/bruiser_hit.png",
+      "status": "needed",
+      "description": "Bruiser: hit (flinch). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff8c42"
+    },
+    {
+      "id": "char.bruiser.death",
+      "file": "characters/bruiser_death.png",
+      "status": "needed",
+      "description": "Bruiser: death (collapse, last frame held). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff8c42"
+    },
+    {
+      "id": "portrait.bruiser",
+      "file": "portraits/bruiser.png",
+      "status": "needed",
+      "description": "Bruiser portrait bust for the class-select card and lobby. Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "char.hexblade.idle",
+      "file": "characters/hexblade_idle.png",
+      "status": "needed",
+      "description": "Hexblade: idle (breathing loop). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#b56cff"
+    },
+    {
+      "id": "char.hexblade.walk",
+      "file": "characters/hexblade_walk.png",
+      "status": "needed",
+      "description": "Hexblade: walk (run cycle). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#b56cff"
+    },
+    {
+      "id": "char.hexblade.attack",
+      "file": "characters/hexblade_attack.png",
+      "status": "needed",
+      "description": "Hexblade: attack (one strike/shot, returns to idle pose). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#b56cff"
+    },
+    {
+      "id": "char.hexblade.hit",
+      "file": "characters/hexblade_hit.png",
+      "status": "needed",
+      "description": "Hexblade: hit (flinch). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#b56cff"
+    },
+    {
+      "id": "char.hexblade.death",
+      "file": "characters/hexblade_death.png",
+      "status": "needed",
+      "description": "Hexblade: death (collapse, last frame held). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#b56cff"
+    },
+    {
+      "id": "portrait.hexblade",
+      "file": "portraits/hexblade.png",
+      "status": "needed",
+      "description": "Hexblade portrait bust for the class-select card and lobby. Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "char.alch.idle",
+      "file": "characters/alch_idle.png",
+      "status": "needed",
+      "description": "Alchemist: idle (breathing loop). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ffd166"
+    },
+    {
+      "id": "char.alch.walk",
+      "file": "characters/alch_walk.png",
+      "status": "needed",
+      "description": "Alchemist: walk (run cycle). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ffd166"
+    },
+    {
+      "id": "char.alch.attack",
+      "file": "characters/alch_attack.png",
+      "status": "needed",
+      "description": "Alchemist: attack (one strike/shot, returns to idle pose). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ffd166"
+    },
+    {
+      "id": "char.alch.hit",
+      "file": "characters/alch_hit.png",
+      "status": "needed",
+      "description": "Alchemist: hit (flinch). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ffd166"
+    },
+    {
+      "id": "char.alch.death",
+      "file": "characters/alch_death.png",
+      "status": "needed",
+      "description": "Alchemist: death (collapse, last frame held). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ffd166"
+    },
+    {
+      "id": "portrait.alch",
+      "file": "portraits/alch.png",
+      "status": "needed",
+      "description": "Alchemist portrait bust for the class-select card and lobby. Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "char.wraith.idle",
+      "file": "characters/wraith_idle.png",
+      "status": "needed",
+      "description": "Wraith: idle (breathing loop). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 6,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff3e7f"
+    },
+    {
+      "id": "char.wraith.walk",
+      "file": "characters/wraith_walk.png",
+      "status": "needed",
+      "description": "Wraith: walk (run cycle). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff3e7f"
+    },
+    {
+      "id": "char.wraith.attack",
+      "file": "characters/wraith_attack.png",
+      "status": "needed",
+      "description": "Wraith: attack (one strike/shot, returns to idle pose). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 4,
+      "fps": 10,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff3e7f"
+    },
+    {
+      "id": "char.wraith.hit",
+      "file": "characters/wraith_hit.png",
+      "status": "needed",
+      "description": "Wraith: hit (flinch). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 2,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff3e7f"
+    },
+    {
+      "id": "char.wraith.death",
+      "file": "characters/wraith_death.png",
+      "status": "needed",
+      "description": "Wraith: death (collapse, last frame held). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "sheet",
+      "frameW": 48,
+      "frameH": 64,
+      "frames": 6,
+      "fps": 8,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "hand": [
+        11,
+        -18
+      ],
+      "accent": "#ff3e7f"
+    },
+    {
+      "id": "portrait.wraith",
+      "file": "portraits/wraith.png",
+      "status": "needed",
+      "description": "Wraith portrait bust for the class-select card and lobby. Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "kind": "image",
+      "frameW": 96,
+      "frameH": 96,
+      "anchor": [
+        0.5,
+        1
+      ]
+    }
+  ]
+}

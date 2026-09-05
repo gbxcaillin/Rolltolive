@@ -29,17 +29,17 @@ each weapon type differently. Medkits are carried. Each class has a passive perk
 | Roll d20 | Space / Enter | tap the dice |
 | Pause / Mute | P / M | top-right buttons |
 
-## Two repositories
+## Branches: source vs. hosted build
 
-| Repo | Role | Edit here? |
+| Branch | Role | Edit here? |
 |---|---|---|
-| `gbxcaillin/Rolltolive` (this one) | **Offline / test source of truth.** Single-file game, relay, art specs, tests, docs. | Yes |
-| `gbxcaillin/ashfall-hosted` | **Server-hosted build.** `public/` (game + art) and `server/relay.js` in one deployable Node process, with Dockerfile / Render / Fly configs. | No, generated |
+| `main` (and feature branches) | **Offline / test source of truth.** Single-file game, relay, art specs, tests, docs. | Yes |
+| `hosted` (and `hosted/<feature>`) | **Server-hosted build.** Only `public/` (game + art), `server/relay.js` and deploy configs (Dockerfile, Render, Fly). Deploy platforms point here. | No, generated |
 
 They stay in step automatically: the `sync-hosted` GitHub Action runs the headless tests on every
-push here, then mirrors the build into `ashfall-hosted` on the same branch name (needs a
-`HOSTED_REPO_TOKEN` repository secret, a fine-grained PAT with Contents read/write on the hosted
-repo). Locally, `tools/sync-hosted.sh` does the same thing in one command.
+push to a source branch, then rebuilds the matching build branch (`main` → `hosted`,
+`feature/x` → `hosted/feature/x`) using the workflow's own token, so no secrets are needed.
+Locally, `tools/sync-hosted.sh` does the same in one command.
 
 ## Docs
 

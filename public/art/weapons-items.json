@@ -1,0 +1,580 @@
+{
+  "category": "weapons-items",
+  "$comment": "Weapons: 5 types \u00d7 4 tiers. Held sprite is drawn at the character's hand (anchor = grip point). Icon is shown in HUD/panels. Tier 3\u20134 should glow in the type colour (blade white, blunt tan, ranged grey-blue, arcane purple, tech cyan).",
+  "assets": [
+    {
+      "id": "weapon.blade.1",
+      "file": "weapons/blade_1.png",
+      "status": "needed",
+      "description": "Shiv (tier 1 blade), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blade.1",
+      "file": "icons/weapon_blade_1.png",
+      "status": "needed",
+      "description": "Shiv inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blade.2",
+      "file": "weapons/blade_2.png",
+      "status": "needed",
+      "description": "Rune Machete (tier 2 blade), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blade.2",
+      "file": "icons/weapon_blade_2.png",
+      "status": "needed",
+      "description": "Rune Machete inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blade.3",
+      "file": "weapons/blade_3.png",
+      "status": "needed",
+      "description": "Plasma Katana (tier 3 blade), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blade.3",
+      "file": "icons/weapon_blade_3.png",
+      "status": "needed",
+      "description": "Plasma Katana inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blade.4",
+      "file": "weapons/blade_4.png",
+      "status": "needed",
+      "description": "Voidreaver (tier 4 blade), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blade.4",
+      "file": "icons/weapon_blade_4.png",
+      "status": "needed",
+      "description": "Voidreaver inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blunt.1",
+      "file": "weapons/blunt_1.png",
+      "status": "needed",
+      "description": "Lead Pipe (tier 1 blunt), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blunt.1",
+      "file": "icons/weapon_blunt_1.png",
+      "status": "needed",
+      "description": "Lead Pipe inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blunt.2",
+      "file": "weapons/blunt_2.png",
+      "status": "needed",
+      "description": "Rebar Maul (tier 2 blunt), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blunt.2",
+      "file": "icons/weapon_blunt_2.png",
+      "status": "needed",
+      "description": "Rebar Maul inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blunt.3",
+      "file": "weapons/blunt_3.png",
+      "status": "needed",
+      "description": "Gravity Hammer (tier 3 blunt), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blunt.3",
+      "file": "icons/weapon_blunt_3.png",
+      "status": "needed",
+      "description": "Gravity Hammer inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.blunt.4",
+      "file": "weapons/blunt_4.png",
+      "status": "needed",
+      "description": "Titan Fist (tier 4 blunt), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.blunt.4",
+      "file": "icons/weapon_blunt_4.png",
+      "status": "needed",
+      "description": "Titan Fist inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.ranged.1",
+      "file": "weapons/ranged_1.png",
+      "status": "needed",
+      "description": "Rusty Revolver (tier 1 ranged), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.ranged.1",
+      "file": "icons/weapon_ranged_1.png",
+      "status": "needed",
+      "description": "Rusty Revolver inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.ranged.2",
+      "file": "weapons/ranged_2.png",
+      "status": "needed",
+      "description": "Scrap Bow (tier 2 ranged), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.ranged.2",
+      "file": "icons/weapon_ranged_2.png",
+      "status": "needed",
+      "description": "Scrap Bow inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.ranged.3",
+      "file": "weapons/ranged_3.png",
+      "status": "needed",
+      "description": "Railgun (tier 3 ranged), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.ranged.3",
+      "file": "icons/weapon_ranged_3.png",
+      "status": "needed",
+      "description": "Railgun inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.ranged.4",
+      "file": "weapons/ranged_4.png",
+      "status": "needed",
+      "description": "Storm Rifle (tier 4 ranged), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.ranged.4",
+      "file": "icons/weapon_ranged_4.png",
+      "status": "needed",
+      "description": "Storm Rifle inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.arcane.1",
+      "file": "weapons/arcane_1.png",
+      "status": "needed",
+      "description": "Bone Wand (tier 1 arcane), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.arcane.1",
+      "file": "icons/weapon_arcane_1.png",
+      "status": "needed",
+      "description": "Bone Wand inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.arcane.2",
+      "file": "weapons/arcane_2.png",
+      "status": "needed",
+      "description": "Ember Staff (tier 2 arcane), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.arcane.2",
+      "file": "icons/weapon_arcane_2.png",
+      "status": "needed",
+      "description": "Ember Staff inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.arcane.3",
+      "file": "weapons/arcane_3.png",
+      "status": "needed",
+      "description": "Frost Scepter (tier 3 arcane), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.arcane.3",
+      "file": "icons/weapon_arcane_3.png",
+      "status": "needed",
+      "description": "Frost Scepter inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.arcane.4",
+      "file": "weapons/arcane_4.png",
+      "status": "needed",
+      "description": "Eclipse Focus (tier 4 arcane), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.arcane.4",
+      "file": "icons/weapon_arcane_4.png",
+      "status": "needed",
+      "description": "Eclipse Focus inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.tech.1",
+      "file": "weapons/tech_1.png",
+      "status": "needed",
+      "description": "Shock Prod (tier 1 tech), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.tech.1",
+      "file": "icons/weapon_tech_1.png",
+      "status": "needed",
+      "description": "Shock Prod inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.tech.2",
+      "file": "weapons/tech_2.png",
+      "status": "needed",
+      "description": "Tesla Gauntlet (tier 2 tech), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.tech.2",
+      "file": "icons/weapon_tech_2.png",
+      "status": "needed",
+      "description": "Tesla Gauntlet inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.tech.3",
+      "file": "weapons/tech_3.png",
+      "status": "needed",
+      "description": "Nano Blaster (tier 3 tech), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.tech.3",
+      "file": "icons/weapon_tech_3.png",
+      "status": "needed",
+      "description": "Nano Blaster inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "weapon.tech.4",
+      "file": "weapons/tech_4.png",
+      "status": "needed",
+      "description": "Singularity Cannon (tier 4 tech), held sprite pointing right, grip at anchor.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.2,
+        0.6
+      ]
+    },
+    {
+      "id": "icon.weapon.tech.4",
+      "file": "icons/weapon_tech_4.png",
+      "status": "needed",
+      "description": "Singularity Cannon inventory icon.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 32,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "item.crate",
+      "file": "items/crate.png",
+      "status": "needed",
+      "description": "Supply crate on the ground. Rusted metal box, gold straps, faint glow.",
+      "kind": "image",
+      "frameW": 32,
+      "frameH": 28,
+      "anchor": [
+        0.5,
+        1
+      ]
+    },
+    {
+      "id": "item.medkit",
+      "file": "items/medkit.png",
+      "status": "needed",
+      "description": "Medkit pouch icon for the HUD.",
+      "kind": "image",
+      "frameW": 24,
+      "frameH": 24,
+      "anchor": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "id": "item.barge",
+      "file": "items/barge.png",
+      "status": "needed",
+      "description": "Extraction barge beached on sand, gold cabin, cyan running lights, 4-frame bob/beacon loop.",
+      "kind": "sheet",
+      "frameW": 96,
+      "frameH": 56,
+      "frames": 4,
+      "fps": 4,
+      "anchor": [
+        0.5,
+        0.85
+      ]
+    },
+    {
+      "id": "fx.skull",
+      "file": "fx/skull.png",
+      "status": "needed",
+      "description": "Small skull marker left where a survivor died.",
+      "kind": "image",
+      "frameW": 20,
+      "frameH": 20,
+      "anchor": [
+        0.5,
+        1
+      ]
+    }
+  ]
+}

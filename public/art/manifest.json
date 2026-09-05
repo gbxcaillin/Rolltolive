@@ -1,0 +1,38 @@
+{
+  "$comment": "Ashfall art manifest. The engine (index.html \u2192 loadArt) fetches this file, then every pack listed below, and loads each asset whose file exists. Anything missing falls back to the built-in canvas primitives, so packs can be delivered one asset at a time.",
+  "name": "Ashfall art manifest",
+  "version": 1,
+  "engine": {
+    "tile": 32,
+    "pixelArt": true,
+    "exportScale": "deliver @1x (logical px) PNG with alpha; optional @2x copies as <file>@2x.png",
+    "anchor": "[x,y] as fractions of the frame; [0.5,1] = bottom-centre = the character's feet / a tile's bottom edge",
+    "sheet": "frames laid out left\u2192right, wrapping to a new row when the sheet is wider than frameW*cols; frame index 0 is the first",
+    "palette": {
+      "ink": "#0a0e1a",
+      "pink": "#ff3e7f",
+      "cyan": "#2ee6ff",
+      "gold": "#ffd166",
+      "green": "#5cff9d",
+      "red": "#ff4d4d",
+      "purple": "#b56cff",
+      "orange": "#ff8c42",
+      "white": "#f5f2ec",
+      "deepWater": "#08213f",
+      "water": "#12457a",
+      "sand": "#e6c47a",
+      "grass": "#6ab04c",
+      "forest": "#2f6a3a",
+      "rock": "#5b5f73",
+      "ruin": "#2a2d3b",
+      "ash": "#3a3540"
+    },
+    "style": "Bold flat shapes, 2px dark outlines (#0a0e1a), saturated accents, slight rust/grime. Post-apocalyptic science + magic. Readable at 32px."
+  },
+  "packs": [
+    "tiles.json",
+    "characters.json",
+    "weapons-items.json",
+    "ui-fx.json"
+  ]
+}

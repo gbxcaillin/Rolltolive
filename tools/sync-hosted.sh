@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Build the server-hosted version of the game from this branch and push it to a build branch of the SAME repo:
-#   main / master  ->  hosted
-#   any-other      ->  hosted-<branch with / replaced by ->  (git forbids 'hosted' next to 'hosted/x')
+#   <branch>  ->  hosted-<branch>   (slashes become dashes: main -> hosted-main, feature/x -> hosted-feature-x)
 # The build branch holds only deployable files (public/, server/, Dockerfile, render.yaml, fly.toml, package.json).
 #
 #   tools/sync-hosted.sh            # build from the current branch, commit, push
@@ -11,7 +10,7 @@ set -euo pipefail
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 HOSTED_REPO="${HOSTED_REPO:-$(git -C "$SRC" remote get-url origin)}"
 SRC_BRANCH="$(git -C "$SRC" rev-parse --abbrev-ref HEAD)"
-case "$SRC_BRANCH" in main|master) DEFAULT_HB="hosted" ;; *) DEFAULT_HB="hosted-$(echo "$SRC_BRANCH" | tr "/" "-")" ;; esac
+DEFAULT_HB="hosted-$(echo "$SRC_BRANCH" | tr "/" "-")"
 HB="${HOSTED_BRANCH:-$DEFAULT_HB}"
 SHA="$(git -C "$SRC" rev-parse --short HEAD)"
 SUBJECT="$(git -C "$SRC" log -1 --pretty=%s)"

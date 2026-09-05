@@ -1,7 +1,7 @@
 # Art pipeline
 
 The game draws everything with canvas primitives, so it runs with no art at all. Every draw path
-also checks for a sprite first. Drop PNGs into this folder, serve the game over HTTP
+also checks for a sprite first. Drop PNGs into this folder, flip the asset's `status` to `"ready"`, serve the game over HTTP
 (`npx serve .` or any static host), and each asset replaces its primitive the moment it loads.
 Opened from `file://` the browser blocks fetches, so the primitives are used. That is by design.
 
@@ -24,7 +24,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 ```
 
 - `id` is the engine key. Do not rename it. The engine looks up exactly these ids.
-- `file` is relative to this folder. Set `status` to `"placeholder"` to skip an asset.
+- `file` is relative to this folder. The engine loads an asset only when `status` is `"ready"`; leave `"needed"` (or anything else) until the PNG is delivered, so nothing 404s.
 - `kind`: `image` (one frame) or `sheet` (frames left to right, wrapping rows).
 - `anchor`: fraction of the frame that sits on the draw point. `[0.5, 1]` is the feet.
 - `hand`: character sheets only. Offset (logical px, facing right) where the held weapon sprite is drawn.

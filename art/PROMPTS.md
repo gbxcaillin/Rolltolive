@@ -214,6 +214,6 @@ Deliver as `icons/<file>.png`.
 2. Lay frames out left to right in a single row (rows of 7 for the d20) at exactly the
    `frameW × frameH` in the JSON. Feet on the bottom edge, centred, for characters.
 3. Sprites face right; the engine mirrors them.
-4. Save to the `file` path in the JSON and set `"status": "needed"` → leave as is; set
-   `"placeholder"` on any asset you want the engine to skip.
+4. Save to the `file` path in the JSON and flip that asset's `"status"` to `"ready"`; anything
+   else is skipped by the loader.
 5. Serve the folder over HTTP and open the game: each asset replaces its primitive as it loads.

@@ -3,8 +3,11 @@
 // Implements the room/relay contract in NETWORK.md so the game can be played across devices.
 // Your own server only needs to speak the same JSON messages (see NETWORK.md).
 'use strict';
-const http = require('http'), crypto = require('crypto');
+const http = require('http'), crypto = require('crypto'), fs = require('fs'), path = require('path');
 const PORT = parseInt(process.argv[2] || process.env.PORT || '8787', 10);
+// Static hosting: serves PUBLIC_DIR (default ../public next to this file) so one process hosts the game and the relay.
+const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(__dirname, '..', 'public');
+const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.css':'text/css','.md':'text/markdown; charset=utf-8','.ico':'image/x-icon'};
 const MAX_ROOM = 10, MAX_MSG = 64 * 1024;
 const rooms = new Map();   // room -> { host:id, clients: Map<id, client> }
 let nextId = 1;
@@ -33,7 +36,17 @@ function leave(c){ const room=rooms.get(c.room); if(!room) return; room.clients.
   if(room.clients.size===0){ rooms.delete(c.room); return; }
   broadcastRoom(room, {t:'peer', id:c.id, name:c.name, on:false});
   if(room.host===c.id){ room.host=room.clients.keys().next().value; broadcastRoom(room,{t:'host', id:room.host}); } }
-const server = http.createServer((req,res)=>{ res.writeHead(200,{'Content-Type':'text/plain'}); res.end(`Ashfall relay: ${rooms.size} room(s) open\n`); });
+const server = http.createServer((req,res)=>{
+  const url=(req.url||'/').split('?')[0];
+  if(url==='/health'){ res.writeHead(200,{'Content-Type':'application/json'}); res.end(JSON.stringify({ok:true, rooms:rooms.size, players:[...rooms.values()].reduce((n,r)=>n+r.clients.size,0)})); return; }
+  const rel = url==='/' ? '/index.html' : url;
+  const file = path.normalize(path.join(PUBLIC_DIR, rel));
+  if(!file.startsWith(PUBLIC_DIR) || !fs.existsSync(file) || fs.statSync(file).isDirectory()){
+    if(!fs.existsSync(path.join(PUBLIC_DIR,'index.html'))){ res.writeHead(200,{'Content-Type':'text/plain'}); res.end(`Ashfall relay: ${rooms.size} room(s) open\n`); return; }
+    res.writeHead(404,{'Content-Type':'text/plain'}); res.end('not found'); return; }
+  res.writeHead(200,{'Content-Type': MIME[path.extname(file).toLowerCase()]||'application/octet-stream', 'Cache-Control': rel==='/index.html'?'no-cache':'public, max-age=3600'});
+  fs.createReadStream(file).pipe(res);
+});
 server.on('upgrade',(req,sock)=>{
   const key=req.headers['sec-websocket-key']; if(!key){ sock.destroy(); return; }
   const accept=crypto.createHash('sha1').update(key+'258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
@@ -54,4 +67,4 @@ server.on('upgrade',(req,sock)=>{
       else { const o=room.clients.get(m.to); if(o) o.ws.send(out); } }
   }, ()=>{ if(c.room){ console.log(`[${c.room}] ${c.name} left`); leave(c); c.room=null; } });
 });
-server.listen(PORT, ()=>console.log(`Ashfall relay listening on ws://localhost:${PORT}`));
+server.listen(PORT, ()=>console.log(`Ashfall relay listening on ws://localhost:${PORT}` + (fs.existsSync(path.join(PUBLIC_DIR,'index.html'))?` and serving ${PUBLIC_DIR}`:' (no public dir: relay only)')));

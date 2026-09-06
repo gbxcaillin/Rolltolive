@@ -2,7 +2,7 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch(); const errors=[];
   const mk=async(name)=>{ const page=await browser.newPage({ viewport:{width:1000,height:640} }); page.on('pageerror',e=>errors.push(name+' pageerror: '+e.message)); page.on('console',m=>{ if(m.type()==='error') errors.push(name+' console: '+m.text()); });
-    await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(150); await page.click('[data-mode="online"]'); await page.fill('#srvUrl','ws://localhost:8787'); await page.fill('#roomCode','MIG1'); await page.fill('#playerName',name); await page.click('#connectBtn'); await page.waitForTimeout(400); return page; };
+    await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(150); await page.evaluate(()=>window.__game.skipTitle()); await page.waitForTimeout(150); await page.click('[data-mode="online"]'); await page.fill('#srvUrl','ws://localhost:8787'); await page.fill('#roomCode','MIG1'); await page.fill('#playerName',name); await page.click('#connectBtn'); await page.waitForTimeout(400); return page; };
   const host=await mk('Host'), g1=await mk('GuestOne'), g2=await mk('GuestTwo'); await g2.waitForTimeout(300);
   await host.keyboard.press('1'); await g1.keyboard.press('3'); await g2.keyboard.press('6'); await g2.waitForTimeout(300);
   await host.click('#startBtn'); await g2.waitForTimeout(1000);

@@ -1,4 +1,4 @@
-# ASHFALL (working title) — Design Wireframe
+# ASHFIELD — Design Wireframe
 
 *Formerly "Roll to Live". See §13 for the title review.*
 
@@ -243,7 +243,7 @@ Options considered:
 | Ten Drop | Punchy, refers to the ten contestants. | Obscure until explained. |
 | Safe City | The promised land. | Too soft for a game about killing nine people. |
 
-Recommendation: ship as **Ashfall** with "Roll to live." as the tagline. The title is a one-line
+Update: the commissioned key art reads **Ashfield**, so the game ships as Ashfield with "Roll to live." as the tagline; the storm ring keeps the name **the Ashfall**. The title is a one-line
 constant (`GAME_TITLE`) so it can be switched in seconds.
 
 ## 14. Roadmap after v1

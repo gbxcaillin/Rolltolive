@@ -3,7 +3,7 @@ const out=require('path').join(__dirname,'shots'); require('fs').mkdirSync(out,{
 (async () => {
   const browser = await chromium.launch(); const errors=[];
   const mk=async(name)=>{ const page=await browser.newPage({ viewport:{width:1100,height:700} }); page.on('pageerror',e=>errors.push(name+' pageerror: '+e.message)); page.on('console',m=>{ if(m.type()==='error') errors.push(name+' console: '+m.text()); });
-    await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(200); await page.click('[data-mode="online"]'); await page.fill('#srvUrl','ws://localhost:8787'); await page.fill('#roomCode','TEST1'); await page.fill('#playerName',name); await page.click('#connectBtn'); await page.waitForTimeout(500); return page; };
+    await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(150); await page.evaluate(()=>window.__game.skipTitle()); await page.waitForTimeout(200); await page.click('[data-mode="online"]'); await page.fill('#srvUrl','ws://localhost:8787'); await page.fill('#roomCode','TEST1'); await page.fill('#playerName',name); await page.click('#connectBtn'); await page.waitForTimeout(500); return page; };
   const host=await mk('Host'), cli=await mk('Guest'); await cli.waitForTimeout(400);
   console.log('lobby host:', await host.evaluate(()=>({isHost:window.__game.Net.isHost, players:window.__game.Lobby.order().map(p=>p.name)})));
   await host.keyboard.press('1'); await cli.keyboard.press('6'); await cli.waitForTimeout(400);

@@ -1,4 +1,4 @@
-# Ashfall (working title: formerly Roll to Live)
+# Ashfield (formerly Roll to Live)
 
 A browser and mobile survival game. Ten contestants are dropped on a post-apocalyptic island of
 science and magic. Walk the island, loot crates, and when you meet another survivor, fight it out

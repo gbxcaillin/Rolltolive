@@ -3,7 +3,7 @@ const out=require('path').join(__dirname,'shots'); require('fs').mkdirSync(out,{
 (async () => {
   const browser = await chromium.launch(); const page = await browser.newPage({ viewport: { width: 1280, height: 760 } });
   const errors=[]; page.on('pageerror', e => errors.push('pageerror: '+e.message)); page.on('console', m => { if(m.type()==='error') errors.push('console: '+m.text()); });
-  await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(300);
+  await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(150); await page.evaluate(()=>window.__game.skipTitle()); await page.waitForTimeout(300);
   await page.screenshot({ path: out + '/s01_menu.png' });
   await page.click('[data-mode="solo"]'); await page.waitForTimeout(200); await page.screenshot({ path: out + '/s02_select.png' });
   await page.keyboard.press('2'); await page.waitForTimeout(400);

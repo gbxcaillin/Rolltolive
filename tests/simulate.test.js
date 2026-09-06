@@ -1,6 +1,6 @@
 const { chromium } = require('playwright');
 (async () => { const browser=await chromium.launch(); const page=await browser.newPage({viewport:{width:1000,height:640}}); const errs=[]; page.on('pageerror',e=>errs.push(e.message));
-  await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(200);
+  await page.goto('file://'+require('path').resolve(__dirname,'../index.html')); await page.waitForTimeout(150); await page.evaluate(()=>window.__game.skipTitle()); await page.waitForTimeout(200);
   for(let run=0;run<3;run++){
     await page.click('[data-mode="solo"]'); await page.keyboard.press(String(1+run*2)); await page.waitForTimeout(200);
     const r=await page.evaluate(()=>{ const g=window.__game; const viol=[]; let fights=0, maxRounds=0; let t=0;

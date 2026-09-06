@@ -45,6 +45,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll (`ui/dice_d20.webp`, 7×4 grid of 192 px frames): frames 0–19 are faces 1–20, frame 20 a spare rune face, frames 21–27 tumble (`tumbleFrom`) |
 | `bg.combat.landscape`, `bg.combat.portrait` | Encounter backdrops (`ui/combat_*.jpg`, 1672×941 / 941×1672), picked by screen aspect, scaled to cover and anchored to the bottom so the flagstones stay under the fighters |
+| `ui.menu.portrait`, `ui.menu.landscape` | Main-menu paintings (`ui/menu_*.jpg`), chosen by orientation, cover-fit with a slow drift and anchored where the subject lives (bottom / right). The menu UI sits on a plate that fades into the painting; the key table is hidden there (it lives in the guide). Falls back to the panning map. |
 | `ui.intro.portrait`, `ui.intro.landscape` | Intro video (mp4, H.264 main profile + AAC, ~15 s, about 2 MB each, `+faststart` so it plays while downloading) played once after START: the portrait cut on tall screens, the landscape cut on wide ones, letterboxed to fit; tap or any key skips; a missing file or unsupported codec goes straight to the menu. Preloaded while the title shows. |
 | `ui.title.portrait`, `ui.title.landscape` | Title screen key art, chosen by orientation, drawn with object-fit cover; `startButton` marks the painted START plate |
 | `ui.logo` | Reserved (v2) |

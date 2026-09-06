@@ -129,6 +129,16 @@
   #guide b.k{color:var(--cyan)} #guide .cls{font-weight:900}
   #guide svg{display:block;margin:8px auto;max-width:320px}
   .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+  /* painted menu: UI on a plate that fades into the painting; key table lives in the guide instead */
+  body.menuArt #menu{background:linear-gradient(180deg,rgba(6,9,18,.84) 0%,rgba(6,9,18,.84) 50%,rgba(6,9,18,0) 64%)}
+  body.menuArt #menu .box{display:none} body.menuArt #menu > :first-child{margin-top:0} body.menuArt #menu > :last-child{margin-bottom:0}
+  body.menuArt #menu .best{position:fixed;left:0;right:0;bottom:calc(30px + env(safe-area-inset-bottom));text-align:center;text-shadow:0 2px 6px #000}
+  body.menuArt #menu .buildTag,body.menuArt #buildTag{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom));text-align:center;text-shadow:0 2px 6px #000}
+  @media (orientation:landscape) and (min-width:760px){
+    body.menuArt #menu{background:linear-gradient(90deg,rgba(6,9,18,.86) 0%,rgba(6,9,18,.86) 40%,rgba(6,9,18,0) 56%);align-items:flex-start;padding-left:6vw;justify-content:center}
+    body.menuArt #menu > *{max-width:40vw} body.menuArt #menu h1{font-size:clamp(40px,6.5vw,96px);text-align:left} body.menuArt #menu .sub{text-align:left}
+    body.menuArt #menu .row,body.menuArt #menu .menuRow2{justify-content:flex-start}
+    body.menuArt #menu .best,body.menuArt #buildTag{left:6vw;right:auto;text-align:left} }
   #title{padding:0;background:#0a0e1a;justify-content:center;overflow:hidden;cursor:pointer}
   #intro{padding:0;background:#000;justify-content:center;overflow:hidden;cursor:pointer}
   #introVid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
@@ -311,7 +321,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'bd9ec39 20260906-1320';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'e4af703 20260906-1335';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
 const SHEET_WALK_FPS = 3.5;        // run-sheet frames per second of movement (6 frames: one stride cycle every 1.7 s); lower = slower, more readable
 const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
@@ -1575,13 +1585,18 @@ function drawCombat(g){
   g.restore();
   if(flashA>0){ g.fillStyle=`rgba(255,255,255,${flashA*0.5})`; g.fillRect(0,0,W,H); }
 }
+// Menu backdrop: the painting for this orientation, cover-fit and anchored where its subject lives (bottom in
+// portrait, right in landscape), with a slow drift. Falls back to the panning map.
+function menuArt(){ return sprite(W>=H?'ui.menu.landscape':'ui.menu.portrait'); }
 function drawMenuBg(g){
   g.fillStyle=COL.deep; g.fillRect(0,0,W,H);
+  const art=menuArt(); if(art && art.img.naturalWidth){ const iw=art.img.naturalWidth, ih=art.img.naturalHeight, z=1.04+0.02*Math.sin(timeNow*0.15), sc=Math.max(W/iw,H/ih)*z, dw=iw*sc, dh=ih*sc;
+    const ox= W>=H? (W-dw) : (W-dw)/2 + Math.sin(timeNow*0.1)*(dw-W)*0.3, oy= W>=H? (H-dh)/2 : (H-dh); g.drawImage(art.img,ox,oy,dw,dh); return; }
   if(mapCanvas){ const t=timeNow*12; g.save(); g.globalAlpha=0.55; g.drawImage(mapCanvas, (Math.sin(t*0.01)+1)*200*MAP_RES, (Math.cos(t*0.013)+1)*200*MAP_RES, W*MAP_RES, H*MAP_RES, 0,0,W,H); g.restore(); }
   g.fillStyle='rgba(6,9,18,0.35)'; g.fillRect(0,0,W,H);
 }
 function render(){
-  const g=ctx; g.clearRect(0,0,W,H); document.body.classList.toggle('fighting', !!viewCombat);
+  const g=ctx; g.clearRect(0,0,W,H); document.body.classList.toggle('fighting', !!viewCombat); document.body.classList.toggle('menuArt', !!menuArt());
   if(state==='menu'||state==='select'||state==='lobby'||!G){ drawMenuBg(g); return; }
   if(viewCombat) drawCombat(g); else drawWorld(g);
 }

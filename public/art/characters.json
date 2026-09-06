@@ -1,6 +1,6 @@
 {
   "category": "characters",
-  "$comment": "Six survivor classes. Every animation is a horizontal sheet of frameW\u00d7frameH frames, anchor at the feet. hand = [x,y] offset from the feet (logical px, right-facing) where a held weapon sprite is drawn; sprites face RIGHT, the engine mirrors them. Overworld draws at scale 1, combat at scale 2\u20134.",
+  "$comment": "Six survivor classes. Every animation is a horizontal sheet of frameW×frameH frames, anchor at the feet. hand = [x,y] offset from the feet (logical px, right-facing) where a held weapon sprite is drawn; sprites face RIGHT, the engine mirrors them. Overworld draws at scale 1, combat at scale 2–4.",
   "assets": [
     {
       "id": "char.warden.idle",
@@ -113,7 +113,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     },
     {
       "id": "char.techno.idle",
@@ -226,7 +227,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     },
     {
       "id": "char.bruiser.idle",
@@ -339,7 +341,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     },
     {
       "id": "char.hexblade.idle",
@@ -452,7 +455,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     },
     {
       "id": "char.alch.idle",
@@ -565,7 +569,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     },
     {
       "id": "char.wraith.idle",
@@ -678,7 +683,8 @@
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Class picker card and the combat scene (black backdrop keyed out at runtime; figure mirrored for the right-hand fighter)."
     }
   ]
 }

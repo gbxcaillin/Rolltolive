@@ -150,7 +150,48 @@ Escape barge, 4-frame sheet in a horizontal row: a rusted flat-bottomed river ba
 Death marker: a small skull sunk in ash with a faint pink ember in one eye, three-quarter top-down view. BLACK BG + STYLE
 ```
 
-## 5. UI and effects
+## 5. Menu and How-to-Play backdrops (with wireframes)
+
+Wireframes in `art/ui/wireframes/` show exactly where the game's buttons and text sit on each painting. Attach the
+matching wireframe as an image reference and paste its prompt; the game draws the wordmark, buttons and text
+panels itself on a dark translucent plate, so the painting only has to leave that zone calm.
+
+```
+MENU, PORTRAIT (941×1672, wireframe menu_portrait.png): key-art painting for the main menu of Outborn. Upper 55% is a calm, dark, low-contrast column (a storm sky over ash dunes, faint violet Ashfall glow) — the game draws its title and four buttons there. Lower third is the hero area: the six survivors seen from behind at the edge of a black-sand shore, the rusted extraction barge grounded ahead of them, the white spires of the Safe City small on the far horizon, embers drifting. Same composition language as the Outborn title painting, no text, no logo. + STYLE
+```
+```
+MENU, LANDSCAPE (1672×941, wireframe menu_landscape.png): key-art painting for the main menu of Outborn. LEFT 45% is a calm, dark, low-contrast area (storm sky, ash haze) — the game draws its title and buttons there. RIGHT half is the hero area: the six survivors from behind at the shore, the rusted barge, the Safe City on the horizon under the violet Ashfall ring, embers drifting. No text, no logo. + STYLE
+```
+```
+HOW TO PLAY, PORTRAIT (941×1672, wireframe guide_portrait.png): decorative FRAME, not a scene. Edges built from rusted riveted iron, bone, torn banner cloth and rune-etched stone, corner ornaments; the whole centre is a dim, muted, low-contrast field (dark ash-grey, slight vignette) because scrolling text sits over it. No text, no logo. + STYLE
+```
+```
+HOW TO PLAY, LANDSCAPE (1672×941, wireframe guide_landscape.png): same frame as the portrait version in landscape proportions: ornament on the edges and corners only, dim muted centre for text. No text. + STYLE
+```
+
+### Button plates and panel frame (9-slice, `BLACK BG`)
+
+These replace the CSS button and panel borders. Ornament must live in the corners and along the edges only, with
+a plain flat middle, because the game stretches the middle to fit each button's width (9-slice).
+
+```
+BUTTON PLATE, GOLD (768×224): a wide rectangular button plate of dark riveted iron, gold-lit rune trim along the edges, small skull-and-gear ornaments in the two left corners, flat plain centre, straight-on, isolated on pure black. + STYLE
+BUTTON PLATE, CYAN (768×224): same plate, cyan reactor-glow trim and copper wiring in the corners.
+BUTTON PLATE, PINK (768×224): same plate, torn crimson banner cloth wrapped at the ends, pink rune trim.
+BUTTON PLATE, PLAIN (768×224): same plate, unlit bone-white rune trim, for secondary buttons.
+BUTTON PLATE, PRESSED (768×224): the gold plate darker with the trim glowing brighter, for the pressed state.
+```
+```
+PANEL FRAME (1024×1024): a square frame of rusted iron plate with bolted corner brackets, a strip of rune stone along the top edge, bone charms hanging from the bottom corners; the entire inside is empty pure black (it is cut out). Isolated on pure black. + STYLE
+```
+```
+DIVIDER (1024×96): a horizontal ornamental rule — a chain with a central rune medallion, ends fraying into ash; isolated on pure black. + STYLE
+```
+```
+SECTION ICONS (128×128 each, one line each, dark-red vignette): The Goal — a barge lamp; A Round — an hourglass of ash; Fighting — crossed rebar and blade; Classes — six small silhouettes; Weapons — a rack of scrap; The Ashfall — the violet ring; Controls — a pressed rune key.
+```
+
+## 6. UI and effects
 
 ```
 Combat backdrop, 16:9: the Ashfield wastes at dusk — cracked black-sand ground in the foreground, ruined observatory silhouette on a ridge, the violet Ashfall storm ring closing on the horizon, embers drifting, empty centre stage with room for two figures, muted so characters pop. STYLE

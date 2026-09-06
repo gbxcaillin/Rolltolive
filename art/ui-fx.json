@@ -41,6 +41,32 @@
       "description": "Outborn title key art, landscape. Same rules as the portrait one."
     },
     {
+      "id": "ui.menu.portrait",
+      "file": "ui/menu_portrait.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 941,
+      "frameH": 1672,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "usage": "Main-menu painting on tall screens: cover-fit, anchored to the bottom so the survivors and the barge show under the button stack, slow drift."
+    },
+    {
+      "id": "ui.menu.landscape",
+      "file": "ui/menu_landscape.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1672,
+      "frameH": 941,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "usage": "Main-menu painting on wide screens: cover-fit, anchored to the right so the subject sits beside the left-hand button column."
+    },
+    {
       "id": "ui.intro.portrait",
       "file": "ui/intro_portrait.mp4",
       "status": "ready",

@@ -272,6 +272,12 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Painted menu
+The main menu draws a painting behind the UI (`ui.menu.portrait` / `ui.menu.landscape`, chosen by orientation,
+cover-fit, anchored bottom or right, slow drift). In portrait the wordmark and buttons sit on a plate in the upper
+half that fades into the painting; in landscape they stack down the left 45 %. The controls table is hidden on the
+painted menu because it lives in the guide. `art/ui/wireframes/` holds the layout guides used to brief the art.
+
 ### Painted terrain
 The eight tile types come from one generated contact sheet, cut into eight square variants each and drawn at
 32 px from 64 px sources (the map canvas renders at up to 2× on high-DPI screens). Painted ground is rich and

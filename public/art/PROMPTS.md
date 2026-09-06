@@ -1,219 +1,211 @@
-# Outborn — artwork generation prompts
+# Outborn — artwork generation prompts (matched to the shipped key art)
 
-Copy-paste prompts for an image generator (Midjourney, DALL·E, Stable Diffusion, Flux, etc.).
-Every prompt ends with the shared STYLE block so the whole set reads as one game. File names,
-sizes, frame counts and anchors must match `art/*.json`; the generator will not hit exact pixel
-sizes, so generate large, then downscale and lay out sheets by hand (notes at the bottom).
+Copy-paste prompts for an image generator (Midjourney, Flux, Stable Diffusion, DALL·E, OpenArt…).
+They are written to match the artwork already in the game: the Outborn title paintings and the six
+class portraits. Every prompt ends with the shared STYLE block so the whole set reads as one game.
+
+The generator will not hit exact pixel sizes. Generate large, then downscale and lay out sheets by
+hand (checklist at the bottom). File names, sizes, frame counts and anchors must match `art/*.json`.
 
 ---
 
 ## STYLE (append to every prompt)
 
 ```
-Style: bold flat-shaded 2D game sprite, thick dark outlines (#0a0e1a), saturated accent colours, slight rust and grime, post-apocalyptic science-and-magic wasteland, readable at small size, clean silhouette, no text, no watermark, no background (transparent PNG), centered, facing right.
-Palette: ink #0a0e1a, pink #ff3e7f, cyan #2ee6ff, gold #ffd166, green #5cff9d, red #ff4d4d, purple #b56cff, orange #ff8c42, bone-white #f5f2ec.
+Style: highly detailed dark-fantasy post-apocalyptic illustration, heavy black ink linework with painterly colour, rusted riveted iron, torn layered cloth and leather straps, chipped paint, ash and grime, glowing rune and reactor accents, dramatic rim light, rich saturated colour against deep shadow, cinematic contrast. Same artist as the Outborn key art (attach a class portrait or the title painting as a style reference). No text, no watermark, no signature.
+Palette: ink #0a0e1a, pink #ff3e7f, cyan #2ee6ff, gold #ffd166, green #5cff9d, red #ff4d4d, purple #b56cff, orange #ff8c42, bone-white #f5f2ec, rust #8a4a1f.
 ```
 
-For tiles and backgrounds replace "no background" with "seamless, top-down".
+Two backgrounds are used, pick per section:
 
----
-
-## 1. Characters (6 classes × 5 animations + portrait)
-
-Generate the **base design** first for each class, then reuse it as an image reference for every
-animation sheet so the frames stay consistent.
-
-### Base designs
-
-```
-WARDEN — a lean wasteland ranger, hooded green cloak, practical layered clothes, quiver and scrap bow on the back, calm watchful eyes, accent colour green #7bd88f. Full body, neutral idle pose. + STYLE
-```
-```
-TECHNOMANCER — a reactor witch: brass goggles pushed up, cables running down one arm into a glowing cyan tech gauntlet, patched lab coat over light armour, accent colour cyan #2ee6ff. Full body, neutral idle pose. + STYLE
-```
-```
-BRUISER — a scrapyard titan: massive frame, welded iron helmet with a single orange visor slit, shoulder plates of rusted car panels, rebar wrapped around one fist, accent colour orange #ff8c42. Full body, neutral idle pose. + STYLE
-```
-```
-HEXBLADE — a cursed duelist: horned mask, purple rune tattoos glowing on the forearms, tattered black cloak, runed machete at the hip, accent colour purple #b56cff. Full body, neutral idle pose. + STYLE
-```
-```
-ALCHEMIST — a field medic: gas mask with round gold lenses, satchel of glowing vials across the chest, yellow chemical stains on a canvas coat, accent colour gold #ffd166. Full body, neutral idle pose. + STYLE
-```
-```
-WRAITH — an ash scavenger: dark hood, pink scarf-mask over the lower face, wiry fast build, bandolier of knives and a revolver, accent colour pink #ff3e7f. Full body, neutral idle pose. + STYLE
-```
-
-### Animation sheets (run once per class, swap the class name)
-
-```
-Sprite sheet of the WARDEN (use the attached base design), 4 frames in a horizontal row, IDLE animation: subtle breathing loop, weight shifts, cloak sways. Same size and position in every frame. Facing right. + STYLE
-```
-```
-Sprite sheet of the WARDEN (use the attached base design), 6 frames in a horizontal row, WALK cycle: full run stride, arms pumping, cloak trailing. Same size and position in every frame. Facing right. + STYLE
-```
-```
-Sprite sheet of the WARDEN (use the attached base design), 4 frames in a horizontal row, ATTACK: wind-up, strike/shoot forward, follow-through, return to idle. Right hand free to hold a weapon. Facing right. + STYLE
-```
-```
-Sprite sheet of the WARDEN (use the attached base design), 2 frames in a horizontal row, HIT reaction: flinch back, brief white flash on frame 2. Facing right. + STYLE
-```
-```
-Sprite sheet of the WARDEN (use the attached base design), 6 frames in a horizontal row, DEATH: stagger, fall to knees, collapse, final frame lying still. Facing right. + STYLE
-```
-
-Deliver each sheet as `characters/<classId>_<anim>.png`, frames 48×64 px each, feet at the
-bottom-centre of every frame, empty right hand at about (11, −18) px from the feet.
-Class ids: `warden`, `techno`, `bruiser`, `hexblade`, `alch`, `wraith`.
-
-### Portraits
-
-```
-Portrait bust of the WARDEN (use the attached base design), head and shoulders, three-quarter view, dramatic dusk rim light in the class accent colour, dark vignette. 96×96 square composition. + STYLE (keep a background this time: dark smoky gradient)
-```
+- `BLACK BG` — "isolated on a solid pure black background (#000000), nothing touching the edges, no
+  ground shadow". The engine keys pure black out at runtime (this is how the portraits work), so keep
+  the backdrop truly black and the figure clear of the image edges.
+- `SEAMLESS` — "seamless tileable texture, straight top-down view, even lighting, no vignette".
 
 ---
+
+## 1. Characters — animation sheets (6 classes × 5 sheets)
+
+The portraits already define each character. Attach the class's portrait (`art/portraits/<id>.jpg`)
+as the image reference for every sheet so the frames stay consistent. Frames are 48×64 in the game;
+generate each frame at 512×683 or larger and downscale. All sheets: `BLACK BG`, facing right.
+
+Character reminders (match the portraits exactly):
+
+```
+WARDEN — hooded green cloak with pale rune stitching, scrap bow and green-fletched arrows on the back, leather belts and a glowing green lantern vial, calm sharp-eyed ranger.
+TECHNOMANCER — white hair tied up, brass goggles, white lab coat over dark armour, one arm a cyan-lit brass-and-cable reactor gauntlet, glowing vials at the belt.
+BRUISER — huge, welded iron helmet with an orange visor slit, rusted plate shoulders and gauntlets wrapped in chain and rope, orange rags, exposed muscle.
+HEXBLADE — horned bone mask with a violet glowing eye, tattered black-and-purple cloak, purple rune tattoos on the forearms, curved rune-lit machete, skull charms.
+ALCHEMIST — canvas coat stained gold and white, gas mask with round gold lenses, chest satchel of glowing yellow vials, a swinging alchemical lantern.
+WRAITH — dark hood and crimson scarf-mask, ragged pink-red cape, throwing knives on the chest, revolver at the hip, wiry and fast.
+```
+
+Run these once per class, swapping the class name:
+
+```
+Sprite sheet of the WARDEN from the attached portrait, 4 frames in a single horizontal row, IDLE loop: breathing, weight shifting foot to foot, cloak swaying. Identical scale and foot position in every frame, evenly spaced. Facing right. BLACK BG + STYLE
+```
+```
+Sprite sheet of the WARDEN from the attached portrait, 6 frames in a single horizontal row, RUN cycle: full stride, arms pumping, cloak trailing behind, contact-down-passing-up poses. Identical scale and foot position in every frame, evenly spaced. Facing right. BLACK BG + STYLE
+```
+```
+Sprite sheet of the WARDEN from the attached portrait, 4 frames in a single horizontal row, ATTACK: wind-up, strike forward with the right hand, follow-through, recover. Right hand empty (weapons are drawn separately). Identical scale and foot position. Facing right. BLACK BG + STYLE
+```
+```
+Sprite sheet of the WARDEN from the attached portrait, 2 frames in a single horizontal row, HIT reaction: flinch back and clutch the wound, then stagger. Identical scale and foot position. Facing right. BLACK BG + STYLE
+```
+```
+Sprite sheet of the WARDEN from the attached portrait, 6 frames in a single horizontal row, DEATH: stagger, drop to one knee, collapse forward, lie still, ash drifting off the body in the last two frames. Facing right. BLACK BG + STYLE
+```
 
 ## 2. Tiles (8, top-down, 32×32, seamless)
 
-Generate a 4×1 strip of variants where the JSON says `frames: 4`, else 3×1.
+Generate at 512×512, downscale to 32×32 sets of 3–4 variants. The ground should read as painted
+terrain, not photo texture; keep detail large enough to survive the downscale.
 
 ```
-Top-down seamless ground tile, DEEP OCEAN WATER, dark navy #08213f, almost flat with a faint slow swell, 4 subtle variants in a row. + STYLE
+Seamless top-down deep ocean water, near-black teal, long slow swells, faint moonlit ash flecks on the surface, 4 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, SHALLOW WATER, blue #12457a with small light wave highlights, 4 subtle variants in a row. + STYLE
+Seamless top-down shallow coastal water, teal-blue, rippling, rust-orange silt patches and drowned wreckage shadows below the surface, 4 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, BEACH SAND, warm ochre #e6c47a with sparse pebbles and shell flecks, 4 subtle variants in a row. + STYLE
+Seamless top-down black volcanic sand beach with pale bone-coloured shell fragments, drift ash, sparse wet stones, 4 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, GRASS, two green tones around #6ab04c with small tufts, 4 subtle variants in a row. + STYLE
+Seamless top-down wasteland grass, dull olive-green tufts with yellow dead patches and rune-scorched bare earth, 4 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, FOREST CANOPY, dense dark-green tree tops #2f6a3a with lighter highlights and drop shadows, 4 subtle variants in a row. + STYLE
+Seamless top-down dead forest canopy, dense dark green and rust-brown crowns, gnarled bare branches, pale fungal glow between trunks, 4 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, ROCK CLIFF, solid grey-blue faceted boulders #5b5f73 with bright edge highlights, reads as impassable, 3 variants in a row. + STYLE
+Seamless top-down cracked grey rock and scree, iron-stained fissures, patches of soot, 3 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, RUINED BUILDING BLOCK, dark slate walls #2a2d3b, rust-orange lit windows, cracked concrete top, reads as impassable, 3 variants in a row. + STYLE
+Seamless top-down ruined city block: broken concrete slabs, exposed rebar, collapsed walls, faint orange window glow from below, rune graffiti, 3 variants. SEAMLESS + STYLE
 ```
 ```
-Top-down seamless ground tile, ASHFALL GROUND, dark grey ash #3a3540 with a few dying orange embers, 3 variants in a row. + STYLE
-```
-
-Deliver as `tiles/<name>.png`, each variant 32×32, strip laid out left to right.
-
----
-
-## 3. Weapons (5 types × 4 tiers = 20, held sprite + icon)
-
-Template, one line per weapon. The held sprite points right with the grip at the left-centre.
-
-```
-Game weapon sprite, <NAME>, a <DESCRIPTION>, pointing right, grip at left, tier <T> of 4 (<T>=1 crude scrap, 2 well-made, 3 glowing high-tech, 4 legendary with strong glow), glow colour <GLOW>. 32×32 composition. + STYLE
+Seamless top-down ash field, grey-violet drifts, smouldering embers, half-buried skulls and rusted debris, 3 variants. SEAMLESS + STYLE
 ```
 
-| id | NAME | DESCRIPTION | GLOW |
-|---|---|---|---|
-| blade.1 | Shiv | sharpened scrap-metal knife with tape grip | none |
-| blade.2 | Rune Machete | heavy machete etched with faint runes | faint white |
-| blade.3 | Plasma Katana | slim katana with a white-hot plasma edge | white |
-| blade.4 | Voidreaver | black blade leaking violet void energy | white-violet |
-| blunt.1 | Lead Pipe | dented lead pipe | none |
-| blunt.2 | Rebar Maul | concrete chunk on rebar, a crude maul | none |
-| blunt.3 | Gravity Hammer | sledgehammer with a humming tan energy core | tan #c8a57a |
-| blunt.4 | Titan Fist | giant piston-driven gauntlet | tan |
-| ranged.1 | Rusty Revolver | rusted six-shot revolver | none |
-| ranged.2 | Scrap Bow | compound bow built from car springs | none |
-| ranged.3 | Railgun | long coil railgun with blue-grey charge lights | grey-blue #9aa7bd |
-| ranged.4 | Storm Rifle | sleek rifle wrapped in crackling lightning | grey-blue |
-| arcane.1 | Bone Wand | wand carved from a femur | none |
-| arcane.2 | Ember Staff | gnarled staff with a smouldering ember tip | faint purple |
-| arcane.3 | Frost Scepter | crystal scepter with icy purple light | purple #b56cff |
-| arcane.4 | Eclipse Focus | floating black sun orb ringed with purple fire | purple |
-| tech.1 | Shock Prod | cattle prod with exposed sparking wires | none |
-| tech.2 | Tesla Gauntlet | forearm gauntlet with tesla coils | faint cyan |
-| tech.3 | Nano Blaster | compact blaster with a glowing cyan core | cyan #2ee6ff |
-| tech.4 | Singularity Cannon | shoulder cannon with a tiny black hole in the barrel | cyan |
+## 3. Weapons (5 types × 4 tiers = 20 held sprites, 20 icons)
 
-Deliver held sprites as `weapons/<type>_<tier>.png` (32×32, grip at 20 % from the left, 60 %
-down) and icons as `icons/weapon_<type>_<tier>.png` (32×32, centred).
+Held sprites are drawn in the character's right hand at 32×32 (scale up in combat), so they must
+read at small size: one strong silhouette, one glowing accent. Generate at 512×512, `BLACK BG`,
+pointing to the upper right. Icons are the same object, straight on, centred, with a subtle
+dark-red vignette behind for the button.
 
-Icon variant of the template:
 ```
-Game inventory icon, <NAME>, <DESCRIPTION>, centred, slight 3/4 angle, glow colour <GLOW>, 32×32 composition. + STYLE
+BLADE T1 — Shiv: a sharpened rebar spike wrapped in bloody rag, rust scale, no glow. BLACK BG + STYLE
+BLADE T2 — Rune Machete: a wide chipped machete with a single purple rune burning along the spine. BLACK BG + STYLE
+BLADE T3 — Plasma Katana: a long blade with a cyan plasma edge, brass coolant lines in the hilt. BLACK BG + STYLE
+BLADE T4 — Voidreaver: a black curved greatsword with a violet void tear running its length, bone hilt. BLACK BG + STYLE
+```
+```
+BLUNT T1 — Lead Pipe: a bent lead pipe with a rusted valve wheel at the end. BLACK BG + STYLE
+BLUNT T2 — Rebar Maul: a concrete block on a rebar haft, bristling with bent rods. BLACK BG + STYLE
+BLUNT T3 — Gravity Hammer: an iron sledge with an orange energy core in the head, chains hanging. BLACK BG + STYLE
+BLUNT T4 — Titan Fist: a colossal engine-block gauntlet, glowing orange between the plates. BLACK BG + STYLE
+```
+```
+RANGED T1 — Rusty Revolver: a heavy revolver, taped grip, pitted barrel. BLACK BG + STYLE
+RANGED T2 — Scrap Bow: a compound bow of car springs and cable, green-fletched arrow nocked. BLACK BG + STYLE
+RANGED T3 — Railgun: a long coil rifle with cyan magnetic rings and copper wiring. BLACK BG + STYLE
+RANGED T4 — Storm Rifle: a bulky rifle crackling with gold lightning, brass storm capacitor. BLACK BG + STYLE
+```
+```
+ARCANE T1 — Bone Wand: a carved femur wand, faint violet tip. BLACK BG + STYLE
+ARCANE T2 — Ember Staff: a charred staff with a caged burning ember. BLACK BG + STYLE
+ARCANE T3 — Frost Scepter: an iron scepter with a cyan crystal and frost creeping down the shaft. BLACK BG + STYLE
+ARCANE T4 — Eclipse Focus: a floating ring of black metal around a purple-white eclipse. BLACK BG + STYLE
+```
+```
+TECH T1 — Shock Baton: a police baton with exposed sparking wires. BLACK BG + STYLE
+TECH T2 — Arc Welder: a handheld welder torch with a cyan arc. BLACK BG + STYLE
+TECH T3 — Drone Rig: a wrist launcher with three hovering cyan drones. BLACK BG + STYLE
+TECH T4 — Reactor Gauntlet: a brass gauntlet with a glowing cyan reactor core, tubes and gauges. BLACK BG + STYLE
 ```
 
----
+Icon variant, append to any weapon line: `…, straight-on centred icon, subtle dark-red vignette, reads at 32 px.`
 
 ## 4. Items and props
 
 ```
-Top-down game prop, SUPPLY CRATE: rusted metal box with gold straps and a faint gold glow, 32×28 composition. + STYLE
+Supply crate: a rust-red steel ammo crate with a glowing gold latch and stencilled rune, slightly open, three-quarter top-down view. BLACK BG + STYLE
 ```
 ```
-Game icon, MEDKIT: canvas pouch with a bone-white cross, green stitching, 24×24 composition. + STYLE
+Medkit: a battered olive field-medic tin with a bone-white cross and a glowing green vial clipped to the side, three-quarter view. BLACK BG + STYLE
 ```
 ```
-Sprite sheet, 4 frames in a row, EXTRACTION BARGE beached on sand seen from above-front: flat rusted hull, small gold cabin, cyan running lights, a rotating beacon that pulses across the 4 frames, 96×56 per frame. + STYLE
+Escape barge, 4-frame sheet in a horizontal row: a rusted flat-bottomed river barge with a smoking stack and a gold signal lamp, gently bobbing and rocking across the frames, three-quarter top-down view. BLACK BG + STYLE
 ```
 ```
-Small game marker, SKULL: bone-white skull half-sunk in ash, 20×20 composition. + STYLE
+Death marker: a small skull sunk in ash with a faint pink ember in one eye, three-quarter top-down view. BLACK BG + STYLE
 ```
-
----
 
 ## 5. UI and effects
 
 ```
-Sprite sheet, 28 frames in rows of 7, a GOLD ICOSAHEDRAL D20 DIE: frames 1–20 show the die settled with faces 1 to 20 clearly readable in dark numerals, frames 21–28 show it tumbling mid-air with motion blur. Gold #ffd166 with dark facet lines, 96×96 per frame. + STYLE
+Combat backdrop, 16:9: the Ashfield wastes at dusk — cracked black-sand ground in the foreground, ruined observatory silhouette on a ridge, the violet Ashfall storm ring closing on the horizon, embers drifting, empty centre stage with room for two figures, muted so characters pop. STYLE
 ```
 ```
-Wide game backdrop 1280×720, ENCOUNTER SCENE: ruined shoreline at dusk under falling ash, broken concrete pier, distant reactor towers, pink ashfall ring glowing on the horizon, dark uncluttered centre so two characters read clearly in front of it. Painterly but flat-shaded, dark vignette. + STYLE (keep background)
+Twenty-sided die sprite sheet: an obsidian-and-gold d20 with rune-carved faces, 28 frames in a 7×4 grid — frames 1–20 show faces 1 to 20 settled and readable, frames 21–28 are motion-blurred tumbling angles. Numbers bold bone-white, face 20 glowing gold, face 1 glowing red. BLACK BG + STYLE
 ```
 ```
-Game logo wordmark, "OUTBORN", heavy geometric uppercase letters, wide tracking, gradient gold #ffd166 → pink #ff3e7f → cyan #2ee6ff, embers drifting off the letters, hard dark drop shadow, 800×240, transparent background.
+Wordmark: "OUTBORN" in riveted, rust-bitten iron capitals with spiked edges, a torn red banner beneath reading "ROLL TO LIVE", matching the title painting exactly, wide banner composition. BLACK BG + STYLE
+```
+```
+Power die set, three icons: a cyan-edged obsidian d6 (cube), a purple-edged d12 (pentagonal faces), a gold-edged d20 — same material as the d20 sheet, straight on. BLACK BG + STYLE
 ```
 
 ### Ability icons (19, 32×32, one line each)
 
-Template: `Game ability icon, <SUBJECT>, single bold symbol, <COLOUR> on dark, 32×32 composition. + STYLE`
+All: `…, bold single-object icon on a dark-red vignette, one glowing accent, reads at 32 px. BLACK BG + STYLE`
 
-| file | SUBJECT | COLOUR |
-|---|---|---|
-| ability_attack | clenched fist striking | bone-white |
-| ability_flee | running figure with motion lines | orange |
-| ability_medkit | pouch with a cross | green |
-| ability_snare | bear-trap jaws | green |
-| ability_arc | forked lightning bolt | cyan |
-| ability_slam | fist hitting cracked ground | orange |
-| ability_leech | dripping purple heart with fangs | purple |
-| ability_stim | syringe with a spark | gold |
-| ability_venom | dagger dripping green poison | pink |
-| ability_cleave | sweeping blade arc | white |
-| ability_flurry | two crossed blades with speed lines | white |
-| ability_crush | hammer coming down with impact stars | tan |
-| ability_stagger | spinning stars over a helmet | tan |
-| ability_aimed | crosshair over an arrow | grey-blue |
-| ability_volley | three arrows fanning out | grey-blue |
-| ability_ember | fireball comet | purple-orange |
-| ability_hex | skull inside a rune circle | purple |
-| ability_overclock | gear with a lightning spark | cyan |
-| ability_drones | three small hovering drones | cyan |
+```
+Attack — a clenched rust-gauntlet fist.
+Flee — a torn boot mid-sprint with ash trailing.
+Medkit — the field-medic tin from the items set, green vial lit.
+Snare Trap — a coiled steel snare with a green rune trigger.
+Arc Bolt — a forked cyan lightning bolt from a brass coil.
+Ground Slam — a cracked ground shockwave under an orange fist.
+Soul Leech — a purple wisp being drawn into a horned mask.
+Stim Shot — a gold syringe with a glowing plunger.
+Venom Strike — a curved knife dripping pink-green venom.
+Cleave — a wide diagonal blade slash with sparks.
+Flurry — three overlapping slash arcs.
+Crushing Blow — a hammer head striking, orange impact.
+Stagger — a spiral of stars over a cracked helmet.
+Aimed Shot — a crosshair over a single rifle round.
+Volley — three arrows fanning upward.
+Ember Bolt — a flaming ember comet.
+Hex of Rot — a rotting purple rune eye.
+Overclock — a brass gauge redlining, cyan sparks.
+Drone Swarm — three cyan drones in a triangle.
+```
 
-Deliver as `icons/<file>.png`.
+### Defensive moves (6, same icon rule)
+
+```
+Kite — a green boot print with a trailing dashed arc.
+Shield Drone — a cyan hex shield projected by a small drone.
+Guard — a raised rusted plate gauntlet.
+Mirror Curse — a cracked violet mirror reflecting a blade.
+Purge — a gold flask pouring cleansing light.
+Dirty Trick — a hand throwing a burst of sand.
+```
 
 ---
 
 ## Post-processing checklist
 
-1. Generate at 4–8× the target size, remove the background, then downscale with nearest-neighbour
-   (pixel look) or Lanczos (clean vector look). Keep one method for the whole set.
-2. Lay frames out left to right in a single row (rows of 7 for the d20) at exactly the
-   `frameW × frameH` in the JSON. Feet on the bottom edge, centred, for characters.
-3. Sprites face right; the engine mirrors them.
-4. Save to the `file` path in the JSON and flip that asset's `"status"` to `"ready"`; anything
-   else is skipped by the loader.
-5. Serve the folder over HTTP and open the game: each asset replaces its primitive as it loads.
+1. Keying: portraits and sprites must sit on pure black (#000000). The engine flood-fills the black from
+   the border, so black *inside* a figure is safe; a grey or noisy backdrop is not.
+2. Sheets: equal-width frames in one row (or the 7×4 grid for the d20), frame width × count = sheet
+   width. Set `frames`, `frameW`, `frameH` in the JSON to what you actually laid out.
+3. Anchor: feet at the bottom-centre for characters ([0.5, 1]); centred for icons and tiles.
+4. Downscale with a high-quality filter (Lanczos) and sharpen lightly; check every sprite at 1× and 2×.
+5. Save JPEG quality ~80 for large paintings, PNG for anything with transparency, and keep totals
+   inside the budgets in `art/README.md`. Set `"status": "ready"` in the JSON to switch an asset on.

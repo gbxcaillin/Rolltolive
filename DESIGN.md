@@ -45,7 +45,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 | Move | WASD / Arrow keys | Left-half virtual joystick |
 | Engage nearby contestant | E or Space | ENGAGE button (bottom-right) |
 | Use a medkit | H | MED button |
-| Class action (Technomancer tinker) | Q | ACT button |
+| Field action (one per class) | Q | ACT button |
 | Pick ability in combat | 1–6 or click | Tap button |
 | Roll the d20 | Space / Enter / click | Tap the ROLL button or the dice |
 | Pause / controls | P or Esc | Tap ⏸ (top-right) |
@@ -73,7 +73,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 ## 6. Progression: fists → weapon → moves
 
 Everyone lands with **Attack** (bare fists: 1d6, Hexblade and Wraith 1d8, Bruiser 1d10, plus ATK),
-**one signature ability**, and **Flee**. That is the whole action bar at the start.
+**one signature ability**, **one defensive move**, and **Flee**. That is the whole action bar at the start.
 
 Weapons found in crates or taken from the dead add moves. Each weapon type carries two moves.
 How many you can use, and how well the weapon works for you, depends on your class's **affinity**
@@ -88,6 +88,24 @@ with that type:
 
 Pickup logic weighs tier and affinity together, so a Warden keeps a T2 bow over a T3 wand.
 Medkits are inventory (2 carried, Alchemist 3): usable on the map (H) or as a combat action.
+
+### Field actions and defensive moves
+
+Every class has exactly one **field action** on Q (pays off on the map or in the next fight) and
+one **defensive move** in the fight bar. Nothing else is shared; the action bar stays small.
+
+| Class | Field action (Q) | Defensive move |
+|---|---|---|
+| Warden | Scout (15 EN, 30 s): every survivor on the minimap for 10 s, arrow to the nearest with its matchup | Kite (5 EN, CD 3): +4 DEF for 2 turns, recover 6 EN |
+| Technomancer | Tinker (20 EN): +1 weapon tier, once per weapon | Shield Drone (8 EN, CD 4): absorbs the next 12 damage over 3 turns |
+| Bruiser | Brace (15 EN): next fight starts with +4 DEF for 3 turns | Guard (4 EN, CD 2): +5 DEF and 2 more damage reduction for 2 turns |
+| Hexblade | Blood Rite (10 HP): first attack next fight cannot miss and crits on 15+ | Mirror Curse (7 EN, CD 4): half of damage taken is reflected for 2 turns |
+| Alchemist | Brew (15 EN, 40 s): make a medkit | Purge (6 EN, CD 3): cleanse poisons, hexes, cracks and stuns; heal 1d6+2 |
+| Wraith | Shadow Sprint (12 EN, 15 s): 4 s at +70% speed, cannot be engaged | Dirty Trick (3 EN, CD 2): target −4 to hit, you +2, for 2 turns; only a natural 1 fails |
+
+AI use them too: Technomancers tinker, Alchemists brew, Bruisers brace, Hexblades rite when
+healthy and hunting, Wraiths sprint when hunting or racing the ring, and everyone reaches for
+their defensive move under half health.
 
 ### The six classes
 

@@ -41,6 +41,14 @@ push to a source branch, then rebuilds the matching build branch (`main` → `ho
 `feature/x` → `hosted-feature-x`) using the workflow's own token, so no secrets are needed.
 Locally, `tools/sync-hosted.sh` does the same in one command.
 
+## GitHub Pages
+
+The `pages` workflow publishes `index.html` and `art/` from `main` to GitHub Pages. Enable it once
+under Settings → Pages → Source: **GitHub Actions**. Solo and Hotseat play there directly. Pages
+cannot run the WebSocket relay, so for Online either deploy `hosted-main` somewhere (Render, Fly,
+your own server) and set the repository variable `RELAY_URL` to its `wss://` address, which the
+workflow stamps into the page, or type the relay address in the lobby.
+
 ## Docs
 
 - `DESIGN.md`: core loop, win/lose rules, classes, affinities, weapons, dice rules, AI, title review, roadmap.

@@ -220,8 +220,10 @@ const FUMBLE_SELF_DAMAGE = 3;
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
 const BUILD = 'dev';               // stamped by tools/sync-hosted.sh in the hosted build
-// When served by the hosted relay the game connects back to the same origin; from file:// it points at a local relay.
-const NET_DEFAULT_URL = /^https?:$/.test(location.protocol) ? (location.protocol==='https:'?'wss://':'ws://')+location.host : 'ws://localhost:8787';
+const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
+// Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
+// else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
+const NET_DEFAULT_URL = RELAY_URL || (location.protocol==='file:' ? 'ws://localhost:8787' : (/github\.io$/.test(location.hostname) ? '' : (location.protocol==='https:'?'wss://':'ws://')+location.host));
 const HI_KEY = 'ashfall_hi';
 
 // ============================================================================
@@ -1289,7 +1291,7 @@ function show(id){ ['menu','select','lobby','pass','pause','end'].forEach(s=>$(s
 function updateTopButtons(){ $('topbtns').classList.toggle('hidden', !(state==='play'||state==='pause'||state==='pass')); $('btnMute').textContent=Audio.muted?'✕':'♪'; }
 function toMenu(){ Net.close(); state='menu'; G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
-  if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus('Enter your server address and a room code, then connect.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
+  if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus(NET_DEFAULT_URL? 'Pick a room code and a name, then connect.' : 'This static site has no relay: enter the address of your relay server (wss://...), a room code and a name.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
   state='select'; show('select'); renderSelect(); }
 function classCard(c, idx, onPick, selected){
   const el=document.createElement('div'); el.className='card'+(selected?' sel':''); el.tabIndex=0; el.style.setProperty('--c',c.color);

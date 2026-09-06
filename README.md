@@ -1,6 +1,6 @@
-# Ashfield (formerly Roll to Live)
+# Outborn (formerly Roll to Live / Ashfall)
 
-A browser and mobile survival game. Ten contestants are dropped on a post-apocalyptic island of
+A browser and mobile survival game. Ten Outborn are dropped on Ashfield, a post-apocalyptic island of
 science and magic. Walk the island, loot crates, and when you meet another survivor, fight it out
 D&D style: pick an ability, roll a d20, live with the result. Last one standing reaches the
 extraction barge to the Safe City.

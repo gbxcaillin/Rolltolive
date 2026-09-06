@@ -1,4 +1,4 @@
-# Ashfall — artwork generation prompts
+# Outborn — artwork generation prompts
 
 Copy-paste prompts for an image generator (Midjourney, DALL·E, Stable Diffusion, Flux, etc.).
 Every prompt ends with the shared STYLE block so the whole set reads as one game. File names,
@@ -174,7 +174,7 @@ Sprite sheet, 28 frames in rows of 7, a GOLD ICOSAHEDRAL D20 DIE: frames 1–20 
 Wide game backdrop 1280×720, ENCOUNTER SCENE: ruined shoreline at dusk under falling ash, broken concrete pier, distant reactor towers, pink ashfall ring glowing on the horizon, dark uncluttered centre so two characters read clearly in front of it. Painterly but flat-shaded, dark vignette. + STYLE (keep background)
 ```
 ```
-Game logo wordmark, "ASHFALL", heavy geometric uppercase letters, wide tracking, gradient gold #ffd166 → pink #ff3e7f → cyan #2ee6ff, embers drifting off the letters, hard dark drop shadow, 800×240, transparent background.
+Game logo wordmark, "OUTBORN", heavy geometric uppercase letters, wide tracking, gradient gold #ffd166 → pink #ff3e7f → cyan #2ee6ff, embers drifting off the letters, hard dark drop shadow, 800×240, transparent background.
 ```
 
 ### Ability icons (19, 32×32, one line each)

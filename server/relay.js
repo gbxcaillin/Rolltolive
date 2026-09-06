@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Ashfall reference relay server. Zero dependencies: node server/relay.js [port]
+// Outborn reference relay server. Zero dependencies: node server/relay.js [port]
 // Implements the room/relay contract in NETWORK.md so the game can be played across devices.
 // Your own server only needs to speak the same JSON messages (see NETWORK.md).
 'use strict';
@@ -42,7 +42,7 @@ const server = http.createServer((req,res)=>{
   const rel = url==='/' ? '/index.html' : url;
   const file = path.normalize(path.join(PUBLIC_DIR, rel));
   if(!file.startsWith(PUBLIC_DIR) || !fs.existsSync(file) || fs.statSync(file).isDirectory()){
-    if(!fs.existsSync(path.join(PUBLIC_DIR,'index.html'))){ res.writeHead(200,{'Content-Type':'text/plain'}); res.end(`Ashfall relay: ${rooms.size} room(s) open\n`); return; }
+    if(!fs.existsSync(path.join(PUBLIC_DIR,'index.html'))){ res.writeHead(200,{'Content-Type':'text/plain'}); res.end(`Outborn relay: ${rooms.size} room(s) open\n`); return; }
     res.writeHead(404,{'Content-Type':'text/plain'}); res.end('not found'); return; }
   res.writeHead(200,{'Content-Type': MIME[path.extname(file).toLowerCase()]||'application/octet-stream', 'Cache-Control': rel==='/index.html'?'no-cache':'public, max-age=3600'});
   fs.createReadStream(file).pipe(res);
@@ -67,4 +67,4 @@ server.on('upgrade',(req,sock)=>{
       else { const o=room.clients.get(m.to); if(o) o.ws.send(out); } }
   }, ()=>{ if(c.room){ console.log(`[${c.room}] ${c.name} left`); leave(c); c.room=null; } });
 });
-server.listen(PORT, ()=>console.log(`Ashfall relay listening on ws://localhost:${PORT}` + (fs.existsSync(path.join(PUBLIC_DIR,'index.html'))?` and serving ${PUBLIC_DIR}`:' (no public dir: relay only)')));
+server.listen(PORT, ()=>console.log(`Outborn relay listening on ws://localhost:${PORT}` + (fs.existsSync(path.join(PUBLIC_DIR,'index.html'))?` and serving ${PUBLIC_DIR}`:' (no public dir: relay only)')));

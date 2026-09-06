@@ -1,6 +1,6 @@
-# ASHFIELD — Design Wireframe
+# OUTBORN — Design Wireframe
 
-*Formerly "Roll to Live". See §13 for the title review.*
+*Formerly "Roll to Live" and "Ashfall". The game is Outborn, the island is Ashfield, the storm ring is the Ashfall. See §13.*
 
 A browser/mobile survival game. Ten contestants are dropped on a post-apocalyptic island of
 science and magic. The last one standing earns a seat on the extraction barge to the Safe City,
@@ -243,7 +243,7 @@ Options considered:
 | Ten Drop | Punchy, refers to the ten contestants. | Obscure until explained. |
 | Safe City | The promised land. | Too soft for a game about killing nine people. |
 
-Update: the commissioned key art reads **Ashfield**, so the game ships as Ashfield with "Roll to live." as the tagline; the storm ring keeps the name **the Ashfall**. The title is a one-line
+Final: the game is **Outborn** (the contestants are outborn, born outside the walls, fighting for a place inside). "Roll to live." stays as the tagline. The island is **Ashfield** and the storm ring is **the Ashfall**. The title is a one-line
 constant (`GAME_TITLE`) so it can be switched in seconds.
 
 ## 14. Roadmap after v1

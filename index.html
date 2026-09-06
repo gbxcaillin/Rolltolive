@@ -106,8 +106,9 @@
   #guide svg{display:block;margin:8px auto;max-width:320px}
   .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
   #title{padding:0;background:#0a0e1a;justify-content:center;overflow:hidden;cursor:pointer}
-  #titleImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s}
-  #titleImg.on{opacity:1}
+  #titleImg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .7s;z-index:1}
+  #titleBg{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(28px) brightness(.45) saturate(1.2);opacity:0;transition:opacity .7s}
+  #titleImg.on,#titleBg.on{opacity:1}
   #titleFallback{position:relative;z-index:1;text-align:center;padding:18px}
   #titleStart{position:absolute;z-index:2;border:0;background:transparent;cursor:pointer;border-radius:10px;animation:tpulse 1.6s ease-in-out infinite}
   @keyframes tpulse{0%,100%{box-shadow:0 0 0 2px rgba(255,209,102,.2)}50%{box-shadow:0 0 30px 8px rgba(255,209,102,.6)}}
@@ -120,7 +121,7 @@
 <div class="topbtns hidden" id="topbtns"><button id="btnMute" title="Mute (M)">♪</button><button id="btnPause" title="Pause (P)">⏸</button></div>
 
 <div id="title" class="screen hidden">
-  <img id="titleImg" alt="">
+  <img id="titleBg" alt=""><img id="titleImg" alt="">
   <div id="titleFallback"><h1 id="titleH1b">Outborn</h1><div class="sub" id="taglineB"></div><button class="btn gold" id="titleStartFb" style="font-size:22px;padding:16px 44px;letter-spacing:.3em">Start</button></div>
   <button id="titleStart" class="hidden" aria-label="Start"></button>
   <div id="titleHint">Tap start · Enter</div>
@@ -465,11 +466,12 @@ const FAMILIES = ['fighting for a sister in quarantine','fighting for two sons',
 const ART = { sprites:{}, count:0 };
 function loadArt(){
   if(location.protocol==='file:') return;
-  fetch('art/manifest.json').then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
-    for(const pack of m.packs){ const p=await fetch('art/'+pack).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
+  const v='?v='+encodeURIComponent(BUILD);
+  fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
+    for(const pack of m.packs){ const p=await fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
       for(const a of p.assets){ if(!a.file||a.status!=='ready') continue; const img=new Image();
         img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); };
-        img.src='art/'+a.file; } } }).catch(()=>{});
+        img.src='art/'+a.file+v; } } }).catch(()=>{});
 }
 const sprite = id=>ART.sprites[id];
 function drawSprite(g,id,x,y,o){ const s=sprite(id); if(!s) return false; o=o||{};
@@ -1428,11 +1430,13 @@ function show(id){ ['title','menu','select','lobby','pass','pause','end','guide'
 // ---- title screen: key art when served (art/ui/title_*.jpg), drawn wordmark otherwise. Picks the painting by orientation. ----
 const TITLE_ART = { portrait:{id:'ui.title.portrait', box:[0.30,0.855,0.70,0.935]}, landscape:{id:'ui.title.landscape', box:[0.40,0.79,0.60,0.94]} };
 function showTitle(){ state='title'; show('title'); layoutTitle(); }
-function layoutTitle(){ if(state!=='title') return; const a=TITLE_ART[W>H?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), hit=$('titleStart');
-  if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; img.dataset.id=a.id; } img.classList.add('on'); $('titleFallback').classList.add('hidden');
-    const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.max(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
+// Picks the painting whose aspect is closest to the screen and shows it whole (fit inside, bars at the sides on
+// 4:3 tablets and foldables); a blurred copy fills the bars. The START hit zone follows the same fit.
+function layoutTitle(){ if(state!=='title') return; const ar=W/Math.max(1,H); const dl=Math.abs(Math.log(ar/(1672/941))), dp=Math.abs(Math.log(ar/(941/1672))); const a=TITLE_ART[dl<=dp?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), bg=$('titleBg'), hit=$('titleStart');
+  if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; bg.src=sp.img.src; img.dataset.id=a.id; } img.classList.add('on'); bg.classList.add('on'); $('titleFallback').classList.add('hidden');
+    const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.min(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
     hit.style.left=(ox+x0*iw*sc)+'px'; hit.style.top=(oy+y0*ih*sc)+'px'; hit.style.width=((x1-x0)*iw*sc)+'px'; hit.style.height=((y1-y0)*ih*sc)+'px'; hit.classList.remove('hidden'); }
-  else { img.classList.remove('on'); $('titleFallback').classList.remove('hidden'); hit.classList.add('hidden'); } }
+  else { img.classList.remove('on'); bg.classList.remove('on'); $('titleFallback').classList.remove('hidden'); hit.classList.add('hidden'); } }
 function startFromTitle(){ if(state!=='title') return; Audio.init(); Audio.sfx.click(); toMenu(); }
 $('title').addEventListener('click',startFromTitle);
 let guideReturn='menu';

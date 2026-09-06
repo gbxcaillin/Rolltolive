@@ -45,9 +45,22 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
 | `bg.combat` | Encounter backdrop |
-| `ui.intro.portrait`, `ui.intro.landscape` | Intro video (mp4, H.264 + AAC, ~15 s) played once after START: the portrait cut on tall screens, the landscape cut on wide ones, letterboxed to fit; tap or any key skips; a missing file or unsupported codec goes straight to the menu. Preloaded while the title shows. |
+| `ui.intro.portrait`, `ui.intro.landscape` | Intro video (mp4, H.264 main profile + AAC, ~15 s, about 2 MB each, `+faststart` so it plays while downloading) played once after START: the portrait cut on tall screens, the landscape cut on wide ones, letterboxed to fit; tap or any key skips; a missing file or unsupported codec goes straight to the menu. Preloaded while the title shows. |
 | `ui.title.portrait`, `ui.title.landscape` | Title screen key art, chosen by orientation, drawn with object-fit cover; `startButton` marks the painted START plate |
 | `ui.logo` | Reserved (v2) |
 
 Class ids: `warden`, `techno`, `bruiser`, `hexblade`, `alch`, `wraith`.
 Weapon types: `blade`, `blunt`, `ranged`, `arcane`, `tech`. Tiers 1–4.
+
+## Keeping the first load fast
+
+Everything a first-time visitor downloads is under `art/`; the page itself is one file. The loader is staged for
+slow links: the title painting for the current orientation loads alone, then the intro video starts buffering, and
+the rest (portraits, the other painting) begins once the video can play through, six seconds later, or as soon as
+the menu opens, whichever comes first. Keep new assets inside those budgets:
+
+- Videos: re-encode to roughly 1 Mbps. The intro cuts were produced with
+  `ffmpeg -i in.mp4 -c:v libx264 -preset slow -crf 27 -profile:v main -level 4.0 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 80k out.mp4`
+  (16 MB → 2 MB with no visible loss).
+- JPEGs: quality 80 or so (`ffmpeg -i in.jpg -q:v 5 out.jpg`); the paintings are ~380 KB, portraits ~90–150 KB.
+

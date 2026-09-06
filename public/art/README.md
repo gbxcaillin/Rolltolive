@@ -37,14 +37,14 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | Key pattern | Where it is drawn |
 |---|---|
 | `tile.<deep,water,sand,grass,forest,rock,ruin,ash>` | Map pre-render; variant picked by tile hash |
-| `char.<classId>.<idle,walk,attack,hit,death>` | Overworld (scale 1) and combat scene (scale 2–4) |
+| `char.<classId>.<idle,walk,attack,hit,death>` | Overworld frame sheets. `walk` is in for all six classes (`characters/<classId>_walk.webp`, 6 frames of 144×192, figure ~184 px tall, anchor [0.5,0.98], `scale` 0.315 so it matches the portrait cutout height; keyed to the walk phase). Other animations fall back to the portrait cutout with procedural motion. Combat uses the portraits. |
 | `weapon.<type>.<tier>` | At the character's hand |
 | `icon.<abilityId>` | Combat action buttons |
 | `icon.weapon.<type>.<tier>`, `item.medkit` | Reserved for HUD inventory (v2) |
 | `portrait.<classId>` | Class picker (select + lobby) and the combat scene: 768×1152 JPEG at `portraits/<classId>.jpg`, 2:3, character on solid black. In combat the black is keyed out (flood fill from the border, `PORTRAIT_KEY_LEVEL`) and the cutout is drawn on the encounter backdrop, mirrored for the right-hand fighter, with a white silhouette for hit flashes. Keep the backdrop pure black and the figure clear of the edges. The same cutout walks the overworld with procedural motion (bounce, rock, lean, breathing) until `char.<classId>.*` frame sheets exist. A drawn figure stands in when the file is missing or the game runs from file:// |
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
-| `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
-| `bg.combat` | Encounter backdrop |
+| `dice.d20` | The roll (`ui/dice_d20.webp`, 7×4 grid of 192 px frames): frames 0–19 are faces 1–20, frame 20 a spare rune face, frames 21–27 tumble (`tumbleFrom`) |
+| `bg.combat.landscape`, `bg.combat.portrait` | Encounter backdrops (`ui/combat_*.jpg`, 1672×941 / 941×1672), picked by screen aspect, scaled to cover and anchored to the bottom so the flagstones stay under the fighters |
 | `ui.intro.portrait`, `ui.intro.landscape` | Intro video (mp4, H.264 main profile + AAC, ~15 s, about 2 MB each, `+faststart` so it plays while downloading) played once after START: the portrait cut on tall screens, the landscape cut on wide ones, letterboxed to fit; tap or any key skips; a missing file or unsupported codec goes straight to the menu. Preloaded while the title shows. |
 | `ui.title.portrait`, `ui.title.landscape` | Title screen key art, chosen by orientation, drawn with object-fit cover; `startButton` marks the painted START plate |
 | `ui.logo` | Reserved (v2) |
@@ -63,4 +63,13 @@ the menu opens, whichever comes first. Keep new assets inside those budgets:
   `ffmpeg -i in.mp4 -c:v libx264 -preset slow -crf 27 -profile:v main -level 4.0 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 80k out.mp4`
   (16 MB → 2 MB with no visible loss).
 - JPEGs: quality 80 or so (`ffmpeg -i in.jpg -q:v 5 out.jpg`); the paintings are ~380 KB, portraits ~90–150 KB.
+
+## Turning generated sheets into game sheets
+
+Generated run cycles and grids never come out evenly spaced. The pipeline that produced the shipped sheets lives
+in this session's notes and does, in order: key the black backdrop (flood fill from the border, soft alpha only on
+the pixels bordering it), find the emptiest column between figures, hand each connected piece to the figure whose
+box it sits over (so a fist crossing a cut stays with its owner and stray specks are dropped), then scale every
+frame by one factor and place feet at the bottom centre of a fixed frame. Do the same by hand in any editor: same
+scale for all frames, feet on one baseline, one figure per frame, transparent background, export WebP.
 

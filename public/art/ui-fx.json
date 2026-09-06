@@ -66,31 +66,48 @@
     },
     {
       "id": "dice.d20",
-      "file": "ui/d20.png",
-      "status": "needed",
+      "file": "ui/dice_d20.webp",
+      "status": "ready",
       "description": "Icosahedral d20, gold with dark facets and readable numbers; 20 face frames + 8 tumble frames.",
       "kind": "sheet",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 192,
+      "frameH": 192,
       "frames": 28,
       "fps": 12,
       "anchor": [
         0.5,
-        1
-      ]
+        0.5
+      ],
+      "tumbleFrom": 21,
+      "usage": "7x4 grid. Frames 0-19 are the settled faces 1-20 (1 glows red, 20 gold), frame 20 is a spare rune face, frames 21-27 tumble while rolling (tumbleFrom)."
     },
     {
-      "id": "bg.combat",
-      "file": "ui/combat_bg.png",
-      "status": "needed",
-      "description": "Encounter backdrop: ruined shoreline at dusk under ashfall, dark centre so figures read. Stretched to the viewport.",
+      "id": "bg.combat.landscape",
+      "file": "ui/combat_landscape.jpg",
+      "status": "ready",
       "kind": "image",
-      "frameW": 1280,
-      "frameH": 720,
+      "frameW": 1672,
+      "frameH": 941,
+      "description": "Encounter backdrop: ruined shoreline at dusk under ashfall, dark centre so figures read. Stretched to the viewport.",
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "Encounter backdrop on wide screens (width >= height): scaled to cover, anchored to the bottom so the cracked flagstones stay under the fighters."
+    },
+    {
+      "id": "bg.combat.portrait",
+      "file": "ui/combat_portrait.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 941,
+      "frameH": 1672,
+      "description": "Encounter backdrop: ruined shoreline at dusk under ashfall, dark centre so figures read. Stretched to the viewport.",
+      "anchor": [
+        0.5,
+        1
+      ],
+      "usage": "Encounter backdrop on tall screens: same treatment."
     },
     {
       "id": "ui.logo",

@@ -45,7 +45,8 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
 | `bg.combat` | Encounter backdrop |
-| `ui.logo` | Reserved for the title screen (v2) |
+| `ui.title.portrait`, `ui.title.landscape` | Title screen key art, chosen by orientation, drawn with object-fit cover; `startButton` marks the painted START plate |
+| `ui.logo` | Reserved (v2) |
 
 Class ids: `warden`, `techno`, `bruiser`, `hexblade`, `alch`, `wraith`.
 Weapon types: `blade`, `blunt`, `ranged`, `arcane`, `tech`. Tiers 1–4.

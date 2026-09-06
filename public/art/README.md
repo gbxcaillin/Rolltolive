@@ -41,7 +41,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `weapon.<type>.<tier>` | At the character's hand |
 | `icon.<abilityId>` | Combat action buttons |
 | `icon.weapon.<type>.<tier>`, `item.medkit` | Reserved for HUD inventory (v2) |
-| `portrait.<classId>` | Class picker (select + lobby) and the combat scene: 768×1152 JPEG at `portraits/<classId>.jpg`, 2:3, character on solid black. In combat the black is keyed out (flood fill from the border, `PORTRAIT_KEY_LEVEL`) and the cutout is drawn on the encounter backdrop, mirrored for the right-hand fighter, with a white silhouette for hit flashes. Keep the backdrop pure black and the figure clear of the edges. A drawn figure stands in when the file is missing or the game runs from file:// |
+| `portrait.<classId>` | Class picker (select + lobby) and the combat scene: 768×1152 JPEG at `portraits/<classId>.jpg`, 2:3, character on solid black. In combat the black is keyed out (flood fill from the border, `PORTRAIT_KEY_LEVEL`) and the cutout is drawn on the encounter backdrop, mirrored for the right-hand fighter, with a white silhouette for hit flashes. Keep the backdrop pure black and the figure clear of the edges. The same cutout walks the overworld with procedural motion (bounce, rock, lean, breathing) until `char.<classId>.*` frame sheets exist. A drawn figure stands in when the file is missing or the game runs from file:// |
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
 | `bg.combat` | Encounter backdrop |

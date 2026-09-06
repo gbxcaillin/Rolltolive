@@ -272,6 +272,14 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Painted terrain
+The eight tile types come from one generated contact sheet, cut into eight square variants each and drawn at
+32 px from 64 px sources (the map canvas renders at up to 2× on high-DPI screens). Painted ground is rich and
+dark, so `renderMap` runs a readability pass when tiles are present: per-type tints (`TILE_TINT`) calm the water,
+green the grass and cool the rock; a dark cliff edge with a light lip is drawn wherever a blocking tile meets open
+ground, and a pale shoreline where water meets land. The minimap is drawn from tile types in the flat palette so it
+reads at a glance. Sheet-drawn figures get the same class-colour rim as the cutouts so they pop off the ground.
+
 ### Run cycles, backdrops and the d20
 All six classes now have real six-frame run sheets on the overworld (`char.<id>.walk`), keyed to the walk phase so
 the stride matches the ground covered, mirrored for leftward travel, with the white-silhouette hit flash built from

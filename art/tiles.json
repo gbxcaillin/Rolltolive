@@ -1,118 +1,126 @@
 {
   "category": "tiles",
-  "$comment": "One sheet per tile type. frames = number of variants; the engine picks a variant per tile from a stable hash. Tiles are 32\u00d732, anchor bottom-centre.",
+  "$comment": "One sheet per tile type. frames = number of variants; the engine picks a variant per tile from a stable hash. Source frames are 64×64 drawn at 32×32 world pixels, anchor bottom-centre.",
   "assets": [
     {
       "id": "tile.deep",
-      "file": "tiles/deep.png",
-      "status": "needed",
+      "file": "tiles/deep.webp",
+      "status": "ready",
       "description": "Deep water. Dark navy, almost flat, subtle swell.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.water",
-      "file": "tiles/water.png",
-      "status": "needed",
+      "file": "tiles/water.webp",
+      "status": "ready",
       "description": "Shallow water. Blue with light wave highlights; the engine draws foam edges itself.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.sand",
-      "file": "tiles/sand.png",
-      "status": "needed",
+      "file": "tiles/sand.webp",
+      "status": "ready",
       "description": "Beach sand. Warm ochre, sparse pebbles.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.grass",
-      "file": "tiles/grass.png",
-      "status": "needed",
+      "file": "tiles/grass.webp",
+      "status": "ready",
       "description": "Grass. Two green tones, small tufts.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.forest",
-      "file": "tiles/forest.png",
-      "status": "needed",
+      "file": "tiles/forest.webp",
+      "status": "ready",
       "description": "Forest canopy. Dense dark-green tree tops with highlights (blocks nothing, slows walking).",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 4,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.rock",
-      "file": "tiles/rock.png",
-      "status": "needed",
+      "file": "tiles/rock.webp",
+      "status": "ready",
       "description": "Rock/cliff. Solid, grey-blue faceted boulders. Impassable.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 3,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.ruin",
-      "file": "tiles/ruin.png",
-      "status": "needed",
+      "file": "tiles/ruin.webp",
+      "status": "ready",
       "description": "Ruined building block. Dark slate walls, rust-orange lit windows. Impassable.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 3,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     },
     {
       "id": "tile.ash",
-      "file": "tiles/ash.png",
-      "status": "needed",
+      "file": "tiles/ash.webp",
+      "status": "ready",
       "description": "Ashfall ground. Dark grey ash with dying embers.",
       "kind": "sheet",
-      "frameW": 32,
-      "frameH": 32,
-      "frames": 3,
+      "frameW": 64,
+      "frameH": 64,
+      "frames": 8,
       "anchor": [
         0.5,
         1
-      ]
+      ],
+      "usage": "8 square variants in a strip, cut from the generated terrain contact sheet; drawn at 32 px per tile (64 px source keeps detail on high-DPI screens). The engine picks a variant per cell from a stable hash."
     }
   ]
 }

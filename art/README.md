@@ -36,7 +36,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 
 | Key pattern | Where it is drawn |
 |---|---|
-| `tile.<deep,water,sand,grass,forest,rock,ruin,ash>` | Map pre-render; variant picked by tile hash |
+| `tile.<type>` | Terrain (`tiles/<type>.webp`, strip of 8 square 64 px variants cut from the generated contact sheet, drawn at 32 px; the engine picks a variant per cell from a stable hash). With painted tiles in, the map renders at up to 2× on high-DPI screens, gets a readability pass (water calmed, grass greened, rock cooled, a cliff edge wherever a blocking tile meets open ground, see `TILE_TINT`) and the minimap stays flat-coloured. |
 | `char.<classId>.<idle,walk,attack,hit,death>` | Overworld frame sheets. `walk` is in for all six classes (`characters/<classId>_walk.webp`, 6 frames of 144×192, figure ~184 px tall, anchor [0.5,0.98], `scale` 0.315 so it matches the portrait cutout height; keyed to the walk phase). Other animations fall back to the portrait cutout with procedural motion. Combat uses the portraits. |
 | `weapon.<type>.<tier>` | At the character's hand |
 | `icon.<abilityId>` | Combat action buttons |

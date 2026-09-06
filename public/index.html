@@ -127,7 +127,7 @@
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · touch: left joystick</td></tr>
       <tr><td>Engage nearby survivor</td><td><kbd>E</kbd> or <kbd>Space</kbd> · touch: ENGAGE button</td></tr>
-      <tr><td>Use medkit · class action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · touch: MED / ACT buttons</td></tr>
+      <tr><td>Use medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · touch: MED / ACT buttons</td></tr>
       <tr><td>Pick ability in combat</td><td><kbd>1</kbd>–<kbd>6</kbd> or tap</td></tr>
       <tr><td>Roll the d20</td><td><kbd>Space</kbd> / <kbd>Enter</kbd> or tap the dice</td></tr>
       <tr><td>Pause · Mute · Guide</td><td><kbd>P</kbd> · <kbd>M</kbd> · <kbd>H</kbd></td></tr>
@@ -176,7 +176,7 @@
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows / joystick</td></tr>
       <tr><td>Engage</td><td><kbd>E</kbd> / <kbd>Space</kbd> / ENGAGE button</td></tr>
-      <tr><td>Medkit · class action</td><td><kbd>H</kbd> · <kbd>Q</kbd></td></tr>
+      <tr><td>Medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd></td></tr>
       <tr><td>Combat</td><td><kbd>1</kbd>–<kbd>6</kbd> choose · <kbd>Space</kbd> roll</td></tr>
       <tr><td>Mute</td><td><kbd>M</kbd></td></tr>
     </table>
@@ -254,7 +254,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'e0da05b 20260906-0133';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '9997b5a 20260906-0200';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -393,6 +393,13 @@ const ABILITIES = {
   attack:   {name:'Attack', cost:0, cd:0, kind:'attack', weaponDmg:true, desc:'Weapon dice + ATK.'},
   flee:     {name:'Flee', cost:0, cd:0, kind:'flee', desc:'d20 + SPD vs 10 + their SPD. Fail: free hit on you.'},
   medkit:   {name:'Medkit', cost:0, cd:0, kind:'item', desc:'Use a medkit. Natural 1 wastes it.'},
+  // defensive moves (one per class, available from the start)
+  kite:     {name:'Kite', cost:5, cd:3, kind:'buff', self:[{status:'defMod',value:4,turns:2,label:'Kiting'}], energyGain:6, desc:'+4 DEF for 2 turns, recover 6 EN.'},
+  shielddrone:{name:'Shield Drone', cost:8, cd:4, kind:'buff', self:[{status:'shield',value:12,turns:3,label:'Shield'}], desc:'Absorbs the next 12 damage (3 turns).'},
+  guard:    {name:'Guard', cost:4, cd:2, kind:'buff', self:[{status:'defMod',value:5,turns:2,label:'Guard'},{status:'brace',value:2,turns:2,label:'Guard'}], desc:'+5 DEF and hits deal 2 less for 2 turns.'},
+  mirror:   {name:'Mirror Curse', cost:7, cd:4, kind:'buff', self:[{status:'reflect',value:0.5,turns:2,label:'Mirror'}], desc:'Half the damage you take is reflected for 2 turns.'},
+  purge:    {name:'Purge', cost:6, cd:3, kind:'cleanse', heal:[1,6], healFlat:2, desc:'Cleanse poisons, hexes and cracks. Heal 1d6+2.'},
+  dirtytrick:{name:'Dirty Trick', cost:3, cd:2, kind:'trick', target:[{status:'hitMod',value:-4,turns:2,label:'Blinded'}], self:[{status:'hitMod',value:2,turns:2,label:'Opening'}], desc:'Sand in the eyes: target -4 to hit, you +2 (2 turns). Only a 1 fails.'},
   // signatures (one per class, available from the start)
   snare:    {name:'Snare Trap', cost:8, cd:4, kind:'attack', extra:[1,6], onHit:{status:'stun',value:1,turns:1,label:'Snared'}, desc:'1d6. Target loses next turn.'},
   arc:      {name:'Arc Bolt', cost:6, cd:1, kind:'attack', extra:[2,6], hitBonus:2, desc:'2d6 lightning, +2 to hit.'},
@@ -415,22 +422,22 @@ const ABILITIES = {
 
 const CLASSES = [
   {id:'warden', name:'Warden', title:'Wasteland Ranger', color:'#7bd88f', hp:58, def:13, atk:3, spd:6, en:30, fists:[1,6],
-   signature:'snare', passive:'keeneye', passiveName:'Keen Eye', passiveDesc:'Spots enemies from three times further away (minimap).',
+   signature:'snare', defensive:'kite', field:{id:'scout',name:'Scout',key:'Q',cost:15,cd:30,desc:'Reveal every survivor on the minimap for 10 s, with an arrow to the nearest.'}, passive:'keeneye', passiveName:'Keen Eye', passiveDesc:'Spots enemies from three times further away (minimap).',
    affinity:{ranged:'expert',blade:'skilled',blunt:'basic',tech:'basic',arcane:'poor'}, family:'Fighting for a daughter waiting at the checkpoint.'},
   {id:'techno', name:'Technomancer', title:'Reactor Witch', color:'#2ee6ff', hp:50, def:12, atk:2, spd:5, en:45, fists:[1,6],
-   signature:'arc', passive:'tinker', passiveName:'Field Tinker', passiveDesc:'Press Q to upgrade the weapon you carry by one tier (20 EN, once per weapon).',
+   signature:'arc', defensive:'shielddrone', field:{id:'tinker',name:'Tinker',key:'Q',cost:UPGRADE_COST,cd:0,desc:'Upgrade the weapon you carry by one tier (once per weapon).'}, passive:'tinker', passiveName:'Field Tinker', passiveDesc:'Press Q to upgrade the weapon you carry by one tier (20 EN, once per weapon).',
    affinity:{tech:'expert',arcane:'skilled',ranged:'basic',blade:'poor',blunt:'poor'}, family:'Fighting for a brother locked in the reactor wards.'},
   {id:'bruiser', name:'Bruiser', title:'Scrapyard Titan', color:'#ff8c42', hp:80, def:15, atk:2, spd:3, en:25, fists:[1,10],
-   signature:'slam', passive:'ironhide', passiveName:'Ironhide', passiveDesc:'Every hit taken deals 2 less damage. Fists hit for 1d10.',
+   signature:'slam', defensive:'guard', field:{id:'brace',name:'Brace',key:'Q',cost:15,cd:0,desc:'Start your next fight with +4 DEF for 3 turns.'}, passive:'ironhide', passiveName:'Ironhide', passiveDesc:'Every hit taken deals 2 less damage. Fists hit for 1d10.',
    affinity:{blunt:'expert',blade:'skilled',tech:'basic',ranged:'poor',arcane:'poor'}, family:'Fighting for three kids in the dust camps.'},
   {id:'hexblade', name:'Hexblade', title:'Cursed Duelist', color:'#b56cff', hp:58, def:13, atk:3, spd:5, en:35, fists:[1,8],
-   signature:'leech', passive:'bloodpact', passiveName:'Blood Pact', passiveDesc:'Kills restore 40% HP instead of 15%.',
+   signature:'leech', defensive:'mirror', field:{id:'rite',name:'Blood Rite',key:'Q',cost:0,hpCost:10,cd:0,desc:'Pay 10 HP: your first attack next fight cannot miss and crits on 15+.'}, passive:'bloodpact', passiveName:'Blood Pact', passiveDesc:'Kills restore 40% HP instead of 15%.',
    affinity:{blade:'expert',arcane:'skilled',blunt:'basic',ranged:'poor',tech:'poor'}, family:"Fighting to keep a dead partner's promise."},
   {id:'alch', name:'Alchemist', title:'Field Medic', color:'#ffd166', hp:62, def:12, atk:2, spd:5, en:40, fists:[1,6],
-   signature:'stim', passive:'medic', passiveName:'Field Medic', passiveDesc:'Medkits heal double, carries one extra, regenerates twice as fast.',
+   signature:'stim', defensive:'purge', field:{id:'brew',name:'Brew',key:'Q',cost:15,cd:40,desc:'Brew a medkit from 15 EN (needs a free slot).'}, passive:'medic', passiveName:'Field Medic', passiveDesc:'Medkits heal double, carries one extra, regenerates twice as fast.',
    affinity:{arcane:'expert',ranged:'skilled',tech:'basic',blade:'basic',blunt:'poor'}, family:'Fighting for a father on the transplant list.'},
   {id:'wraith', name:'Wraith', title:'Ash Scavenger', color:'#ff3e7f', hp:52, def:14, atk:4, spd:8, en:35, fists:[1,8],
-   signature:'venom', passive:'scavenger', passiveName:'Scavenger', passiveDesc:'Moves 15% faster, crate weapons come one tier higher, crates show on the minimap.',
+   signature:'venom', defensive:'dirtytrick', field:{id:'sprint',name:'Shadow Sprint',key:'Q',cost:12,cd:15,desc:'4 s at +70% speed; nobody can engage you meanwhile.'}, passive:'scavenger', passiveName:'Scavenger', passiveDesc:'Moves 15% faster, crate weapons come one tier higher, crates show on the minimap.',
    affinity:{blade:'expert',ranged:'skilled',tech:'basic',blunt:'basic',arcane:'poor'}, family:'Fighting for nobody. Just the way out.'}
 ];
 const CLASS_BY_ID = Object.fromEntries(CLASSES.map(c=>[c.id,c]));
@@ -595,7 +602,7 @@ function pathDir(e,wx,wy){
     const v=f[ny*MAP_W+nx]; if(v<0) continue; if(ox&&oy && (solidAt(ex+ox,ey)||solidAt(ex,ey+oy))) continue; if(v<bd){bd=v;bx=nx;by=ny;} }
   const cx=bx*TILE+TILE/2, cy=by*TILE+TILE/2; let dx=cx-e.x, dy=cy-e.y; const d=Math.hypot(dx,dy)||1; return {dx:dx/d,dy:dy/d,d:Math.hypot(wx-e.x,wy-e.y)};
 }
-function speedMul(e){ return (tileAt(Math.floor(e.x/TILE),Math.floor(e.y/TILE))===T.FOREST? FOREST_SLOW : 1) * (e.cls.passive==='scavenger'?1.15:1); }
+function speedMul(e){ return (tileAt(Math.floor(e.x/TILE),Math.floor(e.y/TILE))===T.FOREST? FOREST_SLOW : 1) * (e.cls.passive==='scavenger'?1.15:1) * (e.sprintT>0?1.7:1); }
 
 // ============================================================================
 //  Game state
@@ -612,7 +619,7 @@ const isClient = ()=> setup.mode==='online' && !Net.isHost;
 function makeContestant(id, cls, isHuman, humanIndex, name, netId){
   return { id, name, cls, isHuman, humanIndex, netId:netId||null, x:0, y:0, r:ENT_RADIUS, tx:0, ty:0,
     maxHp:cls.hp, hp:cls.hp, maxEn:cls.en, energy:cls.en, def:cls.def, atk:cls.atk, spd:cls.spd, armor:0,
-    weapon:makeWeapon('none',0), medkits:0, kills:0, alive:true, score:0, dmgDealt:0, crates:0,
+    weapon:makeWeapon('none',0), medkits:0, fieldCd:0, scoutT:0, sprintT:0, prep:null, rite:false, kills:0, alive:true, score:0, dmgDealt:0, crates:0,
     facing:1, walk:0, moving:false, immune:0, immuneHold:0, flash:0, statuses:[], cds:{}, deathT:0, placement:0, inCombat:false, netIn:{dx:0,dy:0}, netEngage:false,
     family: isHuman? cls.family : pick(FAMILIES),
     ai:{state:'wander', target:null, t:0, dir:rnd(0,6.28), pause:false, avoidT:0, avoidDir:0, aggression:rnd(0.35,0.9), decideT:rnd(0,0.5), stuckT:0} };
@@ -656,7 +663,7 @@ function matchupBonus(a,b){ return MATCHUP_BONUS[matchupIdx(a,b)]; }
 function matchupLabel(a,b){ return MATCHUP_LABEL[matchupIdx(a,b)]; }
 function matchupColor(a,b){ const v=matchupBonus(a,b); return v>1?COL.green:v>0?COL.cyan:v===0?COL.white:v>-2?COL.orange:COL.red; }
 function weaponValue(e,w){ return w.type==='none'? 0 : w.tier*10 + AFF[e.cls.affinity[w.type]].rank*4; }
-function abilityList(e){ const ids=['attack', e.cls.signature]; const w=e.weapon;
+function abilityList(e){ const ids=['attack', e.cls.signature, e.cls.defensive]; const w=e.weapon;
   if(w.type!=='none'){ const n=affOf(e).moves; for(let i=0;i<n;i++) ids.push(WEAPON_MOVES[w.type][i]); }
   if(e.medkits>0) ids.push('medkit'); ids.push('flee'); return ids; }
 function sumStatus(e,type){ let s=0; for(const st of e.statuses) if(st.status===type) s+=st.value; return s; }
@@ -665,8 +672,12 @@ function defVal(e){ return e.def + sumStatus(e,'defMod'); }
 function dmgMod(e){ return affOf(e).dmg + sumStatus(e,'dmgMod'); }
 function medkitHeal(e){ return MEDKIT_HEAL*(e.cls.passive==='medic'?2:1); }
 function medkitMax(e){ return MEDKIT_MAX+(e.cls.passive==='medic'?1:0); }
-function detectRange(e){ return DETECT_RANGE*(e.cls.passive==='keeneye'?3:1); }
+function detectRange(e){ return e.scoutT>0? 1e9 : DETECT_RANGE*(e.cls.passive==='keeneye'?3:1); }
 function canUpgrade(e){ return e.cls.passive==='tinker' && e.weapon.type!=='none' && !e.weapon.upgraded && e.weapon.tier<4 && e.energy>=UPGRADE_COST; }
+// why the class field action is not usable right now, or '' when it is
+function fieldBlock(e){ const f=e.cls.field; if(!f) return 'none'; if(e.inCombat) return 'in a fight'; if(e.fieldCd>0) return `cooldown ${Math.ceil(e.fieldCd)}s`; if(e.energy<f.cost) return `needs ${f.cost} EN`;
+  switch(f.id){ case 'tinker': return e.weapon.type==='none'?'needs a weapon':e.weapon.upgraded?'already tinkered':e.weapon.tier>=4?'weapon maxed':''; case 'brace': return e.prep?'already braced':''; case 'rite': return e.rite?'rite ready':e.hp<=f.hpCost+5?'too little HP':''; case 'brew': return e.medkits>=medkitMax(e)?'bag full':''; case 'scout': return e.scoutT>0?'scouting':''; case 'sprint': return e.sprintT>0?'sprinting':''; } return ''; }
+function canField(e){ return e && e.alive && fieldBlock(e)===''; }
 function applyStatus(e, s, fresh){ const i=e.statuses.findIndex(x=>x.label===s.label && x.status===s.status);
   const st={status:s.status,value:s.value,turns:s.turns,label:s.label,fresh:!!fresh}; if(i>=0) e.statuses[i]=st; else e.statuses.push(st); }
 function saveHi(score){ score=Math.round(score); if(score>hiScore){ hiScore=score; try{ localStorage.setItem(HI_KEY,String(hiScore)); }catch(e){} } }
@@ -679,14 +690,17 @@ function attackRoll(user,target,ab,nat){
   const di=target.statuses.findIndex(s=>s.status==='dodge');
   if(di>=0){ target.statuses.splice(di,1); return {type:'dodge', nat, total}; }
   if(nat===1){ user.hp -= FUMBLE_SELF_DAMAGE; return {type:'fumble', nat, total, self:FUMBLE_SELF_DAMAGE}; }
-  const need=defVal(target), hit = nat===20 || total>=need;
+  const need=defVal(target); let critMin=ab.critMin||20, rite=false; if(user.rite){ rite=true; user.rite=false; critMin=Math.min(critMin,15); }
+  const hit = nat===20 || rite || total>=need;
   if(!hit) return {type:'miss', nat, total, need};
   let dmg=0; if(ab.weaponDmg) dmg += rollDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk;
   if(ab.extra) dmg += rollDice(ab.extra); dmg += dmgMod(user) + mu;
-  const crit = nat >= (ab.critMin||20); if(crit) dmg*=2;
-  if(target.cls.passive==='ironhide') dmg-=2; dmg=Math.max(1,dmg);
+  const crit = nat >= critMin; if(crit) dmg*=2;
+  if(target.cls.passive==='ironhide') dmg-=2; dmg-=sumStatus(target,'brace'); dmg=Math.max(1,dmg);
+  let absorbed=0; const sh=target.statuses.find(x=>x.status==='shield'); if(sh){ absorbed=Math.min(sh.value,dmg); sh.value-=absorbed; dmg-=absorbed; if(sh.value<=0) target.statuses=target.statuses.filter(x=>x!==sh); }
+  let reflected=0; const rf=sumStatus(target,'reflect'); if(rf>0 && dmg>0){ reflected=Math.floor(dmg*rf); user.hp-=reflected; }
   target.hp -= dmg; user.dmgDealt += dmg; if(user.isHuman) user.score += dmg; target.flash=1;
-  const r={type:'hit', nat, total, dmg, crit, need};
+  const r={type:'hit', nat, total, dmg, crit, need, absorbed, reflected, rite};
   if(ab.leech){ const h=Math.min(Math.floor(dmg*ab.leech), user.maxHp-user.hp); if(h>0){ user.hp+=h; r.heal=h; } }
   if(ab.onHit && target.hp>0){ applyStatus(target, ab.onHit, user._second); r.status=ab.onHit.label; }
   return r;
@@ -700,7 +714,12 @@ function resolveAction(user, target, abId, nat){
   else if(ab.kind==='item'){ if(user.medkits<=0){ ev.push({type:'fail',nat}); return ev; } user.medkits--;
     if(nat===1) ev.push({type:'fail',nat,wasted:true}); else { let amt=medkitHeal(user)*(nat===20?2:1); amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20}); } }
   else if(ab.kind==='buff'){ if(nat===1) ev.push({type:'fail',nat});
-    else { ab.self.forEach(s=>applyStatus(user,{...s,turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'buff',nat,label:ab.self[0].label,crit:nat===20}); } }
+    else { ab.self.forEach(s=>applyStatus(user,{...s,turns:s.turns+(nat===20?1:0)},user._second)); if(ab.energyGain) user.energy=Math.min(user.maxEn,user.energy+ab.energyGain); ev.push({type:'buff',nat,label:ab.self[0].label,crit:nat===20}); } }
+  else if(ab.kind==='cleanse'){ if(nat===1) ev.push({type:'fail',nat});
+    else { const before=user.statuses.length; user.statuses=user.statuses.filter(st=>!(st.status==='dot'||st.status==='stun'||((st.status==='hitMod'||st.status==='defMod')&&st.value<0))); const n=before-user.statuses.length;
+      let amt=rollDice(ab.heal)+(ab.healFlat||0); if(nat===20) amt*=2; amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20,cleansed:n}); } }
+  else if(ab.kind==='trick'){ if(nat===1) ev.push({type:'fail',nat});
+    else { ab.target.forEach(st=>applyStatus(target,{...st,turns:st.turns+(nat===20?1:0)},user._second)); (ab.self||[]).forEach(st=>applyStatus(user,{...st,turns:st.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total:nat,label:ab.target[0].label,crit:nat===20}); } }
   else if(ab.kind==='debuff'){ const total=nat+hitMod(user)+matchupBonus(user,target); const need=defVal(target);
     if(nat!==1 && (nat===20||total>=need)){ ab.target.forEach(s=>applyStatus(target,{...s,turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total,label:ab.target[0].label,crit:nat===20}); }
     else ev.push({type:'miss',nat,total,need}); }
@@ -727,8 +746,9 @@ function aiChoose(user, target, round){
   if(hpF<0.22 && target.hp>user.hp*1.6 && Math.random()<0.4) return 'flee';
   const heal=opts.find(id=>ABILITIES[id].kind==='heal'); if(heal && hpF<0.42) return heal;
   if(opts.includes('medkit') && hpF<0.35 && !heal) return 'medkit';
-  const buff=opts.find(id=>ABILITIES[id].kind==='buff'); if(buff && round<=2 && !user.statuses.some(s=>['hitMod','dmgMod','defMod','dodge'].includes(s.status)&&s.value>0) && Math.random()<0.75) return buff;
-  const deb=opts.find(id=>ABILITIES[id].kind==='debuff'); if(deb && !target.statuses.some(s=>s.label===ABILITIES[deb].target[0].label) && Math.random()<0.6) return deb;
+  const dfn=user.cls.defensive; if(opts.includes(dfn) && (hpF<0.5 || (round<=2 && Math.random()<0.3)) && !user.statuses.some(s=>s.label===(ABILITIES[dfn].self||ABILITIES[dfn].target||[{}])[0].label) && Math.random()<0.55) return dfn;
+  const buff=opts.find(id=>ABILITIES[id].kind==='buff' && id!==dfn); if(buff && round<=2 && !user.statuses.some(s=>['hitMod','dmgMod','defMod','dodge'].includes(s.status)&&s.value>0) && Math.random()<0.75) return buff;
+  const deb=opts.find(id=>ABILITIES[id].kind==='debuff' || (ABILITIES[id].kind==='trick' && id!==dfn)); if(deb && !target.statuses.some(s=>s.label===ABILITIES[deb].target[0].label) && Math.random()<0.6) return deb;
   let best='attack', bestV=-1; for(const id of opts){ const ab=ABILITIES[id]; if(ab.kind!=='attack') continue; const v=expectedDamage(user,target,ab)*(1+Math.random()*0.15); if(v>bestV){bestV=v;best=id;} }
   return best;
 }
@@ -736,6 +756,7 @@ function fleeRoll(user,target,nat){ return nat!==1 && (nat===20 || nat+user.spd 
 function simulateCombat(a,b){
   const ia=d20()+a.spd, ib=d20()+b.spd; const f = ia>=ib? [a,b] : [b,a];
   a.statuses=[]; b.statuses=[]; a.cds={}; b.cds={}; f[0]._second=false; f[1]._second=true;
+  [a,b].forEach(e=>{ if(e.prep){ e.prep.forEach(st=>applyStatus(e,st,false)); e.prep=null; } });
   for(let round=1; round<=40; round++){
     for(let i=0;i<2;i++){ const u=f[i], t=f[1-i];
       const bt=beginTurn(u); if(u.hp<=0) break; if(bt.skip) continue;
@@ -835,7 +856,7 @@ function updateWorld(dt){
     z.radius = lerp(from,to, z.phase<ZONE_RADII.length-1? clamp(z.t/ZONE_PHASE_TIME,0,1) : 1)*half;
     for(const e of G.ents){
       if(!e.alive){ e.deathT+=dt; continue; }
-      e.immune=Math.max(0,e.immune-dt); e.moving=false;
+      e.immune=Math.max(0,e.immune-dt); e.moving=false; e.fieldCd=Math.max(0,e.fieldCd-dt); e.scoutT=Math.max(0,e.scoutT-dt); if(e.sprintT>0){ e.sprintT=Math.max(0,e.sprintT-dt); e.immune=Math.max(e.immune,0.3); }
       if(e.isHuman && e.alive) e.score+=SURVIVE_SCORE*dt;
       if(e.inCombat) continue;
       // sanctuary: while an enemy camps next to a fresh survivor, immunity refreshes (up to SANCTUARY_HOLD)
@@ -885,6 +906,18 @@ function openCrate(e){
 }
 function useMedkit(e){ if(!e||!e.alive||e.inCombat||e.medkits<=0) return false; if(e.hp>=e.maxHp-1){ netToastTo(e,'Already at full health',''); return false; }
   e.medkits--; const h=Math.min(medkitHeal(e),e.maxHp-e.hp); e.hp+=h; netToastTo(e,`Medkit +${Math.round(h)} HP (${e.medkits} left)`,'green'); if(e===localHuman()){ Audio.sfx.heal(); addFloat(e.x,e.y-20,'+'+Math.round(h),COL.green,1,'world'); } return true; }
+// the class field action (Q). Returns true when it fired.
+function fieldAction(e){
+  if(!canField(e)) return false; const f=e.cls.field; e.energy-=f.cost; e.fieldCd=f.cd; const me=e===localHuman();
+  switch(f.id){
+    case 'tinker': e.energy+=f.cost; return upgradeWeapon(e);
+    case 'scout': e.scoutT=10; netToastTo(e,'Scouting: every survivor is on your minimap for 10 s','cyan'); if(me) Audio.sfx.buff(); return true;
+    case 'brace': e.prep=[{status:'defMod',value:4,turns:3,label:'Braced'}]; netToastTo(e,'Braced: +4 DEF for 3 turns in your next fight','cyan'); if(me) Audio.sfx.buff(); return true;
+    case 'rite': e.hp-=f.hpCost; e.rite=true; netToastTo(e,`Blood Rite: paid ${f.hpCost} HP. Your first strike next fight cannot miss.`,'red'); if(me){ Audio.sfx.debuff(); spawnParticles(e.x,e.y-15,20,COL.red,140,0.7,3,'world'); } return true;
+    case 'brew': e.medkits++; netToastTo(e,`Brewed a medkit (${e.medkits}/${medkitMax(e)})`,'green'); if(me) Audio.sfx.heal(); return true;
+    case 'sprint': e.sprintT=4; e.immune=Math.max(e.immune,4); netToastTo(e,'Shadow Sprint: 4 s untouchable','cyan'); if(me){ Audio.sfx.flee(); } return true;
+  } return false;
+}
 function upgradeWeapon(e){ if(!e||!canUpgrade(e)||e.inCombat) return false; e.energy-=UPGRADE_COST; const w=makeWeapon(e.weapon.type,e.weapon.tier+1); w.upgraded=true; e.weapon=w;
   netToastTo(e,`Tinkered: ${w.name} (T${w.tier})`,'cyan'); if(e===localHuman()){ Audio.sfx.upgrade(); spawnParticles(e.x,e.y-15,24,COL.cyan,140,0.7,3,'world'); } return true; }
 // nobody may stand inside the circle of a fight they are not part of
@@ -914,7 +947,7 @@ function updateAI(e,dt){
 }
 function decideAI(e){
   const ai=e.ai, z=G.zone;
-  if(canUpgrade(e)) upgradeWeapon(e);
+  if(canField(e)){ const f=e.cls.field.id; if(f==='tinker'||f==='brew'||f==='brace'||(f==='rite'&&e.hp>e.maxHp*0.7&&ai.state==='hunt')||(f==='scout'&&z.phase>=2&&Math.random()<0.3)||(f==='sprint'&&(ai.state==='hunt'||ai.state==='zone'))) fieldAction(e); }
   if(e.medkits>0 && e.hp<e.maxHp*0.5) useMedkit(e);
   if(G.barge && G.alive===1){ ai.state='barge'; return; }
   const dz=Math.hypot(e.x-z.cx,e.y-z.cy);
@@ -941,7 +974,7 @@ function startCombat(a,b){
   if(!a.isHuman && !b.isHuman){ simulateCombat(a,b); return; }
   const begin=()=>{
     const ia=d20()+a.spd, ib=d20()+b.spd; const f= ia>=ib? [a,b] : [b,a]; f[0]._second=false; f[1]._second=true;
-    [a,b].forEach(e=>{ e.statuses=[]; e.cds={}; e.moving=false; e.inCombat=true; e.ai.state='wander'; });
+    [a,b].forEach(e=>{ e.statuses=[]; e.cds={}; e.moving=false; e.inCombat=true; e.ai.state='wander'; e.sprintT=0; if(e.prep){ e.prep.forEach(st=>applyStatus(e,st,false)); e.prep=null; } });
     const c={id:combatIdSeq++, f, turn:0, round:1, phase:'intro', t:0, chosen:null, nat:20, dice:{value:20,t:0,angle:0,rolling:false,visible:false,pop:0}, log:[], lunge:0, winner:null, loser:null, fleer:null, forced:false};
     combatLog(c,`${a.name} vs ${b.name}. ${f[0].name} ${V(f[0],'win','wins')} initiative (${Math.max(ia,ib)}).`, COL.gold);
     const mu=matchupBonus(a,b); if(mu) combatLog(c, mu>0? `${a.cls.name} vs ${b.cls.name}: ${a.name} ${V(a,'have','has')} the matchup (${mu>0?'+':''}${mu} hit & dmg).` : `${a.cls.name} vs ${b.cls.name}: ${b.name} ${V(b,'have','has')} the matchup (+${-mu} hit & dmg).`, mu>0?a.cls.color:b.cls.color);
@@ -994,11 +1027,11 @@ function resolveChosen(c){
   const ev=resolveAction(u,t,c.chosen,nat); c.lunge=1;
   for(const e of ev){
     switch(e.type){
-      case 'hit': combatLog(c,`${u.name} rolled ${e.nat} (${e.total} vs ${e.need}) — ${e.crit?'CRITICAL! ':'hit for '}${e.dmg}${e.crit?' damage!':''}${e.heal?` and drained ${e.heal}`:''}${e.status?` · ${e.status}`:''}`, e.crit?COL.gold:COL.white); break;
+      case 'hit': combatLog(c,`${u.name} rolled ${e.nat}${e.rite?' (Blood Rite: cannot miss)':` (${e.total} vs ${e.need})`} — ${e.crit?'CRITICAL! ':'hit for '}${e.dmg}${e.crit?' damage!':''}${e.absorbed?` (${e.absorbed} absorbed)`:''}${e.reflected?` · ${e.reflected} reflected back`:''}${e.heal?` and drained ${e.heal}`:''}${e.status?` · ${e.status}`:''}`, e.crit?COL.gold:COL.white); break;
       case 'miss': combatLog(c,`${u.name} rolled ${e.nat} (${e.total} vs ${e.need}) — miss.`, COL.red); break;
       case 'dodge': combatLog(c,`${t.name} ${V(t,'vanish','vanishes')} — the attack whiffs!`, COL.purple); break;
       case 'fumble': combatLog(c,`NATURAL 1! ${u.name} ${V(u,'fumble and take','fumbles and takes')} ${e.self}.`, COL.orange); break;
-      case 'heal': combatLog(c,`${u.name} rolled ${e.nat} — ${e.crit?'DOUBLE ':''}heal ${e.amt}.`, COL.green); break;
+      case 'heal': combatLog(c,`${u.name} rolled ${e.nat} — ${e.crit?'DOUBLE ':''}heal ${e.amt}${e.cleansed?` and cleansed ${e.cleansed} effect${e.cleansed>1?'s':''}`:''}.`, COL.green); break;
       case 'buff': combatLog(c,`${u.name} rolled ${e.nat} — ${e.label} active${e.crit?' (extended)':''}.`, COL.cyan); break;
       case 'debuff': combatLog(c,`${u.name} rolled ${e.nat} (${e.total}) — ${t.name} ${V(t,'are','is')} ${e.label}${e.crit?' (extended)':''}.`, COL.purple); break;
       case 'fail': combatLog(c,`NATURAL 1! ${u.name}'s ${ABILITIES[c.chosen].name} ${e.wasted?'is wasted':'fizzles'}.`, COL.orange); break;
@@ -1016,7 +1049,7 @@ function presentEvents(c, actorIdx, chosen, ev, nat){
       case 'hit': addFloat(tp.x+rnd(-20,20), tp.y-110, (e.crit?'CRIT ':'-')+e.dmg, e.crit?COL.gold:COL.red, e.crit?1.7:1.2, 'screen');
         spawnParticles(tp.x,tp.y-50,e.crit?36:14,e.crit?COL.gold:WEAPON_COLORS[u.weapon.type],e.crit?320:180,0.7,e.crit?6:4,'screen');
         shake=Math.max(shake,e.crit?SHAKE_CRIT:SHAKE_HIT); if(e.crit){ flashA=0.7; Audio.sfx.crit(); } else Audio.sfx.hit();
-        if(e.heal) addFloat(up.x, up.y-110, '+'+e.heal, COL.green, 1, 'screen'); if(e.status && ABILITIES[chosen]?.onHit?.status==='stun') Audio.sfx.stun(); t.flash=1; break;
+        if(e.heal) addFloat(up.x, up.y-110, '+'+e.heal, COL.green, 1, 'screen'); if(e.absorbed) addFloat(tp.x, tp.y-135, 'ABSORB '+e.absorbed, COL.cyan, 1, 'screen'); if(e.reflected){ addFloat(up.x, up.y-135, 'REFLECT -'+e.reflected, COL.purple, 1.1, 'screen'); u.flash=1; } if(e.status && ABILITIES[chosen]?.onHit?.status==='stun') Audio.sfx.stun(); t.flash=1; break;
       case 'miss': addFloat(tp.x, tp.y-110,'MISS','#aab3c8',1,'screen'); Audio.sfx.miss(); break;
       case 'dodge': addFloat(tp.x, tp.y-110,'DODGE',COL.purple,1.1,'screen'); Audio.sfx.miss(); break;
       case 'fumble': addFloat(up.x, up.y-110,'FUMBLE -'+e.self,COL.orange,1.2,'screen'); shake=Math.max(shake,SHAKE_HIT); Audio.sfx.fumble(); break;
@@ -1130,7 +1163,7 @@ const Session = {
       case 'act': case 'roll': case 'back': { if(!Net.isHost||!G) return; const e=G.ents.find(x=>x.netId===from); if(!e) return; const c=combats.find(x=>x.f.includes(e)); if(!c||actorOf(c)!==e) return;
         if(d.t==='act') chooseAbilityFor(c,e,d.ab); else if(d.t==='roll'&&c.phase==='await') goRoll(c); else if(d.t==='back'&&c.phase==='await'&&!(c.chosen==='attack'&&/free strike/.test(c.log[c.log.length-1]?.text||''))){ c.phase='choose'; c.chosen=null; } break; }
       case 'med': { if(!Net.isHost||!G) return; const e=G.ents.find(x=>x.netId===from); useMedkit(e); break; }
-      case 'upg': { if(!Net.isHost||!G) return; const e=G.ents.find(x=>x.netId===from); upgradeWeapon(e); break; }
+      case 'upg': { if(!Net.isHost||!G) return; const e=G.ents.find(x=>x.netId===from); fieldAction(e); break; }
     }
   },
   onHostDropped(id){ if(state==='lobby'){ return; } toast('Host dropped — migrating the round...','red',4); Net.migrating=HOST_MIGRATE_TIMEOUT; this.onPeerLeft(id); },
@@ -1149,7 +1182,7 @@ function makeSnapshot(){
   const r1=v=>Math.round(v*10)/10;
   return { t:'snap', tm:r1(G.time), z:[G.zone.cx|0,G.zone.cy|0,G.zone.radius|0,G.zone.phase,r1(G.zone.t)], al:G.alive, b:G.barge?[G.barge.x,G.barge.y]:null,
     cr:G.crates.map(c=>[c.x|0,c.y|0]), over:G.over?1:0,
-    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0]),
+    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0,r1(e.fieldCd),r1(e.scoutT),r1(e.sprintT),e.prep?1:0,e.rite?1:0]),
     c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,t:r1(c.t),fo:c.forced?1:0,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
 }
 function applySnapshot(s){
@@ -1161,7 +1194,7 @@ function applySnapshot(s){
     e.tx=r[1]; e.ty=r[2]; if(e!==me){ if(Math.hypot(e.tx-e.x,e.ty-e.y)>160) { e.x=e.tx; e.y=e.ty; } } else if(Math.hypot(e.tx-e.x,e.ty-e.y)>48){ e.x=e.tx; e.y=e.ty; }
     e.hp=r[3]; e.maxHp=r[4]; e.energy=r[5]; e.maxEn=r[6]; e.alive=!!r[7]; if(e!==me){ e.facing=r[8]; e.moving=!!r[9]; }
     if(e.weapon.type!==r[10]||e.weapon.tier!==r[11]){ e.weapon=makeWeapon(r[10],r[11]); if(r[10]==='none') e.weapon.dice=e.cls.fists; } e.weapon.upgraded=!!r[12];
-    e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; }
+    e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; } e.fieldCd=r[27]; e.scoutT=r[28]; e.sprintT=r[29]; if(r[30]&&!e.prep) e.prep=[{status:'defMod',value:4,turns:3,label:'Braced'}]; if(!r[30]) e.prep=null; e.rite=!!r[31];
     if(wasAlive && !e.alive){ e.deathT=0; if(e===me) Audio.sfx.death(); } }
   const seen=new Set();
   for(const v of s.c){ seen.add(v.id); let c=combats.find(x=>x.id===v.id);
@@ -1282,7 +1315,8 @@ function drawHUD(g){
     bar(g,16,30,120,9,e.hp/e.maxHp,e.hp/e.maxHp<0.3?COL.red:COL.green); txt(g,`${Math.max(0,Math.round(e.hp))}/${e.maxHp}`,142,34,10,COL.white,'left',700);
     bar(g,16,43,120,6,e.energy/e.maxEn,COL.cyan); txt(g,`EN ${Math.round(e.energy)}`,142,46,10,COL.cyan,'left',700);
     const aff=e.weapon.type==='none'?'':` · ${affOf(e).label}`; txt(g,`${e.weapon.name}${e.weapon.type!=='none'?' T'+e.weapon.tier:''}${aff} · DEF ${e.def} · ATK +${e.atk}`,16,58,10,COL.gold,'left',700);
-    txt(g,`MED ${e.medkits}/${medkitMax(e)}${e.medkits?' [H]':''}${canUpgrade(e)?' · TINKER READY [Q]':(e.cls.passive==='tinker'?' · tinker '+(e.weapon.type==='none'?'needs weapon':e.weapon.upgraded?'used':e.weapon.tier>=4?'maxed':UPGRADE_COST+' EN'):'')}`,16,70,10,e.medkits||canUpgrade(e)?COL.green:'#8e97ad','left',700); }
+    const fb=fieldBlock(e), fname=e.cls.field.name.toUpperCase(); const ftxt = fb===''? `${fname} READY [Q]` : `${fname}: ${fb}`; const flags=(e.prep?' · BRACED':'')+(e.rite?' · RITE':'')+(e.scoutT>0?` · SCOUT ${Math.ceil(e.scoutT)}s`:'')+(e.sprintT>0?' · SPRINT':'');
+    txt(g,`MED ${e.medkits}/${medkitMax(e)}${e.medkits?' [H]':''} · ${ftxt}${flags}`,16,70,10,fb===''||e.medkits?COL.green:'#8e97ad','left',700); }
   const cx=W/2, py=narrow?86:8; g.fillStyle='rgba(10,14,26,0.72)'; g.beginPath(); g.roundRect(cx-120,py,240,40,8); g.fill();
   txt(g,`${G.alive} ALIVE`,cx-60,py+12,14,COL.pink,'center');
   const dz=e? Math.hypot(e.x-z.cx,e.y-z.cy) : 0; const outside=e && e.alive && dz>z.radius && ZONE_DAMAGE[z.phase]>0;
@@ -1304,13 +1338,15 @@ function drawHUD(g){
     if(e.cls.passive==='scavenger') for(const c of G.crates){ g.fillStyle=COL.gold; g.fillRect(mx+c.x*sc-1,my+c.y*sc-1,2,2); }
     g.fillStyle=COL.white; g.beginPath(); g.arc(mx+e.x*sc,my+e.y*sc,3,0,7); g.fill(); }
   g.strokeStyle='rgba(255,255,255,0.4)'; g.strokeRect(mx+0.5,my+0.5,ms-1,ms-1); g.restore();
+  if(e && e.scoutT>0 && e.alive){ let n=null,nd=1e9; for(const o of aliveEnts()){ if(o===e) continue; const d=dist(o,e); if(d<nd){nd=d;n=o;} } if(n && nd>180){ const ang=Math.atan2(n.y-e.y,n.x-e.x); const ax=W/2+Math.cos(ang)*Math.min(W,H)*0.26, ay=H/2+Math.sin(ang)*Math.min(W,H)*0.26;
+    g.save(); g.translate(ax,ay); g.rotate(ang); g.fillStyle=matchupColor(e,n); g.beginPath(); g.moveTo(14,0); g.lineTo(-8,-8); g.lineTo(-3,0); g.lineTo(-8,8); g.closePath(); g.fill(); g.restore(); txtO(g,`${n.name} · ${matchupLabel(e,n)} · ${Math.round(nd/TILE)}m`,ax,ay+20,11,matchupColor(e,n),'center'); } }
   if(G.barge && e){ const ang=Math.atan2(G.barge.y-e.y,G.barge.x-e.x); const d=Math.hypot(G.barge.x-e.x,G.barge.y-e.y); if(d>200){ const ax=W/2+Math.cos(ang)*Math.min(W,H)*0.3, ay=H/2+Math.sin(ang)*Math.min(W,H)*0.3;
     g.save(); g.translate(ax,ay); g.rotate(ang); g.fillStyle=COL.gold; g.beginPath(); g.moveTo(16,0); g.lineTo(-10,-10); g.lineTo(-4,0); g.lineTo(-10,10); g.closePath(); g.fill(); g.restore(); txtO(g,`BARGE ${Math.round(d/TILE)}m`,ax,ay+22,11,COL.gold,'center'); } }
-  if(G.hintT>0 && !G.over){ g.globalAlpha=clamp(G.hintT,0,1); txtO(g, isTouch? 'Drag left side to move · ENGAGE to fight · open crates' : 'WASD move · E engage · H medkit · Q class action · P pause', W/2, H-(isTouch?100:30), 13, COL.white,'center'); g.globalAlpha=1; }
+  if(G.hintT>0 && !G.over){ g.globalAlpha=clamp(G.hintT,0,1); txtO(g, isTouch? 'Drag left side to move · ENGAGE to fight · open crates' : 'WASD move · E engage · H medkit · Q field action · P pause', W/2, H-(isTouch?100:30), 13, COL.white,'center'); g.globalAlpha=1; }
   if(isTouch){ if(joy){ g.globalAlpha=0.35; g.fillStyle='#fff'; g.beginPath(); g.arc(joy.ox,joy.oy,48,0,7); g.fill(); g.globalAlpha=0.7; g.beginPath(); g.arc(joy.ox+joy.dx*40,joy.oy+joy.dy*40,22,0,7); g.fill(); g.globalAlpha=1; }
     engageBtn.x=W-52; engageBtn.y=H-52; const n=e&&nearestEngageable(e); g.globalAlpha=n?0.95:0.4; g.fillStyle=n?COL.pink:'#333a4d'; g.beginPath(); g.arc(engageBtn.x,engageBtn.y,engageBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'ENGAGE',engageBtn.x,engageBtn.y,11,COL.white,'center');
     medBtn.x=W-120; medBtn.y=H-44; const hm=e&&e.medkits>0; g.globalAlpha=hm?0.95:0.35; g.fillStyle=hm?COL.green:'#333a4d'; g.beginPath(); g.arc(medBtn.x,medBtn.y,medBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'MED',medBtn.x,medBtn.y,11,'#0a0e1a','center');
-    actBtn.x=W-180; actBtn.y=H-44; const hu=e&&canUpgrade(e); g.globalAlpha=hu?0.95:0.35; g.fillStyle=hu?COL.cyan:'#333a4d'; g.beginPath(); g.arc(actBtn.x,actBtn.y,actBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'ACT',actBtn.x,actBtn.y,11,'#0a0e1a','center'); }
+    actBtn.x=W-180; actBtn.y=H-44; const hu=e&&canField(e); g.globalAlpha=hu?0.95:0.35; g.fillStyle=hu?COL.cyan:'#333a4d'; g.beginPath(); g.arc(actBtn.x,actBtn.y,actBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'ACT',actBtn.x,actBtn.y,11,'#0a0e1a','center'); }
   if(G.over && G.result){ g.fillStyle='rgba(0,0,0,0.35)'; g.fillRect(0,0,W,H); }
 }
 function drawD20(g,x,y,r,value,angle,glow,pop,rolling){
@@ -1342,7 +1378,7 @@ function drawCombat(g){
     bar(g,bx,by,bw,12,e.hp/e.maxHp,e.hp/e.maxHp<0.3?COL.red:(e===localHuman()?COL.green:COL.pink)); txtO(g,`${Math.max(0,Math.round(e.hp))} / ${e.maxHp}`,p.x,by+6,11,COL.white,'center',800);
     bar(g,bx,by+15,bw,6,e.energy/e.maxEn,COL.cyan); const mu=matchupBonus(e,c.f[1-i]); txt(g,`EN ${Math.round(e.energy)}  DEF ${defVal(e)}  HIT ${hitMod(e)+mu>=0?'+':''}${hitMod(e)+mu}  MED ${e.medkits}`,bx,by+30,10,'#aab3c8','left',700);
     if(mu){ txt(g,`${matchupLabel(e,c.f[1-i])} ${mu>0?'+':''}${mu}`,bx+bw,by+30,10,matchupColor(e,c.f[1-i]),'right',900); }
-    let sx=bx; for(const st of e.statuses){ const label=`${st.label} ${st.status==='dot'?st.value+'/t':st.status==='stun'?'':(st.value>0?'+':'')+(st.status==='dodge'?'':st.value)} ${st.turns}t`; g.font='700 10px "Segoe UI",Roboto,sans-serif'; const w=g.measureText(label).width+10;
+    let sx=bx; for(const st of e.statuses){ const label=`${st.label} ${st.status==='dot'?st.value+'/t':st.status==='stun'?'':st.status==='shield'?st.value+' hp':st.status==='reflect'?Math.round(st.value*100)+'%':st.status==='brace'?'-'+st.value+' dmg':(st.value>0?'+':'')+(st.status==='dodge'?'':st.value)} ${st.turns}t`; g.font='700 10px "Segoe UI",Roboto,sans-serif'; const w=g.measureText(label).width+10;
       g.fillStyle = st.value<0||st.status==='dot'||st.status==='stun'? 'rgba(181,108,255,0.35)' : 'rgba(46,230,255,0.3)'; g.beginPath(); g.roundRect(sx,by+38,w,15,4); g.fill(); txt(g,label,sx+5,by+46,10,COL.white,'left',700); sx+=w+4; }
     if(c.phase!=='end' && c.turn===i){ const ty=p.y+14; g.fillStyle=COL.gold; g.beginPath(); g.moveTo(p.x,ty); g.lineTo(p.x-8,ty+12); g.lineTo(p.x+8,ty+12); g.closePath(); g.fill(); }
   }
@@ -1383,7 +1419,7 @@ function renderGuide(){
   const phases=ZONE_RADII.map((r,i)=>`<tr><td>${i===0?'0 (drop)':i}</td><td>${i===ZONE_RADII.length-1?'stays':ZONE_PHASE_TIME+' s'}</td><td>${Math.round(r*100)}%</td><td>${ZONE_DAMAGE[i]||'none'}</td><td>${MUSIC_BASE_BPM+MUSIC_BPM_STEP*i}</td></tr>`).join('');
   const classes=CLASSES.map(c=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>MATCHUP_CYCLE[(i+k)%6];
     const aff=WEAPON_TYPES.map(t=>`${t} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
-    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
+    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
   const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">${diceStr(TIER_DICE[i])}${i===3?'+2':''}</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
   // matchup ring as SVG
   const R=110, cx=150, cy=150; const pts=MATCHUP_CYCLE.map((id,i)=>{ const a=-Math.PI/2+i*Math.PI/3; return {id, x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R}; });
@@ -1394,7 +1430,7 @@ function renderGuide(){
 <h3>The goal</h3>
 <p>Ten survivors are dropped on an island. You want the only seat on the extraction barge to the Safe City. Be the <b class="k">last one alive</b>, then walk to the barge when it lands. You lose the moment your HP hits zero, whether in a fight or burning outside the ring.</p>
 <h3>A round, minute by minute</h3>
-<ul><li><b class="k">Land with nothing</b> but your fists, your class's signature ability, and Flee.</li>
+<ul><li><b class="k">Land with nothing</b> but your fists, your class's signature attack, its defensive move, and Flee. Every class also has one <b class="k">field action</b> on Q that pays off on the map or in the next fight.</li>
 <li><b class="k">Loot crates</b> (gold boxes) for weapons, medkits, armor plates, power cells. Walk over them.</li>
 <li><b class="k">The Ashfall ring shrinks</b> every ${ZONE_PHASE_TIME} seconds. The pink circle is safe; the dashed circle shows where it closes next. Outside it you burn, harder each phase. The soundtrack speeds up every time it closes.</li>
 <li><b class="k">Meet survivors</b>: an ENGAGE prompt appears within reach, coloured by how good the matchup is for you. AI will ambush you too.</li>
@@ -1403,7 +1439,7 @@ function renderGuide(){
 <h3>Controls</h3>
 <div class="tw"><table><tr><th>Action</th><th>Keyboard</th><th>Touch</th></tr>
 <tr><td>Move</td><td>WASD / arrows</td><td>drag on the left half</td></tr><tr><td>Engage the survivor in reach</td><td>E / Space</td><td>ENGAGE</td></tr>
-<tr><td>Use a medkit (${MEDKIT_HEAL} HP, Alchemist ${MEDKIT_HEAL*2})</td><td>H</td><td>MED</td></tr><tr><td>Class action (Technomancer: tinker)</td><td>Q</td><td>ACT</td></tr>
+<tr><td>Use a medkit (${MEDKIT_HEAL} HP, Alchemist ${MEDKIT_HEAL*2})</td><td>H</td><td>MED</td></tr><tr><td>Field action (Scout, Tinker, Brace, Blood Rite, Brew, Shadow Sprint)</td><td>Q</td><td>ACT</td></tr>
 <tr><td>Choose an ability in a fight</td><td>1–6</td><td>tap</td></tr><tr><td>Roll the d20</td><td>Space / Enter</td><td>tap the dice</td></tr><tr><td>Pause · mute</td><td>P · M</td><td>top-right buttons</td></tr></table></div>
 <h3>Fighting: the d20</h3>
 <ul><li>Initiative: d20 + SPD, higher acts first. Turns alternate; energy regenerates ${ENERGY_REGEN} per turn.</li>
@@ -1414,7 +1450,7 @@ function renderGuide(){
 <li><b class="k">Flee</b>: d20 + your SPD vs 10 + their SPD. Fail and they get a free strike. Success puts you a few tiles away with a short immunity.</li>
 <li>Killing someone heals you 15% (Hexblade 40%), raises ATK by one (max +4), and lets you take their weapon and medkits if they are better.</li></ul>
 <h3>Classes</h3>
-<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
+<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · defence · field action · passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
 <h3>The matchup circle</h3>
 <p>Each class hunts the next one round the circle (<b>+${MATCHUP_BONUS[1]}</b> to hit and damage, and the victim gets −${MATCHUP_BONUS[1]}), has the edge on the one after (+${MATCHUP_BONUS[2]}), is even with the opposite class and with its own, and is on the losing side of the other two. The ENGAGE prompt says <span style="color:${COL.green}">PREY</span>, <span style="color:${COL.cyan}">EDGE</span>, EVEN, <span style="color:${COL.orange}">RISKY</span> or <span style="color:${COL.red}">AVOID</span> before you commit, and minimap dots use the same colours. Chase your prey. Run from your predator.</p>
 ${ring}
@@ -1447,7 +1483,7 @@ function classCard(c, idx, onPick, selected){
   const por=sprite('portrait.'+c.id); const affs=WEAPON_TYPES.map(t=>{ const a=c.affinity[t]; return `<span class="${a==='expert'?'ex':a==='poor'?'po':''}" title="${a}">${t}${a==='expert'?' ★★':a==='skilled'?' ★':''}</span>`; }).join('');
   el.innerHTML=`<div class="key">${idx+1}</div>${por?`<img class="por" src="${por.img.src}" alt="">`:''}<div class="nm">${c.name}</div><div class="ti">${c.title}</div>
     <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
-    <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
+    <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
     <div class="ab" style="margin-top:4px">${(()=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name; return `<span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">edge on ${n(2)}</span> · even vs ${n(3)} · <span style="color:${COL.orange}">risky vs ${n(4)}</span> · <span style="color:${COL.red}">fears ${n(5)}</span>`; })()}</div>
     <div class="st">${affs}</div><div class="fam">${c.family}</div>`;
   el.addEventListener('click',()=>onPick(idx)); el.addEventListener('keydown',ev=>{ if(ev.key==='Enter') onPick(idx); }); return el;
@@ -1489,7 +1525,7 @@ $('btnMute').addEventListener('click',()=>{ Audio.init(); Audio.muted=!Audio.mut
 function togglePause(){ if(setup.mode==='online') return; if(state==='play'){ state='pause'; show('pause'); } else if(state==='pause'){ state='play'; show(null); } updateTopButtons(); }
 function tryEngage(){ const me=localHuman(); if(!me||!me.alive||G.over||viewCombat) return; if(isClient()){ if(nearestEngageable(me)) Net.toHost({t:'in',d:[0,0],e:1}); } else tryEngageFor(me); }
 function tryMedkit(){ const me=localHuman(); if(!me||viewCombat) return; if(isClient()) Net.toHost({t:'med'}); else useMedkit(me); }
-function tryAction(){ const me=localHuman(); if(!me||viewCombat) return; if(isClient()) Net.toHost({t:'upg'}); else if(!upgradeWeapon(me) && me.cls.passive==='tinker') toast(me.weapon.type==='none'?'Find a weapon to tinker with':me.weapon.upgraded?'Already tinkered':me.energy<UPGRADE_COST?`Need ${UPGRADE_COST} EN`:'Weapon is maxed',''); else if(me.cls.passive!=='tinker') toast(`${me.cls.passiveName} is passive: ${me.cls.passiveDesc}`,''); }
+function tryAction(){ const me=localHuman(); if(!me||viewCombat||!me.alive) return; const why=fieldBlock(me); if(why){ toast(`${me.cls.field.name}: ${why}`,''); return; } if(isClient()) Net.toHost({t:'upg'}); else fieldAction(me); }
 
 // ---- online lobby ----
 function setLobbyStatus(t){ $('lobbyStatus').textContent=t; }

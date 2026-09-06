@@ -24,23 +24,25 @@
     },
     {
       "id": "char.warden.walk",
-      "file": "characters/warden_walk.png",
-      "status": "needed",
+      "file": "characters/warden_walk.webp",
+      "status": "ready",
       "description": "Warden: walk (run cycle). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#7bd88f"
+      "accent": "#7bd88f",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.warden.attack",
@@ -138,23 +140,25 @@
     },
     {
       "id": "char.techno.walk",
-      "file": "characters/techno_walk.png",
-      "status": "needed",
+      "file": "characters/techno_walk.webp",
+      "status": "ready",
       "description": "Technomancer: walk (run cycle). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#2ee6ff"
+      "accent": "#2ee6ff",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.techno.attack",
@@ -252,23 +256,25 @@
     },
     {
       "id": "char.bruiser.walk",
-      "file": "characters/bruiser_walk.png",
-      "status": "needed",
+      "file": "characters/bruiser_walk.webp",
+      "status": "ready",
       "description": "Bruiser: walk (run cycle). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#ff8c42"
+      "accent": "#ff8c42",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.bruiser.attack",
@@ -366,23 +372,25 @@
     },
     {
       "id": "char.hexblade.walk",
-      "file": "characters/hexblade_walk.png",
-      "status": "needed",
+      "file": "characters/hexblade_walk.webp",
+      "status": "ready",
       "description": "Hexblade: walk (run cycle). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#b56cff"
+      "accent": "#b56cff",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.hexblade.attack",
@@ -480,23 +488,25 @@
     },
     {
       "id": "char.alch.walk",
-      "file": "characters/alch_walk.png",
-      "status": "needed",
+      "file": "characters/alch_walk.webp",
+      "status": "ready",
       "description": "Alchemist: walk (run cycle). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#ffd166"
+      "accent": "#ffd166",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.alch.attack",
@@ -594,23 +604,25 @@
     },
     {
       "id": "char.wraith.walk",
-      "file": "characters/wraith_walk.png",
-      "status": "needed",
+      "file": "characters/wraith_walk.webp",
+      "status": "ready",
       "description": "Wraith: walk (run cycle). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
       "kind": "sheet",
-      "frameW": 48,
-      "frameH": 64,
+      "frameW": 144,
+      "frameH": 192,
       "frames": 6,
       "fps": 8,
       "anchor": [
         0.5,
-        1
+        0.98
       ],
       "hand": [
         11,
         -18
       ],
-      "accent": "#ff3e7f"
+      "accent": "#ff3e7f",
+      "scale": 0.315,
+      "usage": "Overworld run cycle, 6 frames left to right, facing right (flipped for left); figure about 184 px tall in a 144x192 frame, drawn at scale 0.315 so it matches the portrait cutout height"
     },
     {
       "id": "char.wraith.attack",

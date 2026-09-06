@@ -272,6 +272,14 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Run cycles, backdrops and the d20
+All six classes now have real six-frame run sheets on the overworld (`char.<id>.walk`), keyed to the walk phase so
+the stride matches the ground covered, mirrored for leftward travel, with the white-silhouette hit flash built from
+the sheet. Standing still shows the portrait cutout, so stopping reads as turning to face the camera. The
+encounter scene draws a painted backdrop chosen by screen aspect (the Ashfall observatory at dusk), scaled to cover
+and anchored to the ground, with a translucent plate behind each fighter's name and bars. The d20 is the painted
+obsidian-and-gold die: faces 1–20 from the sheet, seven motion-blurred frames while it tumbles.
+
 ### Overworld portraits and single-image animation
 The same cutouts walk the island (`PORTRAIT_WORLD_H` px tall, downscaled once to a small copy, with a faint
 class-coloured rim behind so they read on busy tiles). There is one still per class, so motion is procedural

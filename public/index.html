@@ -14,7 +14,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;overscroll-behavior:none}
   canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));overflow:auto;background:rgba(6,9,18,.78);backdrop-filter:blur(2px);z-index:20}
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px;padding-bottom:calc(18px + env(safe-area-inset-bottom));overflow:auto;background:rgba(6,9,18,.82);z-index:20}
   /* centre vertically when the content fits, scroll from the top when it does not (flex centring would clip the top) */
   .screen > :first-child{margin-top:auto} .screen > :last-child{margin-bottom:auto}
   .screen > *{flex-shrink:0}
@@ -134,7 +134,7 @@
   #introVid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
   #introHint{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));color:rgba(245,242,236,.75);font-size:11px;letter-spacing:.2em;text-transform:uppercase;background:rgba(0,0,0,.45);padding:6px 10px;border-radius:6px;z-index:2}
   #titleImg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .7s;z-index:1}
-  #titleBg{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(28px) brightness(.45) saturate(1.2);opacity:0;transition:opacity .7s}
+  #titleBg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s} /* a 24px-wide darkened copy of the painting, upscaled: a free blur */
   #titleImg.on,#titleBg.on{opacity:1}
   #titleFallback{position:relative;z-index:1;text-align:center;padding:18px}
   #titleStart{position:absolute;z-index:2;border:0;background:transparent;cursor:pointer;border-radius:10px;animation:tpulse 1.6s ease-in-out infinite}
@@ -311,7 +311,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '669abed 20260906-0947';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '3d35074 20260906-0958';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
 const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
 const PORTRAIT_RIM = 0.6;          // alpha of the class-coloured rim drawn behind overworld portraits so they read against busy tiles (0 = off)
@@ -520,26 +520,40 @@ const ART = { sprites:{}, count:0, cutouts:{} };
 // background is keyed out once per class: a flood fill from the border over near-black pixels (so black inside the
 // character is kept), stored as a cutout canvas plus a white silhouette for the hit flash. null until the portrait
 // has loaded; the drawn figure is used meanwhile.
-function portraitCutout(clsId){ const c=ART.cutouts[clsId]; if(c!==undefined) return c; const sp=sprite('portrait.'+clsId); if(!sp || !sp.img.naturalWidth) return null;
+// Pure keying step (also stringified into a Web Worker): flood-fill the near-black backdrop from the border and
+// clear it, with a soft edge just outside the keyed region. Runs on the raw RGBA bytes.
+function keyPortrait(d,w,h,level){ const seen=new Uint8Array(w*h), stack=new Int32Array(w*h); let sp=0;
+  const dark=i=>Math.max(d[i*4],d[i*4+1],d[i*4+2])<level; const push=i=>{ if(!seen[i] && dark(i)){ seen[i]=1; stack[sp++]=i; } };
+  for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); } for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+  while(sp){ const i=stack[--sp], x=i%w; if(x>0) push(i-1); if(x<w-1) push(i+1); if(i>=w) push(i-w); if(i<w*(h-1)) push(i+w); }
+  for(let i=0;i<w*h;i++){ if(seen[i]) d[i*4+3]=0; else { const m=Math.max(d[i*4],d[i*4+1],d[i*4+2]); if(m<level*2) d[i*4+3]=Math.round(255*(m-level)/level); } } return d; }
+const CutWork = { worker:null, busy:false, queue:[], started:{}, timer:0 };
+function cutoutWorker(){ if(CutWork.worker!==null) return CutWork.worker;
+  try{ const src=`const key=${keyPortrait.toString()}; onmessage=e=>{ const m=e.data, d=new Uint8ClampedArray(m.buf); key(d,m.w,m.h,m.level); postMessage({id:m.id,buf:d.buffer,w:m.w,h:m.h},[d.buffer]); };`;
+    const wk=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'}))); wk.onmessage=ev=>{ finishCutout(ev.data); CutWork.busy=false; pumpCutouts(); }; wk.onerror=()=>{ CutWork.worker=false; CutWork.busy=false; pumpCutouts(); }; CutWork.worker=wk; }
+  catch(e){ CutWork.worker=false; } return CutWork.worker; }
+function requestCutout(clsId){ if(CutWork.started[clsId]) return; CutWork.started[clsId]=true; CutWork.queue.push(clsId); pumpCutouts(); }
+function pumpCutouts(){ clearTimeout(CutWork.timer); if(CutWork.busy || !CutWork.queue.length) return;
+  if(state==='title' || state==='intro'){ CutWork.timer=setTimeout(pumpCutouts,400); return; } // never stall the title or the intro video
+  const clsId=CutWork.queue.shift(); const sp=sprite('portrait.'+clsId); if(!sp || !sp.img.naturalWidth){ CutWork.started[clsId]=false; pumpCutouts(); return; }
   const w=sp.img.naturalWidth, h=sp.img.naturalHeight, cv2=document.createElement('canvas'); cv2.width=w; cv2.height=h; const g=cv2.getContext('2d',{willReadFrequently:true}); g.drawImage(sp.img,0,0);
-  let cut=null; try{ const im=g.getImageData(0,0,w,h), d=im.data, seen=new Uint8Array(w*h), stack=[];
-    const dark=i=>Math.max(d[i*4],d[i*4+1],d[i*4+2])<PORTRAIT_KEY_LEVEL;
-    const push=i=>{ if(!seen[i] && dark(i)){ seen[i]=1; stack.push(i); } };
-    for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); } for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
-    while(stack.length){ const i=stack.pop(), x=i%w; if(x>0) push(i-1); if(x<w-1) push(i+1); if(i>=w) push(i-w); if(i<w*(h-1)) push(i+w); }
-    for(let i=0;i<w*h;i++){ if(seen[i]) d[i*4+3]=0; else { const m=Math.max(d[i*4],d[i*4+1],d[i*4+2]); if(m<PORTRAIT_KEY_LEVEL*2) d[i*4+3]=Math.round(255*(m-PORTRAIT_KEY_LEVEL)/PORTRAIT_KEY_LEVEL); } } // soft edge just outside the keyed region
-    g.putImageData(im,0,0); const white=document.createElement('canvas'); white.width=w>>1; white.height=h>>1; const wg=white.getContext('2d'); wg.drawImage(cv2,0,0,white.width,white.height); wg.globalCompositeOperation='source-in'; wg.fillStyle='#fff'; wg.fillRect(0,0,white.width,white.height);
-    const small=document.createElement('canvas'); small.height=256; small.width=Math.round(256*w/h); const sg=small.getContext('2d'); sg.imageSmoothingQuality='high'; sg.drawImage(white,0,0); sg.clearRect(0,0,small.width,small.height); sg.drawImage(cv2,0,0,small.width,small.height); // overworld-size copy, downscaled once
-    const rim=document.createElement('canvas'); rim.width=small.width; rim.height=small.height; const rg=rim.getContext('2d'); rg.drawImage(small,0,0); rg.globalCompositeOperation='source-in'; rg.fillStyle=CLASS_BY_ID[clsId]?CLASS_BY_ID[clsId].color:'#fff'; rg.fillRect(0,0,rim.width,rim.height);
-    cut={cv:cv2, white, small, rim, w, h}; }catch(e){ cut=null; }
-  ART.cutouts[clsId]=cut; return cut; }
+  let im; try{ im=g.getImageData(0,0,w,h); }catch(e){ ART.cutouts[clsId]=null; pumpCutouts(); return; }
+  const wk=cutoutWorker(); if(wk){ CutWork.busy=true; wk.postMessage({id:clsId,buf:im.data.buffer,w,h,level:PORTRAIT_KEY_LEVEL},[im.data.buffer]); }
+  else { keyPortrait(im.data,w,h,PORTRAIT_KEY_LEVEL); finishCutout({id:clsId,buf:im.data.buffer,w,h}); CutWork.timer=setTimeout(pumpCutouts,250); } }
+function finishCutout(m){ const {id,w,h}=m; try{ const cv2=document.createElement('canvas'); cv2.width=w; cv2.height=h; const g=cv2.getContext('2d'); g.putImageData(new ImageData(new Uint8ClampedArray(m.buf),w,h),0,0);
+    const white=document.createElement('canvas'); white.width=w>>1; white.height=h>>1; const wg=white.getContext('2d'); wg.drawImage(cv2,0,0,white.width,white.height); wg.globalCompositeOperation='source-in'; wg.fillStyle='#fff'; wg.fillRect(0,0,white.width,white.height);
+    const small=document.createElement('canvas'); small.height=256; small.width=Math.round(256*w/h); const sg=small.getContext('2d'); sg.imageSmoothingQuality='high'; sg.drawImage(cv2,0,0,small.width,small.height); // overworld-size copy, downscaled once
+    const rim=document.createElement('canvas'); rim.width=small.width; rim.height=small.height; const rg=rim.getContext('2d'); rg.drawImage(small,0,0); rg.globalCompositeOperation='source-in'; rg.fillStyle=CLASS_BY_ID[id]?CLASS_BY_ID[id].color:'#fff'; rg.fillRect(0,0,rim.width,rim.height);
+    ART.cutouts[id]={cv:cv2, white, small, rim, w, h}; }catch(e){ ART.cutouts[id]=null; } }
+// Returns the cutout if ready, else queues it and returns null (the drawn figure is used meanwhile).
+function portraitCutout(clsId){ const c=ART.cutouts[clsId]; if(c!==undefined) return c; requestCutout(clsId); return null; }
 function loadArt(){
   if(location.protocol==='file:') return;
   const v='?v='+encodeURIComponent(BUILD);
   fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
     for(const pack of m.packs){ const p=await fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
       for(const a of p.assets){ if(!a.file||a.status!=='ready') continue; const img=new Image();
-        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); if(a.id.startsWith('portrait.')){ pickerRefreshArt(); const id=a.id.slice(9); (window.requestIdleCallback||(f=>setTimeout(f,300)))(()=>portraitCutout(id)); } };
+        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); if(a.id.startsWith('portrait.')){ pickerRefreshArt(); requestCutout(a.id.slice(9)); } };
         img.src='art/'+a.file+v; } } }).catch(()=>{});
 }
 const sprite = id=>ART.sprites[id];
@@ -1537,7 +1551,7 @@ function showTitle(){ state='title'; show('title'); layoutTitle(); introPrime();
 // Picks the painting whose aspect is closest to the screen and shows it whole (fit inside, bars at the sides on
 // 4:3 tablets and foldables); a blurred copy fills the bars. The START hit zone follows the same fit.
 function layoutTitle(){ if(state!=='title') return; const ar=W/Math.max(1,H); const dl=Math.abs(Math.log(ar/(1672/941))), dp=Math.abs(Math.log(ar/(941/1672))); const a=TITLE_ART[dl<=dp?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), bg=$('titleBg'), hit=$('titleStart');
-  if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; bg.src=sp.img.src; img.dataset.id=a.id; } img.classList.add('on'); bg.classList.add('on'); $('titleFallback').classList.add('hidden');
+  if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; img.dataset.id=a.id; try{ const tw=24, th=Math.max(1,Math.round(tw*sp.img.naturalHeight/sp.img.naturalWidth)), tc=document.createElement('canvas'); tc.width=tw; tc.height=th; const tg=tc.getContext('2d'); tg.drawImage(sp.img,0,0,tw,th); tg.fillStyle='rgba(0,0,0,0.55)'; tg.fillRect(0,0,tw,th); bg.src=tc.toDataURL(); }catch(e){ bg.src=sp.img.src; } } img.classList.add('on'); bg.classList.add('on'); $('titleFallback').classList.add('hidden');
     const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.min(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
     hit.style.left=(ox+x0*iw*sc)+'px'; hit.style.top=(oy+y0*ih*sc)+'px'; hit.style.width=((x1-x0)*iw*sc)+'px'; hit.style.height=((y1-y0)*ih*sc)+'px'; hit.classList.remove('hidden'); }
   else { img.classList.remove('on'); bg.classList.remove('on'); $('titleFallback').classList.remove('hidden'); hit.classList.add('hidden'); } }
@@ -1618,7 +1632,7 @@ ${ring}
 }
 $('guideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('pauseGuideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('guideBack').addEventListener('click',()=>{ Audio.sfx.click(); closeGuide(); });
 function updateTopButtons(){ $('topbtns').classList.toggle('hidden', !(state==='play'||state==='pause'||state==='pass')); $('btnMute').textContent=Audio.muted?'✕':'♪'; }
-function toMenu(){ Net.close(); state='menu'; G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
+function toMenu(){ Net.close(); state='menu'; pumpCutouts(); G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
   if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus(NET_DEFAULT_URL? 'Pick a room code and a name, then connect.' : 'This static site has no relay: enter the address of your relay server (wss://...), a room code and a name.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
   state='select'; show('select'); renderSelect(); }
@@ -1782,7 +1796,7 @@ function update(dt){
 }
 function frame(now){
   let d=(now-last)/1000; last=now; if(d>0.25) d=0.25; acc+=d; let n=0;
-  try{ while(acc>=STEP && n<6){ update(STEP); acc-=STEP; n++; } if(n===6) acc=0; render(); Music.tick(); }
+  try{ while(acc>=STEP && n<6){ update(STEP); acc-=STEP; n++; } if(n===6) acc=0; if(state!=='title' && state!=='intro') render(); Music.tick(); } // the canvas is hidden behind the title and the intro video: don't paint it
   catch(err){ console.error(err); acc=0; }
   requestAnimationFrame(frame);
 }

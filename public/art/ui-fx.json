@@ -3,6 +3,44 @@
   "$comment": "Interface and effects. dice.d20: frames 0\u201319 are the settled faces 1\u201320 (frame 0 = face 1), frames 20+ are tumbling frames used while rolling. Ability icons appear inside the combat buttons at 22px.",
   "assets": [
     {
+      "id": "ui.title.portrait",
+      "file": "ui/title_portrait.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 941,
+      "frameH": 1672,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "startButton": [
+        0.3,
+        0.855,
+        0.7,
+        0.935
+      ],
+      "description": "Title key art, portrait. START plate is baked in; the engine overlays a hit zone at startButton (fractions x0,y0,x1,y1)."
+    },
+    {
+      "id": "ui.title.landscape",
+      "file": "ui/title_landscape.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1672,
+      "frameH": 941,
+      "anchor": [
+        0.5,
+        1
+      ],
+      "startButton": [
+        0.4,
+        0.79,
+        0.6,
+        0.94
+      ],
+      "description": "Title key art, landscape. Same rules as the portrait one."
+    },
+    {
       "id": "dice.d20",
       "file": "ui/d20.png",
       "status": "needed",

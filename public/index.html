@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
 <link rel="icon" href="data:,">
-<title>Ashfall</title>
+<title>Ashfield</title>
 <style>
   :root{
     --bg:#0a0e1a; --panel:#111726; --line:#1f2940; --ink:#f5f2ec; --muted:#8e97ad;
@@ -105,12 +105,26 @@
   #guide b.k{color:var(--cyan)} #guide .cls{font-weight:900}
   #guide svg{display:block;margin:8px auto;max-width:320px}
   .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
+  #title{padding:0;background:#0a0e1a;justify-content:center;overflow:hidden;cursor:pointer}
+  #titleImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s}
+  #titleImg.on{opacity:1}
+  #titleFallback{position:relative;z-index:1;text-align:center;padding:18px}
+  #titleStart{position:absolute;z-index:2;border:0;background:transparent;cursor:pointer;border-radius:10px;animation:tpulse 1.6s ease-in-out infinite}
+  @keyframes tpulse{0%,100%{box-shadow:0 0 0 2px rgba(255,209,102,.2)}50%{box-shadow:0 0 30px 8px rgba(255,209,102,.6)}}
+  #titleHint{position:absolute;bottom:2.5%;left:0;right:0;text-align:center;z-index:2;color:#f5f2ec;letter-spacing:.22em;font-size:11px;text-transform:uppercase;text-shadow:0 2px 6px #000,0 0 12px #000;opacity:.85}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="toasts"></div>
 <div class="topbtns hidden" id="topbtns"><button id="btnMute" title="Mute (M)">♪</button><button id="btnPause" title="Pause (P)">⏸</button></div>
+
+<div id="title" class="screen hidden">
+  <img id="titleImg" alt="">
+  <div id="titleFallback"><h1 id="titleH1b">Ashfield</h1><div class="sub" id="taglineB"></div><button class="btn gold" id="titleStartFb" style="font-size:22px;padding:16px 44px;letter-spacing:.3em">Start</button></div>
+  <button id="titleStart" class="hidden" aria-label="Start"></button>
+  <div id="titleHint">Tap start · Enter</div>
+</div>
 
 <div id="menu" class="screen">
   <h1 id="titleH1">Ashfall</h1>
@@ -202,8 +216,8 @@
 // ============================================================================
 //  ASHFALL — tunables. Change these to rebalance the game.
 // ============================================================================
-const GAME_TITLE = 'Ashfall';       // working title (see DESIGN.md §Title)
-const GAME_TAGLINE = 'Roll to live. Ten dropped on the island. One seat on the barge.';
+const GAME_TITLE = 'Ashfield';      // matches the key art; the storm ring is still 'the Ashfall'
+const GAME_TAGLINE = 'Roll to live. Scavenge. Fight. Survive. Belong?';
 const STEP = 1/60;                 // fixed simulation timestep (seconds)
 const TILE = 32;                   // tile size in px
 const MAP_W = 60, MAP_H = 60;      // map size in tiles
@@ -254,7 +268,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '9997b5a 20260906-0200';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '7c3458d 20260906-0610';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -454,7 +468,7 @@ function loadArt(){
   fetch('art/manifest.json').then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
     for(const pack of m.packs){ const p=await fetch('art/'+pack).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
       for(const a of p.assets){ if(!a.file||a.status!=='ready') continue; const img=new Image();
-        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); };
+        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); };
         img.src='art/'+a.file; } } }).catch(()=>{});
 }
 const sprite = id=>ART.sprites[id];
@@ -473,7 +487,7 @@ const COL = { deep:'#08213f', water:'#12457a', sand:'#e6c47a', grass:'#6ab04c', 
   pink:'#ff3e7f', cyan:'#2ee6ff', gold:'#ffd166', green:'#5cff9d', red:'#ff4d4d', purple:'#b56cff', orange:'#ff8c42', white:'#f5f2ec', ink:'#0a0e1a' };
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.floor(W*DPR); cv.height = Math.floor(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
-window.addEventListener('resize', resize); resize();
+window.addEventListener('resize', ()=>{ resize(); if(typeof layoutTitle==='function') layoutTitle(); }); resize();
 
 // ============================================================================
 //  Map generation (deterministic from seed, so every online client builds the same island)
@@ -1410,7 +1424,17 @@ function render(){
 //  Screens / flow
 // ============================================================================
 const $=id=>document.getElementById(id);
-function show(id){ ['menu','select','lobby','pass','pause','end','guide'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+function show(id){ ['title','menu','select','lobby','pass','pause','end','guide'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+// ---- title screen: key art when served (art/ui/title_*.jpg), drawn wordmark otherwise. Picks the painting by orientation. ----
+const TITLE_ART = { portrait:{id:'ui.title.portrait', box:[0.30,0.855,0.70,0.935]}, landscape:{id:'ui.title.landscape', box:[0.40,0.79,0.60,0.94]} };
+function showTitle(){ state='title'; show('title'); layoutTitle(); }
+function layoutTitle(){ if(state!=='title') return; const a=TITLE_ART[W>H?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), hit=$('titleStart');
+  if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; img.dataset.id=a.id; } img.classList.add('on'); $('titleFallback').classList.add('hidden');
+    const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.max(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
+    hit.style.left=(ox+x0*iw*sc)+'px'; hit.style.top=(oy+y0*ih*sc)+'px'; hit.style.width=((x1-x0)*iw*sc)+'px'; hit.style.height=((y1-y0)*ih*sc)+'px'; hit.classList.remove('hidden'); }
+  else { img.classList.remove('on'); $('titleFallback').classList.remove('hidden'); hit.classList.add('hidden'); } }
+function startFromTitle(){ if(state!=='title') return; Audio.init(); Audio.sfx.click(); toMenu(); }
+$('title').addEventListener('click',startFromTitle);
 let guideReturn='menu';
 function openGuide(){ guideReturn = state==='pause'?'pause':'menu'; if(!$('guideBody').innerHTML) renderGuide(); $('guide').classList.remove('hidden'); $('guide').scrollTop=0; if(guideReturn==='menu'){ state='guide'; $('menu').classList.add('hidden'); } else $('pause').classList.add('hidden'); }
 function closeGuide(){ $('guide').classList.add('hidden'); if(guideReturn==='pause') $('pause').classList.remove('hidden'); else { state='menu'; $('menu').classList.remove('hidden'); } }
@@ -1553,6 +1577,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyM'){ Audio.muted=!Audio.muted; updateTopButtons(); return; }
   if(state==='select'){ const n=parseInt(e.key,10); if(n>=1&&n<=6) pickClass(n-1); return; }
   if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected) Lobby.pick(CLASSES[n-1].id); if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
+  if(state==='title'){ if(e.code==='Enter'||e.code==='Space') startFromTitle(); return; }
   if(state==='guide' || (!$('guide').classList.contains('hidden'))){ if(e.code==='Escape'||e.code==='Enter'||e.code==='Backspace') closeGuide(); return; }
   if(state==='menu'){ if(e.code==='Enter'||e.code==='Space') beginSetup('solo',1); if(e.code==='KeyH') openGuide(); return; }
   if(state==='pause'){ if(e.code==='KeyP'||e.code==='Escape'||e.code==='Enter') togglePause(); return; }
@@ -1599,9 +1624,9 @@ function frame(now){
   catch(err){ console.error(err); acc=0; }
   requestAnimationFrame(frame);
 }
-$('titleH1').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · online via '+location.host:'');
-loadArt(); toMenu(); requestAnimationFrame(frame);
-window.__game = { step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
+$('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · online via '+location.host:'');
+loadArt(); if(!mapCanvas) genMap(12345); $('menuBest').textContent='BEST '+hiScore; showTitle(); requestAnimationFrame(frame);
+window.__game = { skipTitle(){ if(state==='title') toMenu(); }, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
   beginSetup, pickClass, tryEngage, tryMedkit, tryAction, uiChoose, uiRoll, ABILITIES, CLASSES, startCombat, killContestant, localHuman, abilityList, makeWeapon, hostStartRound };
 </script>
 </body>

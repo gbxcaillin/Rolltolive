@@ -229,7 +229,7 @@ const SHAKE_HIT = 7, SHAKE_CRIT = 16;
 const FUMBLE_SELF_DAMAGE = 3;
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'e0a3de9 20260906-0021';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '61d3938 20260906-0109';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -1191,7 +1191,7 @@ function drawWorld(g){
     if(e.inCombat) txtO(g,'⚔',e.x,e.y-70,11,COL.pink,'center');
   }
   if(me && me.alive && !G.over && !viewCombat){ const n=nearestEngageable(me); if(n){ const p=Math.sin(timeNow*8)*2; txtO(g, isTouch?'ENGAGE':'[E] ENGAGE', n.x, n.y-72-p, 13, COL.pink,'center'); g.strokeStyle=COL.pink; g.lineWidth=2; g.beginPath(); g.arc(n.x,n.y-12,24+p,0,7); g.stroke(); } }
-  const z=G.zone; g.fillStyle='rgba(140,10,50,0.42)'; g.beginPath(); g.rect(cam.x-50,cam.y-50,W+100,H+100); g.arc(z.cx,z.cy,z.radius,0,7,true); g.fill();
+  const z=G.zone; g.fillStyle='rgba(140,10,50,0.42)'; g.beginPath(); g.rect(cam.x-50,cam.y-50,W+100,H+100); g.moveTo(z.cx+z.radius,z.cy); g.arc(z.cx,z.cy,z.radius,0,Math.PI*2,true); g.fill('evenodd');
   g.strokeStyle=COL.pink; g.lineWidth=3+Math.sin(timeNow*5)*1; g.shadowColor=COL.pink; g.shadowBlur=14; g.beginPath(); g.arc(z.cx,z.cy,z.radius,0,7); g.stroke(); g.shadowBlur=0;
   if(z.phase<ZONE_RADII.length-1){ g.strokeStyle='rgba(255,255,255,0.35)'; g.setLineDash([8,8]); g.lineWidth=1.5; g.beginPath(); g.arc(z.cx,z.cy,ZONE_RADII[z.phase+1]*MAP_W*TILE/2,0,7); g.stroke(); g.setLineDash([]); }
   drawFx(g,'world');

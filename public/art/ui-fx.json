@@ -48,7 +48,7 @@
       "frameW": 480,
       "frameH": 832,
       "seconds": 15,
-      "codec": "H.264 + AAC (mp4)",
+      "codec": "H.264 main + AAC 80k (mp4, faststart), ~2 MB",
       "usage": "Plays once after START on tall screens (height > width), letterboxed to fit; tap or any key skips. Preloaded while the title is showing.",
       "prompt": "15 s cinematic, vertical 9:16: a lone survivor steps off a rusted barge onto Ashfield's black-sand shore at dawn, storm ring glowing violet on the horizon, ruined observatory on the ridge, painterly post-apocalyptic science-and-magic style matching the title key art."
     },
@@ -60,7 +60,7 @@
       "frameW": 832,
       "frameH": 480,
       "seconds": 15,
-      "codec": "H.264 + AAC (mp4)",
+      "codec": "H.264 main + AAC 80k (mp4, faststart), ~2 MB",
       "usage": "Plays once after START on wide screens (width >= height), letterboxed to fit; tap or any key skips. Preloaded while the title is showing.",
       "prompt": "15 s cinematic, horizontal 16:9: same shot as the portrait cut, wider framing shows the whole shoreline and the Ashfall storm ring closing over the island."
     },

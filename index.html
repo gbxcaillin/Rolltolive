@@ -44,8 +44,8 @@
   body.uiArt .btn:active,body.uiArt .btn.gold:active{border-image-source:var(--plate-gold-pressed);filter:none;transform:translateY(1px)}
   body.uiArt .btn:disabled{filter:grayscale(.8) brightness(.6)}
   body.uiArt .box,body.uiArt .card{border:solid transparent;border-width:22px;border-image:var(--panel-frame) 130 / 22px / 6px round;border-radius:0;background:rgba(8,11,22,.86)}
-  body.uiArt #guide h3{padding:6px 0 34px 44px;background:var(--divider) no-repeat center bottom / auto 26px;position:relative;min-height:32px}
-  body.uiArt #guide h3::before{content:'';position:absolute;left:0;top:0;width:36px;height:36px;background:var(--section-icons) no-repeat 0 0 / 700% 100%}
+  body.uiArt #guide h3{padding:4px 0 36px;background:var(--divider) no-repeat center bottom / auto 26px;gap:8px}
+  body.uiArt #guide h3::before{content:'';display:block;width:44px;height:44px;margin:0 auto;background:var(--section-icons) no-repeat 0 0 / 700% 100%}
   body.uiArt #guide h3:nth-of-type(1)::before{background-position-x:calc(100%/6*0)} body.uiArt #guide h3:nth-of-type(2)::before{background-position-x:calc(100%/6*6)} body.uiArt #guide h3:nth-of-type(3)::before{background-position-x:calc(100%/6*5)} body.uiArt #guide h3:nth-of-type(4)::before{background-position-x:calc(100%/6*2)} body.uiArt #guide h3:nth-of-type(5)::before{background-position-x:calc(100%/6*4)} body.uiArt #guide h3:nth-of-type(6)::before{background-position-x:calc(100%/6*3)} body.uiArt #guide h3:nth-of-type(7)::before{background-position-x:calc(100%/6*2)} body.uiArt #guide h3:nth-of-type(8)::before{background-position-x:calc(100%/6*3)} body.uiArt #guide h3:nth-of-type(9)::before{background-position-x:calc(100%/6*1)} body.uiArt #guide h3:nth-of-type(10)::before{background-position-x:calc(100%/6*4)} body.uiArt #guide h3:nth-of-type(11)::before{background-position-x:calc(100%/6*6)} body.uiArt #guide h3:nth-of-type(12)::before{background-position-x:calc(100%/6*0)}
   @media (max-width:640px){ body.uiArt .btn{border-width:10px 24px 11px 20px;border-image-width:10px 24px 11px 20px;padding:4px 8px;font-size:13px;letter-spacing:.08em} body.uiArt .row{gap:6px} }
   @media (orientation:landscape) and (min-width:760px){ body.uiArt #guide{background:var(--guide-bg) center/cover no-repeat,rgba(6,9,18,.82)} body.uiArt #guide .box{max-width:min(900px,76vw)} }
@@ -124,21 +124,28 @@
   .toast.gold{border-color:var(--gold)} .toast.cyan{border-color:var(--cyan)} .toast.green{border-color:var(--green)} .toast.red{border-color:var(--red)}
   .toast.out{opacity:0;transition:opacity .5s}
   @keyframes tin{from{transform:translateX(-20px);opacity:0}to{transform:none;opacity:1}}
-  #end .big{font-size:clamp(38px,8vw,80px);font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin:0;text-align:center}
+  #end{background:rgba(6,9,18,.92);justify-content:center}
+  #end .big{font-size:clamp(38px,8vw,80px);font-weight:900;letter-spacing:.1em;text-transform:uppercase;margin:auto 0 0;text-align:center;line-height:1}
+  #end .sub{margin:10px 0 18px;max-width:520px}
+  .endCard{max-width:420px;width:auto;min-width:min(320px,88vw);margin-bottom:auto;padding:18px 26px 20px;text-align:center}
+  .endCard .row{margin-top:14px}
   #end .big.win{color:var(--gold)} #end .big.lose{color:var(--red)}
-  .stats{display:grid;grid-template-columns:auto auto;gap:4px 18px;font-size:14px;margin:14px 0}
-  .stats b{color:var(--cyan);text-align:right}
+  .stats{display:grid;grid-template-columns:max-content max-content;gap:7px 26px;font-size:15px;margin:0 auto;justify-content:center;align-items:baseline}
+  .stats span{text-align:right;color:var(--muted);letter-spacing:.04em} .stats b{color:var(--cyan);text-align:left;font-weight:800}
   .topbtns{position:fixed;top:10px;right:10px;z-index:11;display:flex;gap:6px}
   .topbtns button{background:rgba(10,14,26,.7);border:1px solid var(--line);color:var(--ink);border-radius:6px;width:36px;height:36px;font-size:16px;cursor:pointer}
   .small{font-size:12px;color:var(--muted);text-align:center;max-width:560px;line-height:1.5}
   .status{font-size:12px;color:var(--cyan);letter-spacing:.1em;min-height:16px;text-align:center}
   #guide .box{max-width:860px;text-align:left}
-  #guide h3{margin:18px 0 6px;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  #guide h3{margin:22px 0 8px;font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-align:center;display:flex;flex-direction:column;align-items:center}
   #guide h3:first-child{margin-top:0}
-  #guide p,#guide li{font-size:13.5px;line-height:1.55;color:#d6dbe8} #guide ul{margin:4px 0 4px 18px;padding:0}
+  #guide p,#guide li{font-size:14px;line-height:1.6;color:#d6dbe8} #guide p{margin:8px 0} #guide ul{margin:6px 0 6px 4px;padding-left:18px} #guide li{margin:4px 0} #guide li::marker{color:var(--cyan)}
+  #guide .box{padding:16px 22px 22px} @media (max-width:640px){ #guide .box{padding:12px 12px 18px} }
   #guide table{border-collapse:collapse;width:100%;font-size:12px;margin:6px 0}
   #guide th,#guide td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} #guide th{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
   #guide .tw{overflow-x:auto;max-width:100%}
+  @media (max-width:640px){ #guide table.stack,#guide table.stack tbody{display:block;width:100%} #guide table.stack tr{display:block;padding:8px 0 10px;border-bottom:1px solid var(--line)} #guide table.stack tr:first-child{display:none}
+    #guide table.stack td{display:block;border:0;padding:2px 0;font-size:13.5px} #guide table.stack td[data-label]::before{content:attr(data-label);display:block;color:var(--muted);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin:8px 0 2px} }
   #guide b.k{color:var(--cyan)} #guide .cls{font-weight:900}
   #guide svg{display:block;margin:8px auto;max-width:320px}
   .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
@@ -197,7 +204,7 @@
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · Touch: left joystick</td></tr>
       <tr><td>Engage nearby survivor</td><td><kbd>E</kbd> or <kbd>Space</kbd> · Touch: ENGAGE button</td></tr>
-      <tr><td>Use medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · Touch: MED / ACT buttons</td></tr>
+      <tr><td>Use medkit · Field action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · Touch: MED / ACT buttons</td></tr>
       <tr><td>Pick ability in combat</td><td><kbd>1</kbd>–<kbd>6</kbd> or tap</td></tr>
       <tr><td>Roll the d20</td><td><kbd>Space</kbd> / <kbd>Enter</kbd> or tap the dice</td></tr>
       <tr><td>Pause · Mute · Guide</td><td><kbd>P</kbd> · <kbd>M</kbd> · <kbd>H</kbd></td></tr>
@@ -257,8 +264,8 @@
 <div id="end" class="screen hidden">
   <p class="big" id="endBig">Escaped</p>
   <div class="sub" id="endSub"></div>
-  <div class="stats" id="endStats"></div>
-  <div class="row"><button class="btn gold" id="againBtn">Play again</button></div>
+  <div class="box endCard"><div class="stats" id="endStats"></div>
+  <div class="row"><button class="btn gold" id="againBtn">Play again</button></div></div>
 </div>
 
 <div id="combatPanel" class="hidden">
@@ -474,7 +481,7 @@ const WEAPON_COLORS = {none:'#e8c39e',blade:'#dfe6f0',blunt:'#c8a57a',ranged:'#9
 // each weapon type carries two moves; the second unlocks only with skilled/expert affinity
 const WEAPON_MOVES = { blade:['cleave','flurry'], blunt:['crush','stagger'], ranged:['aimed','volley'], arcane:['ember','hex'], tech:['overclock','drones'] };
 // class affinity levels with a weapon type
-const AFF = { expert:{hit:2,dmg:2,moves:2,rank:3,label:'expert'}, skilled:{hit:1,dmg:1,moves:2,rank:2,label:'skilled'}, basic:{hit:0,dmg:0,moves:1,rank:1,label:'basic'}, poor:{hit:-2,dmg:-1,moves:0,rank:0,label:'poor'} };
+const AFF = { expert:{hit:2,dmg:2,moves:2,rank:3,label:'Expert'}, skilled:{hit:1,dmg:1,moves:2,rank:2,label:'Skilled'}, basic:{hit:0,dmg:0,moves:1,rank:1,label:'Basic'}, poor:{hit:-2,dmg:-1,moves:0,rank:0,label:'Poor'} };
 function makeWeapon(type, tier, fistBonus){ if(type==='none') return {type:'none',tier:0,name:'Fists',flat:fistBonus||0,upgraded:false};
   tier=clamp(tier,1,4); return {type, tier, name:WEAPON_NAMES[type][tier-1], flat:WEAPON_TIER_BONUS[tier-1], upgraded:false}; }
 const fistStr = c=>'d6'+(c.fistBonus?'+'+c.fistBonus:'');
@@ -1493,7 +1500,7 @@ function drawWorld(g){
   drawFx(g,'world');
   g.restore();
   if(flashA>0){ g.fillStyle=`rgba(255,255,255,${flashA*0.5})`; g.fillRect(0,0,W,H); }
-  drawHUD(g);
+  if(state!=='end') drawHUD(g);
 }
 function drawHUD(g){
   const e=localHuman(); const z=G.zone; const narrow=W<640;
@@ -1654,14 +1661,14 @@ function renderGuide(){
   const cn=id=>CLASS_BY_ID[id].name, col=id=>CLASS_BY_ID[id].color;
   const phases=ZONE_RADII.map((r,i)=>`<tr><td>${i===0?'0 (drop)':i}</td><td>${i===ZONE_RADII.length-1?'stays':ZONE_PHASE_TIME+' s'}</td><td>${Math.round(r*100)}%</td><td>${ZONE_DAMAGE[i]||'none'}</td><td>${MUSIC_BASE_BPM+MUSIC_BPM_STEP*i}</td></tr>`).join('');
   const classes=CLASSES.map(c=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>MATCHUP_CYCLE[(i+k)%6];
-    const aff=WEAPON_TYPES.map(t=>`${t} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
-    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · Fists ${fistStr(c)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
-  const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">+${WEAPON_TIER_BONUS[i]} dmg</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
+    const aff=WEAPON_TYPES.map(t=>`${t[0].toUpperCase()+t.slice(1)} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
+    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td data-label="Stats">HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · Fists ${fistStr(c)}</td><td data-label="Signature · Defence · Field action · Passive"><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td data-label="Weapon affinity">${aff}</td><td data-label="Matchups"><span style="color:${COL.green}">Hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">Edge on ${cn(n(2))}</span><br>Even vs ${cn(n(3))}<br><span style="color:${COL.orange}">Risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">Fears ${cn(n(5))}</span></td></tr>`; }).join('');
+  const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t[0].toUpperCase()+t.slice(1)}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td data-label="Tier ${i+1}">${n}<br><i style="opacity:.7">+${WEAPON_TIER_BONUS[i]} dmg</i></td>`).join('')}<td data-label="Moves">${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
   // matchup ring as SVG
   const R=110, cx=150, cy=150; const pts=MATCHUP_CYCLE.map((id,i)=>{ const a=-Math.PI/2+i*Math.PI/3; return {id, x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R}; });
   const arrows=pts.map((p,i)=>{ const q=pts[(i+1)%6]; const dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy); const ux=dx/d, uy=dy/d; return `<line x1="${p.x+ux*33}" y1="${p.y+uy*33}" x2="${q.x-ux*37}" y2="${q.y-uy*37}" stroke="${col(p.id)}" stroke-width="3" marker-end="url(#ah)"/>`; }).join('');
   const nodes=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="31" fill="#0b1020" stroke="${col(p.id)}" stroke-width="2.5"/><text x="${p.x}" y="${p.y+3.5}" text-anchor="middle" font-size="${cn(p.id).length>7?7.5:9}" font-weight="900" fill="${col(p.id)}">${cn(p.id).toUpperCase()}</text>`).join('');
-  const ring=`<svg viewBox="0 0 300 300" width="320" height="320"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f5f2ec"/></marker></defs>${arrows}${nodes}<text x="150" y="150" text-anchor="middle" font-size="10" fill="#8e97ad">arrow = hunts (+${MATCHUP_BONUS[1]})</text></svg>`;
+  const ring=`<svg viewBox="0 0 300 300" width="320" height="320"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f5f2ec"/></marker></defs>${arrows}${nodes}<text x="150" y="150" text-anchor="middle" font-size="10" fill="#8e97ad">Arrow = hunts (+${MATCHUP_BONUS[1]})</text></svg>`;
   $('guideBody').innerHTML=`
 <h3>The goal</h3>
 <p>You are Outborn: born outside the walls. Ten of you are dropped on the island of Ashfield. You want the only seat on the extraction barge to the Safe City, and the citizenship that comes with it. Be the <b class="k">last one alive</b>, then walk to the barge when it lands. You lose the moment your HP hits zero, whether in a fight or burning outside the ring.</p>
@@ -1686,13 +1693,13 @@ function renderGuide(){
 <li><b class="k">Flee</b>: d20 + your SPD vs 10 + their SPD. Fail and they get a free strike. Success puts you a few tiles away with a short immunity.</li>
 <li>Killing someone heals you 15% (Hexblade 40%), raises ATK by one (max +4), and lets you take their weapon and medkits if they are better.</li></ul>
 <h3>Classes</h3>
-<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · Defence · Field action · Passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
+<div class="tw"><table class="stack"><tr><th>Class</th><th>Stats</th><th>Signature · Defence · Field action · Passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
 <h3>The matchup circle</h3>
 <p>Each class hunts the next one round the circle (<b>+${MATCHUP_BONUS[1]}</b> to hit and damage, and the victim gets −${MATCHUP_BONUS[1]}), has the edge on the one after (+${MATCHUP_BONUS[2]}), is even with the opposite class and with its own, and is on the losing side of the other two. The ENGAGE prompt says <span style="color:${COL.green}">PREY</span>, <span style="color:${COL.cyan}">EDGE</span>, EVEN, <span style="color:${COL.orange}">RISKY</span> or <span style="color:${COL.red}">AVOID</span> before you commit, and minimap dots use the same colours. Chase your prey. Run from your predator.</p>
 ${ring}
 <h3>Weapons and moves</h3>
 <p>A weapon adds moves to your action bar. How many you can use, and the hit/damage bonus, depends on your class's affinity with that weapon type: <b>expert</b> +2/+2 and both moves, <b>skilled</b> +1/+1 and both moves, <b>basic</b> the first move only, <b>poor</b> −2 to hit and no moves. The game keeps whichever weapon is better <i>for you</i>, so a Warden keeps a T2 bow over a T3 wand.</p>
-<div class="tw"><table><tr><th>Type</th><th>Tier 1</th><th>Tier 2</th><th>Tier 3</th><th>Tier 4</th><th>Moves</th></tr>${weapons}</table></div>
+<div class="tw"><table class="stack"><tr><th>Type</th><th>Tier 1</th><th>Tier 2</th><th>Tier 3</th><th>Tier 4</th><th>Moves</th></tr>${weapons}</table></div>
 <h3>Loot</h3>
 <ul><li><b class="k">Weapon</b> (45%): tier rises with the phase. Wraiths find one tier higher.</li><li><b class="k">Medkit</b> (25%): stored, up to ${MEDKIT_MAX} (Alchemist ${MEDKIT_MAX+1}). Use on the map with H, or as a combat action that costs your turn.</li>
 <li><b class="k">Armor plate</b> (12%): +1 DEF, up to +3.</li><li><b class="k">Power cell</b> (8%): +10 max energy, refilled.</li><li><b class="k">Supply cache</b> (10%): score.</li></ul>
@@ -1776,7 +1783,7 @@ function startGame(){ newGame(rint(1,1e9), buildRoster()); clearToasts(); show(n
   toast('Dropped on Ashfield with your fists and one trick. Find a weapon.', 'gold', 5); }
 function showPass(title, sub, cb){ state='pass'; pendingPass=cb; $('passTitle').textContent=title; $('passSub').textContent=sub; show('pass'); updateTopButtons(); }
 $('passBtn').addEventListener('click',()=>{ const cb=pendingPass; pendingPass=null; show(null); Audio.sfx.click(); if(cb) cb(); updateTopButtons(); });
-function showEnd(final){
+function showEnd(final){ clearToasts();
   const me=localHuman(); const r=G.result||{type:'lose'};
   const hs=humans(); const best=hs.slice().sort((a,b)=>b.score-a.score)[0]; const who = (setup.mode==='online')? (me||best) : (r.type==='win'? r.who : best);
   hs.forEach(h=>saveHi(h.score)); if(me) saveHi(me.score);

@@ -257,6 +257,14 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Overworld portraits and single-image animation
+The same cutouts walk the island (`PORTRAIT_WORLD_H` px tall, downscaled once to a small copy, with a faint
+class-coloured rim behind so they read on busy tiles). There is one still per class, so motion is procedural
+(`PORTRAIT_ANIM`): walking bounces the figure, rocks it about its feet, leans it into its direction of travel and
+adds a touch of squash and stretch; idle breathes and sways slowly; attacking is a hard lean into the target and a
+hit recoils and flashes the white silhouette. Real walk cycles can replace this by supplying `char.<id>.walk`
+frame sheets, which `drawFigure` already prefers when present.
+
 ### Combat portraits
 The encounter scene draws each fighter's class portrait instead of the drawn figure. The portrait's black backdrop
 is keyed out once per class (flood fill from the border over near-black pixels, so black inside the character

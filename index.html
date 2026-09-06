@@ -303,6 +303,9 @@ const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
 const BUILD = 'dev';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
+const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
+const PORTRAIT_RIM = 0.6;          // alpha of the class-coloured rim drawn behind overworld portraits so they read against busy tiles (0 = off)
+const PORTRAIT_ANIM = { bob:2.4, rock:0.06, lean:0.09, breathe:0.015 }; // single-image animation: walk bounce (px), rock and forward lean (rad), idle breathing (scale)
 const PORTRAIT_KEY_LEVEL = 22;     // portraits: pixels darker than this (0-255) connected to the border are the black backdrop and get keyed out
 const PICKER_MIN_ART = 320;        // px: below this art height the class picker switches to compact text instead of shrinking further
 const INTRO_STALL_SECS = 25;       // give up on the intro (go to the menu) if nothing has played after this long
@@ -513,7 +516,9 @@ function portraitCutout(clsId){ const c=ART.cutouts[clsId]; if(c!==undefined) re
     while(stack.length){ const i=stack.pop(), x=i%w; if(x>0) push(i-1); if(x<w-1) push(i+1); if(i>=w) push(i-w); if(i<w*(h-1)) push(i+w); }
     for(let i=0;i<w*h;i++){ if(seen[i]) d[i*4+3]=0; else { const m=Math.max(d[i*4],d[i*4+1],d[i*4+2]); if(m<PORTRAIT_KEY_LEVEL*2) d[i*4+3]=Math.round(255*(m-PORTRAIT_KEY_LEVEL)/PORTRAIT_KEY_LEVEL); } } // soft edge just outside the keyed region
     g.putImageData(im,0,0); const white=document.createElement('canvas'); white.width=w>>1; white.height=h>>1; const wg=white.getContext('2d'); wg.drawImage(cv2,0,0,white.width,white.height); wg.globalCompositeOperation='source-in'; wg.fillStyle='#fff'; wg.fillRect(0,0,white.width,white.height);
-    cut={cv:cv2, white, w, h}; }catch(e){ cut=null; }
+    const small=document.createElement('canvas'); small.height=256; small.width=Math.round(256*w/h); const sg=small.getContext('2d'); sg.imageSmoothingQuality='high'; sg.drawImage(white,0,0); sg.clearRect(0,0,small.width,small.height); sg.drawImage(cv2,0,0,small.width,small.height); // overworld-size copy, downscaled once
+    const rim=document.createElement('canvas'); rim.width=small.width; rim.height=small.height; const rg=rim.getContext('2d'); rg.drawImage(small,0,0); rg.globalCompositeOperation='source-in'; rg.fillStyle=CLASS_BY_ID[clsId]?CLASS_BY_ID[clsId].color:'#fff'; rg.fillRect(0,0,rim.width,rim.height);
+    cut={cv:cv2, white, small, rim, w, h}; }catch(e){ cut=null; }
   ART.cutouts[clsId]=cut; return cut; }
 function loadArt(){
   if(location.protocol==='file:') return;
@@ -1292,8 +1297,26 @@ function hostStartRound(){ if(!Net.isHost) return; const roster=buildRoster(); c
 //  Rendering
 // ============================================================================
 const cam={x:0,y:0};
+// Animates a single portrait cutout: walking = bounce + rock about the feet + forward lean + a little squash and
+// stretch; idle = breathing and a slow sway; attack = a hard lean into the target; hits flash the white silhouette.
+function drawPortraitFigure(g, x, y, e, s, opts, cut){
+  const facing=opts.facing??e.facing, moving=opts.moving??e.moving, anim=opts.anim||(moving?'walk':'idle');
+  const fh=PORTRAIT_WORLD_H*s, fw=fh*cut.w/cut.h, ph=e.walk*11, t=timeNow*2.2+e.id*1.3, A=PORTRAIT_ANIM;
+  let bob=0, rock=0, lean=0, sx=1, sy=1;
+  if(anim==='walk'){ bob=Math.abs(Math.sin(ph))*A.bob*s; rock=Math.sin(ph)*A.rock; lean=A.lean; sy=1+Math.sin(ph*2)*0.03; sx=1-Math.sin(ph*2)*0.02; }
+  else { sy=1+Math.sin(t)*A.breathe; rock=Math.sin(t*0.7)*0.012; }
+  if(anim==='attack'){ lean=0.28; sx=1.08; sy=0.97; } else if(anim==='hit'){ lean=-0.12; }
+  g.save(); g.translate(x,y);
+  g.fillStyle='rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(0,1,fw*0.4,fw*0.1,0,0,7); g.fill();
+  g.translate(0,-bob); g.scale(facing,1); g.rotate(lean+rock); g.scale(sx,sy);
+  const world=fh<=cut.small.height; if(world && PORTRAIT_RIM>0){ g.save(); g.globalAlpha*=PORTRAIT_RIM; g.drawImage(cut.rim,-fw/2-1.5,-fh-1.5,fw+3,fh+3); g.restore(); }
+  g.drawImage(world? cut.small : cut.cv, -fw/2, -fh, fw, fh);
+  if(e.flash>0){ g.globalAlpha*=Math.min(1,e.flash)*0.85; g.drawImage(cut.white,-fw/2,-fh,fw,fh); }
+  g.restore(); }
+function figureH(e){ return portraitCutout(e.cls.id)? PORTRAIT_WORLD_H : 42; }
 function drawFigure(g, x, y, e, s, opts){
-  opts=opts||{}; const col=e.cls.color, dark=shade(col,-0.5), facing=opts.facing??e.facing, moving=opts.moving??e.moving, walk=e.walk;
+  opts=opts||{}; const cut=portraitCutout(e.cls.id); if(cut){ drawPortraitFigure(g,x,y,e,s,opts,cut); return; }
+  const col=e.cls.color, dark=shade(col,-0.5), facing=opts.facing??e.facing, moving=opts.moving??e.moving, walk=e.walk;
   const anim=opts.anim||(moving?'walk':'idle');
   if(drawSprite(g,`char.${e.cls.id}.${anim}`,x,y,{frame:Math.floor(timeNow*(anim==='walk'?8:6)),scale:s,flip:facing<0})){
     const cs=sprite(`char.${e.cls.id}.${anim}`); if(cs.hand && e.weapon.type!=='none'){ drawSprite(g,`weapon.${e.weapon.type}.${e.weapon.tier}`, x+cs.hand[0]*s*facing, y+cs.hand[1]*s, {scale:s,flip:facing<0}); }
@@ -1358,13 +1381,13 @@ function drawWorld(g){
   for(const c of combats){ const cx=(c.f[0].x+c.f[1].x)/2, cy=(c.f[0].y+c.f[1].y)/2; g.fillStyle='rgba(255,62,127,0.10)'; g.beginPath(); g.arc(cx,cy,DUEL_RADIUS,0,7); g.fill(); g.strokeStyle='rgba(255,62,127,0.55)'; g.setLineDash([6,6]); g.lineWidth=2; g.beginPath(); g.arc(cx,cy,DUEL_RADIUS,timeNow,timeNow+6.28); g.stroke(); g.setLineDash([]); txtO(g,'DUEL',cx,cy-DUEL_RADIUS-8,10,COL.pink,'center',800); }
   const al=aliveEnts().sort((a,b)=>a.y-b.y);
   for(const e of al){
-    if(e.immune>0){ const sanct=e.immuneHold>0; g.strokeStyle=sanct?'rgba(92,255,157,0.8)':'rgba(255,255,255,0.5)'; g.setLineDash([4,4]); g.lineWidth=sanct?2.5:1.5; g.beginPath(); g.arc(e.x,e.y-12,20+(sanct?Math.sin(timeNow*6)*2:0),0,7); g.stroke(); g.setLineDash([]); if(sanct) txtO(g,`SAFE ${Math.ceil(e.immune)}`,e.x,e.y-80,9,COL.green,'center',800); }
-    if(e.inCombat){ g.strokeStyle=COL.pink; g.setLineDash([3,5]); g.lineWidth=2; g.beginPath(); g.arc(e.x,e.y-12,22,timeNow*2,timeNow*2+5.2); g.stroke(); g.setLineDash([]); }
+    if(e.immune>0){ const sanct=e.immuneHold>0; g.strokeStyle=sanct?'rgba(92,255,157,0.8)':'rgba(255,255,255,0.5)'; g.setLineDash([4,4]); g.lineWidth=sanct?2.5:1.5; g.beginPath(); g.arc(e.x,e.y-figureH(e)/2,figureH(e)/2+(sanct?Math.sin(timeNow*6)*2:0),0,7); g.stroke(); g.setLineDash([]); if(sanct) txtO(g,`SAFE ${Math.ceil(e.immune)}`,e.x,e.y-80,9,COL.green,'center',800); }
+    if(e.inCombat){ g.strokeStyle=COL.pink; g.setLineDash([3,5]); g.lineWidth=2; g.beginPath(); g.arc(e.x,e.y-figureH(e)/2,figureH(e)/2+2,timeNow*2,timeNow*2+5.2); g.stroke(); g.setLineDash([]); }
     if(e===me){ g.strokeStyle=COL.white; g.lineWidth=2; g.beginPath(); g.ellipse(e.x,e.y+1,14,6,0,0,7); g.stroke(); }
-    drawFigure(g,e.x,e.y,e,1);
-    bar(g,e.x-16,e.y-50,32,4,e.hp/e.maxHp, e===me?COL.green:(e.isHuman?COL.cyan:COL.red));
-    txtO(g,e.name,e.x,e.y-58,10,e===me?COL.white:e.cls.color,'center',800);
-    if(e.inCombat) txtO(g,'⚔',e.x,e.y-70,11,COL.pink,'center');
+    drawFigure(g,e.x,e.y,e,1); const top=e.y-figureH(e)-8;
+    bar(g,e.x-16,top,32,4,e.hp/e.maxHp, e===me?COL.green:(e.isHuman?COL.cyan:COL.red));
+    txtO(g,e.name,e.x,top-8,10,e===me?COL.white:e.cls.color,'center',800);
+    if(e.inCombat) txtO(g,'⚔',e.x,top-20,11,COL.pink,'center');
   }
   if(me && me.alive && !G.over && !viewCombat){ const n=nearestEngageable(me); if(n){ const p=Math.sin(timeNow*8)*2; const mu=matchupBonus(me,n); txtO(g, (isTouch?'ENGAGE':'[E] ENGAGE')+' · '+matchupLabel(me,n)+(mu?` ${mu>0?'+':''}${mu}`:''), n.x, n.y-72-p, 13, matchupColor(me,n),'center'); g.strokeStyle=matchupColor(me,n); g.lineWidth=2; g.beginPath(); g.arc(n.x,n.y-12,24+p,0,7); g.stroke(); } }
   const z=G.zone; g.fillStyle='rgba(140,10,50,0.42)'; g.beginPath(); g.rect(cam.x-50,cam.y-50,W+100,H+100); g.moveTo(z.cx+z.radius,z.cy); g.arc(z.cx,z.cy,z.radius,0,Math.PI*2,true); g.fill('evenodd');
@@ -1440,11 +1463,9 @@ function drawCombat(g){
     let lx=0; if(c.phase==='resolve' && c.turn===i) lx=Math.sin(c.lunge*Math.PI)*60*facing;
     const dead = e.hp<=0 && c.phase==='end'; g.save(); if(dead){ g.globalAlpha=clamp(1-c.t/1.2,0,1); g.translate(p.x+lx,p.y); g.rotate(facing*Math.min(1,c.t)*1.4); g.translate(-(p.x+lx),-p.y); }
     const cut=portraitCutout(e.cls.id); let figH=s*50;
-    if(cut){ figH=clamp(Math.min(H*0.5, W*0.62, p.y-224), 140, 520); const fw=figH*cut.w/cut.h, bob=dead?0:Math.sin(timeNow*2+i*1.7)*2;
-      g.fillStyle='rgba(0,0,0,0.4)'; g.beginPath(); g.ellipse(p.x+lx,p.y+2,fw*0.42,fw*0.09,0,0,7); g.fill();
-      g.translate(p.x+lx,p.y-bob); g.scale(facing,1); g.drawImage(cut.cv,-fw/2,-figH,fw,figH);
-      if(e.flash>0){ g.globalAlpha*=e.flash*0.85; g.drawImage(cut.white,-fw/2,-figH,fw,figH); } }
-    else drawFigure(g,p.x+lx,p.y,e,s,{facing,moving:false,anim: dead?'death': (c.phase==='resolve'&&c.turn===i&&c.lunge>0.3)?'attack': e.flash>0?'hit':'idle'});
+    const anim= dead?'death': (c.phase==='resolve'&&c.turn===i&&c.lunge>0.3)?'attack': e.flash>0?'hit':'idle';
+    if(cut){ figH=clamp(Math.min(H*0.5, W*0.62, p.y-224), 140, 520); drawPortraitFigure(g,p.x+lx,p.y,e,figH/PORTRAIT_WORLD_H,{facing,moving:false,anim},cut); }
+    else drawFigure(g,p.x+lx,p.y,e,s,{facing,moving:false,anim});
     g.restore();
     const bw=Math.min(240,W*0.36), narrow=bw<200, bx=p.x-bw/2, by=p.y-figH-(narrow?66:52);
     txtO(g,e.name.toUpperCase(),p.x,by-24,Math.min(20,W/34),e===localHuman()?COL.white:e.cls.color,'center'); txtO(g,`${e.cls.name} · ${e.weapon.name}`,p.x,by-8,11,'#aab3c8','center',700);

@@ -64,7 +64,7 @@ Client → host:
 ```json
 { "t":"snap", "tm":83.2, "z":[cx,cy,radius,phase,phaseT], "al":7, "b":[x,y] | null, "over":0,
   "cr":[[x,y],…],
-  "e":[[id,x,y,hp,maxHp,en,maxEn,alive,facing,moving,wType,wTier,wUpg,kills,immuneSecs,inCombat,def,atk,score,medkits,dmgDealt,crates,placement,armor,immuneHold,aggression,isHuman],…],
+  "e":[[id,x,y,hp,maxHp,en,maxEn,alive,facing,moving,wType,wTier,wUpg,kills,immuneSecs,inCombat,def,atk,score,medkits,dmgDealt,crates,placement,armor,immuneHold,aggression,isHuman,fieldCd,scoutT,sprintT,prep,rite,burnGrace],…],
   "c":[{ "id":3, "f":[idA,idB], "turn":0, "round":2, "ph":"choose", "ch":null, "nat":14, "t":0.4, "fo":0,
          "dv":14, "dr":0, "dvis":1, "log":[{text,color}], "w":0, "l":0, "fl":0,
          "st":[[statuses of A],[statuses of B]], "cd":[{cooldowns A},{cooldowns B}] }] }

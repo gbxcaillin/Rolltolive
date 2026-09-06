@@ -60,35 +60,40 @@ Sprite sheet of the WARDEN from the attached portrait, 2 frames in a single hori
 Sprite sheet of the WARDEN from the attached portrait, 6 frames in a single horizontal row, DEATH: stagger, drop to one knee, collapse forward, lie still, ash drifting off the body in the last two frames. Facing right. BLACK BG + STYLE
 ```
 
-## 2. Tiles (8, top-down, 32×32, seamless)
+## 2. Terrain tiles (8 types, top-down, 32×32, 3–4 variants each)
 
-Generate at 512×512, downscale to 32×32 sets of 3–4 variants. The ground should read as painted
-terrain, not photo texture; keep detail large enough to survive the downscale.
+How the engine uses them: the island is a 60×60 grid of 32 px tiles, one type per cell, no transition tiles,
+drawn with the variant frames scattered at random. So every type must read on its own at 32 px, mostly by
+colour and value, and must not carry a strong directional light or a horizon. The minimap and the Ashfall ring
+use the flat colours below, so keep each type's average colour close to its swatch or the map and minimap will
+disagree.
+
+Generators are poor at true seamless tiles at small sizes. What works: generate one large square swatch per
+type (1024×1024, "seamless texture"), check it tiles by offsetting it half a width in an editor, downscale to
+128×128, then cut four 32×32 variants from different quarters. Ask for **4 variations in a 2×2 grid** if the
+generator handles grids well; each quadrant becomes a variant.
 
 ```
-Seamless top-down deep ocean water, near-black teal, long slow swells, faint moonlit ash flecks on the surface, 4 variants. SEAMLESS + STYLE
+TERRAIN STYLE (append to every tile prompt): seamless tileable texture, straight top-down orthographic view, flat even overcast lighting with no cast shadows and no horizon, painterly with fine ink detail, post-apocalyptic wasteland, muted and grimy, readable when shrunk to a thumbnail, no text, no borders. Same artist as the Outborn key art.
 ```
-```
-Seamless top-down shallow coastal water, teal-blue, rippling, rust-orange silt patches and drowned wreckage shadows below the surface, 4 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down black volcanic sand beach with pale bone-coloured shell fragments, drift ash, sparse wet stones, 4 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down wasteland grass, dull olive-green tufts with yellow dead patches and rune-scorched bare earth, 4 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down dead forest canopy, dense dark green and rust-brown crowns, gnarled bare branches, pale fungal glow between trunks, 4 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down cracked grey rock and scree, iron-stained fissures, patches of soot, 3 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down ruined city block: broken concrete slabs, exposed rebar, collapsed walls, faint orange window glow from below, rune graffiti, 3 variants. SEAMLESS + STYLE
-```
-```
-Seamless top-down ash field, grey-violet drifts, smouldering embers, half-buried skulls and rusted debris, 3 variants. SEAMLESS + STYLE
-```
+
+| Type | Swatch | Prompt |
+|---|---|---|
+| Deep water | `#08213f` | Deep dark ocean far from shore, near-black navy, long slow swell lines, a few pale ash flecks floating, faint violet reflection of a storm sky. + TERRAIN STYLE |
+| Shallow water | `#12457a` | Shallow coastal water, teal-navy over dark sand, soft rippling caustics, drowned rusted wreckage and rebar just under the surface, a thin rust-orange silt drift. + TERRAIN STYLE |
+| Sand | `#e6c47a` | Black-flecked pale tan volcanic beach sand, wind ripples, scattered bone-white shell fragments and small wet stones, faint ash dusting. + TERRAIN STYLE |
+| Grass | `#6ab04c` | Wasteland grassland, dull olive-green tufts over dry yellow-brown earth, bare rune-scorched patches, tiny scrap fragments and dead flowers, no lush green. + TERRAIN STYLE |
+| Forest | `#2f6a3a` | Dense dead-forest canopy from directly above, dark green and rust-brown crowns packed edge to edge, gnarled bare branches, pale fungal glow in the gaps between trunks. + TERRAIN STYLE |
+| Rock | `#5b5f73` | Cracked grey basalt and scree, iron-stained fissures, soot patches, occasional fossil of a rusted machine part pressed into the stone. + TERRAIN STYLE |
+| Ruin | `#2a2d3b` | Ruined city block from above: broken concrete slabs, exposed rebar, collapsed wall lines, a faint orange window glow bleeding up from below, chalk rune graffiti. + TERRAIN STYLE |
+| Ash | `#3a3540` | Ash field, grey-violet drifts of fine ash, smouldering embers, half-buried skulls and rusted debris, the odd violet crystal shard. + TERRAIN STYLE |
+
+Variant prompt (run once per type): `Four variations of the tile above in a 2×2 grid, same palette and scale, different detail placement, each quadrant seamless with the others. + TERRAIN STYLE`
+
+Optional extras the engine can take later as props (`BLACK BG`, three-quarter top-down): a dead tree, a rusted car husk, a rune obelisk, a smashed crate, a bone pile. These would be placed on top of tiles rather than baked into them.
+
+Files: `art/tiles/<type>.png` as a horizontal strip of variants (32×32 each, so a 4-variant strip is 128×32); set
+`frames` in `art/tiles.json` to the variant count and flip `status` to `ready`.
 
 ## 3. Weapons (5 types × 4 tiers = 20 held sprites, 20 icons)
 

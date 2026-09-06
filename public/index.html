@@ -311,7 +311,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '599ba1b 20260906-1223';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'c7721d9 20260906-1239';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
 const SHEET_WALK_FPS = 3.5;        // run-sheet frames per second of movement (6 frames: one stride cycle every 1.7 s); lower = slower, more readable
 const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
@@ -590,7 +590,9 @@ window.addEventListener('resize', ()=>{ resize(); if(typeof layoutTitle==='funct
 const T = {DEEP:0, WATER:1, SAND:2, GRASS:3, FOREST:4, ROCK:5, RUIN:6, ASH:7};
 const TILE_NAMES = ['deep','water','sand','grass','forest','rock','ruin','ash'];
 const SOLID = [true,true,false,false,false,true,true,false];
-let tiles = null, mapCanvas=null, miniCanvas=null, mapSeed=0;
+// overlay per tile type when painted tiles are in (index = T.*): calm the busy water, green the grass, cool the rock
+const TILE_TINT = ['rgba(4,10,30,0.35)','rgba(10,40,70,0.25)',null,'rgba(106,176,76,0.16)','rgba(20,60,30,0.12)','rgba(120,130,160,0.18)','rgba(0,0,0,0.22)','rgba(90,60,110,0.10)'];
+let tiles = null, mapCanvas=null, miniCanvas=null, mapSeed=0, MAP_RES=1; // MAP_RES: map canvas pixels per world pixel (2 on high-DPI screens once painted tiles are in)
 function makeNoise(seed){
   const h=(x,y)=>{ let n=Math.imul(x,374761393)^Math.imul(y,668265263)^seed; n=Math.imul(n^(n>>>13),1274126177); n^=n>>>16; return (n>>>0)/4294967296; };
   const sm=(x,y)=>{ const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
@@ -625,12 +627,13 @@ function genMap(seed){
   flowCache.clear(); renderMap();
 }
 function renderMap(){
-  mapCanvas=document.createElement('canvas'); mapCanvas.width=MAP_W*TILE; mapCanvas.height=MAP_H*TILE;
-  const g=mapCanvas.getContext('2d');
-  g.fillStyle=COL.deep; g.fillRect(0,0,mapCanvas.width,mapCanvas.height);
+  MAP_RES = sprite('tile.grass')? Math.min(2, DPR||1) : 1; // painted tiles are 64 px: keep their detail on phones
+  mapCanvas=document.createElement('canvas'); mapCanvas.width=MAP_W*TILE*MAP_RES; mapCanvas.height=MAP_H*TILE*MAP_RES;
+  const g=mapCanvas.getContext('2d'); g.scale(MAP_RES,MAP_RES);
+  g.fillStyle=COL.deep; g.fillRect(0,0,MAP_W*TILE,MAP_H*TILE);
   for(let y=0;y<MAP_H;y++) for(let x=0;x<MAP_W;x++){
     const t=tiles[y*MAP_W+x], px=x*TILE, py=y*TILE, hh=tileHash(x,y), h2=tileHash(x+999,y+77);
-    if(drawSprite(g,'tile.'+TILE_NAMES[t],px+TILE/2,py+TILE,{frame:Math.floor(hh*97)})) continue;
+    if(drawSprite(g,'tile.'+TILE_NAMES[t],px+TILE/2,py+TILE,{frame:Math.floor(hh*97),w:TILE,h:TILE})) continue;
     switch(t){
       case T.DEEP: g.fillStyle=COL.deep; g.fillRect(px,py,TILE,TILE); break;
       case T.WATER: g.fillStyle=COL.water; g.fillRect(px,py,TILE,TILE);
@@ -658,7 +661,23 @@ function renderMap(){
         if(hh>0.6){ g.fillStyle=COL.orange; g.beginPath(); g.arc(px+6+h2*20,py+6+hh*20,1.6,0,7); g.fill(); } break;
     }
   }
-  miniCanvas=document.createElement('canvas'); miniCanvas.width=120; miniCanvas.height=120; miniCanvas.getContext('2d').drawImage(mapCanvas,0,0,120,120);
+  if(sprite('tile.grass')) paintedTilePass(g);
+  // the minimap stays flat-coloured so it reads at a glance whatever the tiles look like
+  miniCanvas=document.createElement('canvas'); miniCanvas.width=120; miniCanvas.height=120; const mg=miniCanvas.getContext('2d'); const k=120/MAP_W;
+  for(let y=0;y<MAP_H;y++) for(let x=0;x<MAP_W;x++){ mg.fillStyle=COL[TILE_NAMES[tiles[y*MAP_W+x]]]; mg.fillRect(x*k,y*k,k+0.5,k+0.5); }
+}
+// Painted tiles are rich and dark, so walkability needs help: calm the water, tint the grass, and draw a cliff
+// edge wherever a blocking tile meets open ground.
+function paintedTilePass(g){
+  for(let y=0;y<MAP_H;y++) for(let x=0;x<MAP_W;x++){ const t=tiles[y*MAP_W+x], px=x*TILE, py=y*TILE;
+    const tint=TILE_TINT[t]; if(tint){ g.fillStyle=tint; g.fillRect(px,py,TILE,TILE); } }
+  g.lineWidth=2;
+  for(let y=0;y<MAP_H;y++) for(let x=0;x<MAP_W;x++){ const t=tiles[y*MAP_W+x]; if(!SOLID[t]) continue; const px=x*TILE, py=y*TILE; const water=t===T.DEEP||t===T.WATER;
+    const open=(dx,dy)=>{ const n=tileAt(x+dx,y+dy); return !SOLID[n]; };
+    g.strokeStyle= water? 'rgba(200,235,255,0.45)' : 'rgba(0,0,0,0.6)'; g.beginPath();
+    if(open(0,-1)){ g.moveTo(px,py+1); g.lineTo(px+TILE,py+1); } if(open(0,1)){ g.moveTo(px,py+TILE-1); g.lineTo(px+TILE,py+TILE-1); }
+    if(open(-1,0)){ g.moveTo(px+1,py); g.lineTo(px+1,py+TILE); } if(open(1,0)){ g.moveTo(px+TILE-1,py); g.lineTo(px+TILE-1,py+TILE); } g.stroke();
+    if(!water){ g.strokeStyle='rgba(255,255,255,0.22)'; g.beginPath(); if(open(0,-1)){ g.moveTo(px,py+3); g.lineTo(px+TILE,py+3); } if(open(-1,0)){ g.moveTo(px+3,py); g.lineTo(px+3,py+TILE); } g.stroke(); } }
 }
 function randomWalkableTile(minDist, others, rng){
   rng=rng||Math.random;
@@ -1357,6 +1376,7 @@ function drawPortraitFigure(g, x, y, e, s, opts, cut){
   g.restore(); }
 function figureH(e){ return portraitCutout(e.cls.id)? PORTRAIT_WORLD_H : 42; }
 // White silhouette of a frame sheet (built once per sheet) for hit flashes.
+function sheetRim(sp,color){ if(sp.rim) return sp.rim; const c=document.createElement('canvas'); c.width=sp.img.width; c.height=sp.img.height; const g=c.getContext('2d'); g.drawImage(sp.img,0,0); g.globalCompositeOperation='source-in'; g.fillStyle=color; g.fillRect(0,0,c.width,c.height); sp.rim=c; return sp.rim; }
 function sheetWhite(sp){ if(sp.white) return sp.white; const c=document.createElement('canvas'); c.width=sp.img.width; c.height=sp.img.height; const g=c.getContext('2d'); g.drawImage(sp.img,0,0); g.globalCompositeOperation='source-in'; g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); sp.white=c; return sp.white; }
 // Priority: a real frame sheet for this animation (char.<id>.<anim>), else the portrait cutout with procedural
 // motion, else the drawn figure. Walk sheets are keyed to the walk phase so the stride matches the movement.
@@ -1366,6 +1386,8 @@ function drawFigure(g, x, y, e, s, opts){
   const sh=sprite(`char.${e.cls.id}.${anim}`);
   if(sh){ const frames=sh.frames||1, fr=anim==='walk'? Math.floor(walk*SHEET_WALK_FPS)%frames : Math.floor(timeNow*6)%frames; const sc=(sh.scale||1)*s, fw=(sh.frameW||sh.img.width)*sc, fh=(sh.frameH||sh.img.height)*sc;
     g.fillStyle='rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(x,y+1,fw*0.32,fw*0.08,0,0,7); g.fill();
+    const FW=sh.frameW||sh.img.width, FHh=sh.frameH||sh.img.height, cols=Math.max(1,Math.floor(sh.img.width/FW)), sx0=(fr%cols)*FW, sy0=Math.floor(fr/cols)*FHh, ax0=(sh.anchor?sh.anchor[0]:0.5), ay0=(sh.anchor?sh.anchor[1]:1);
+    if(PORTRAIT_RIM>0 && s<3){ g.save(); g.translate(x,y); if(facing<0) g.scale(-1,1); g.globalAlpha*=PORTRAIT_RIM; g.drawImage(sheetRim(sh,e.cls.color),sx0,sy0,FW,FHh,-ax0*fw-1.5,-ay0*fh-1.5,fw+3,fh+3); g.restore(); }
     drawSprite(g,`char.${e.cls.id}.${anim}`,x,y,{frame:fr,scale:s,flip:facing<0});
     if(sh.hand && e.weapon.type!=='none'){ drawSprite(g,`weapon.${e.weapon.type}.${e.weapon.tier}`, x+sh.hand[0]*s*facing, y+sh.hand[1]*s, {scale:s,flip:facing<0}); }
     if(e.flash>0){ const cols=Math.max(1,Math.floor(sh.img.width/(sh.frameW||sh.img.width))), sx=(fr%cols)*(sh.frameW||sh.img.width), sy=Math.floor(fr/cols)*(sh.frameH||sh.img.height), ax=(sh.anchor?sh.anchor[0]:0.5), ay=(sh.anchor?sh.anchor[1]:1);
@@ -1418,7 +1440,7 @@ function drawWorld(g){
   g.fillStyle=COL.deep; g.fillRect(0,0,W,H);
   g.save(); g.translate(-cam.x+shakeX, -cam.y+shakeY);
   const sx=Math.max(0,cam.x), sy=Math.max(0,cam.y), sw=Math.min(W,mw-sx), sh=Math.min(H,mh-sy);
-  if(sw>0&&sh>0) g.drawImage(mapCanvas, sx,sy,sw,sh, sx,sy,sw,sh);
+  if(sw>0&&sh>0) g.drawImage(mapCanvas, sx*MAP_RES,sy*MAP_RES,sw*MAP_RES,sh*MAP_RES, sx,sy,sw,sh);
   const tx0=Math.max(0,Math.floor(cam.x/TILE)), ty0=Math.max(0,Math.floor(cam.y/TILE)), tx1=Math.min(MAP_W-1,Math.ceil((cam.x+W)/TILE)), ty1=Math.min(MAP_H-1,Math.ceil((cam.y+H)/TILE));
   g.fillStyle='rgba(255,255,255,0.09)';
   for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ const t=tiles[ty*MAP_W+tx]; if(t>T.WATER) continue; const h=tileHash(tx,ty); const ph=(timeNow*0.6+h*6.28); const a=(Math.sin(ph)+1)/2; if(a>0.7) g.fillRect(tx*TILE+6+h*14, ty*TILE+10+Math.sin(ph*0.5)*6, 8, 2); }
@@ -1555,7 +1577,7 @@ function drawCombat(g){
 }
 function drawMenuBg(g){
   g.fillStyle=COL.deep; g.fillRect(0,0,W,H);
-  if(mapCanvas){ const t=timeNow*12; g.save(); g.globalAlpha=0.55; g.drawImage(mapCanvas, (Math.sin(t*0.01)+1)*200, (Math.cos(t*0.013)+1)*200, W, H, 0,0,W,H); g.restore(); }
+  if(mapCanvas){ const t=timeNow*12; g.save(); g.globalAlpha=0.55; g.drawImage(mapCanvas, (Math.sin(t*0.01)+1)*200*MAP_RES, (Math.cos(t*0.013)+1)*200*MAP_RES, W*MAP_RES, H*MAP_RES, 0,0,W,H); g.restore(); }
   g.fillStyle='rgba(6,9,18,0.35)'; g.fillRect(0,0,W,H);
 }
 function render(){

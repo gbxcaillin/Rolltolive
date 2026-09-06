@@ -266,7 +266,10 @@ const AI_SIGHT = 300;              // px distance an AI notices targets
 const AI_DECIDE_INTERVAL = 0.5;    // s between AI decisions
 const AI_GRACE = 25;               // seconds before AI start hunting anyone
 const AI_HUNT_CHANCE = 0.02;       // per-decision chance an AI starts hunting (× aggression, grows with phase)
-const ZONE_PHASE_TIME = 100;       // seconds per Ashfall phase
+const ZONE_PHASE_TIME = 100;       // seconds per Ashfall phase at full population
+const ZONE_SPEED_BASE_ALIVE = 10;  // the phase clock runs at (this / survivors alive) speed...
+const ZONE_SPEED_MAX = 2.5;        // ...capped here, so a fight's survivor can still reach the ring
+const COMBAT_BURN_GRACE = 5;       // seconds of ring-burn immunity after a fight ends (burn is also frozen during a fight)
 const ZONE_RADII = [1.05,0.78,0.56,0.38,0.24,0.14,0.08]; // fraction of half-map per phase
 const ZONE_DAMAGE = [0,3,5,8,12,18,25];                  // HP/s outside the ring per phase
 const HOTSEAT_TURN = 20;           // seconds per human turn in hotseat mode
@@ -308,7 +311,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '331dccf 20260906-0838';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '669abed 20260906-0947';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
 const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
 const PORTRAIT_RIM = 0.6;          // alpha of the class-coloured rim drawn behind overworld portraits so they read against busy tiles (0 = off)
@@ -409,7 +412,7 @@ const Music = {
   },
   play(i,t,spb){
     const ph=G.zone.phase, fight=!!viewCombat, v=MUSIC_VOLUME, b=i%16, bar=(i>>4);
-    const me=localHuman(); const outside = me && me.alive && !me.inCombat && ZONE_DAMAGE[ph]>0 && Math.hypot(me.x-G.zone.cx,me.y-G.zone.cy)>G.zone.radius;
+    const me=localHuman(); const outside = me && me.alive && !burnSafe(me) && ZONE_DAMAGE[ph]>0 && Math.hypot(me.x-G.zone.cx,me.y-G.zone.cy)>G.zone.radius;
     const root = 41.2*Math.pow(2, ph/12);           // E1, up a semitone per phase
     const prog=[1,1,1.189,0.891][bar%4];            // i - i - III - VII (minor feel)
     // kick: beats 1 & 3; off-beat from phase 3; heartbeat pattern when burning
@@ -752,6 +755,10 @@ function sumStatus(e,type){ let s=0; for(const st of e.statuses) if(st.status===
 function hitMod(e){ return e.atk + affOf(e).hit + sumStatus(e,'hitMod'); }
 function defVal(e){ return e.def + sumStatus(e,'defMod'); }
 function dmgMod(e){ return affOf(e).dmg + sumStatus(e,'dmgMod'); }
+// The ring never kills a duelist: burn is frozen while in a fight and for COMBAT_BURN_GRACE seconds after it.
+function burnSafe(e){ return e.inCombat || (e.burnGrace||0)>0; }
+// Fewer survivors, faster clock: 10 alive = 1x, 5 alive = 2x, capped at ZONE_SPEED_MAX.
+function zoneSpeed(){ return G? clamp(ZONE_SPEED_BASE_ALIVE/Math.max(1,G.alive), 1, ZONE_SPEED_MAX) : 1; }
 function medkitHeal(e){ return MEDKIT_HEAL*(e.cls.passive==='medic'?2:1); }
 function medkitMax(e){ return MEDKIT_MAX+(e.cls.passive==='medic'?1:0); }
 function detectRange(e){ return e.scoutT>0? 1e9 : DETECT_RANGE*(e.cls.passive==='keeneye'?3:1); }
@@ -852,7 +859,7 @@ function simulateCombat(a,b){
   else if(b.hp<=0) finishCombat(a,b); else if(a.hp<=0) finishCombat(b,a); else finishCombat(null,null,a,b);
 }
 function finishCombat(winner, loser, fleer, other){
-  [winner,loser,fleer,other].forEach(e=>{ if(e){ e.statuses=[]; e.immune=POST_COMBAT_IMMUNITY; e.inCombat=false; e.ai.state='wander'; e.ai.target=null; delete e._second; } });
+  [winner,loser,fleer,other].forEach(e=>{ if(e){ e.statuses=[]; e.immune=POST_COMBAT_IMMUNITY; e.burnGrace=COMBAT_BURN_GRACE; e.inCombat=false; e.ai.state='wander'; e.ai.target=null; delete e._second; } });
   if(winner){ winner.immune=SANCTUARY; winner.immuneHold=SANCTUARY_HOLD; }
   if(fleer){ const ang=Math.atan2(fleer.y-other.y, fleer.x-other.x);
     for(let d=TILE*3; d>0; d-=8){ const x=fleer.x+Math.cos(ang)*d, y=fleer.y+Math.sin(ang)*d; if(x>TILE&&y>TILE&&x<MAP_W*TILE-TILE&&y<MAP_H*TILE-TILE&&!collides(x,y,fleer.r)){ fleer.x=x; fleer.y=y; break; } }
@@ -933,13 +940,13 @@ function updateWorld(dt){
   const paused = setup.mode==='hotseat' && viewCombat;   // hotseat pauses the island during a fight
   if(!paused){
     G.time+=dt; G.hintT-=dt;
-    const z=G.zone; z.t+=dt; const half=MAP_W*TILE/2;
+    const z=G.zone; z.t+=dt*zoneSpeed(); const half=MAP_W*TILE/2;
     if(z.phase<ZONE_RADII.length-1 && z.t>=ZONE_PHASE_TIME){ z.t=0; z.phase++; netToast(`ASHFALL PHASE ${z.phase}: the ring closes`, 'red', 4); Audio.sfx.zone(); for(let i=0;i<CRATES_PER_PHASE;i++) spawnCrate(true); }
     const from=ZONE_RADII[z.phase], to=ZONE_RADII[Math.min(z.phase+1,ZONE_RADII.length-1)];
     z.radius = lerp(from,to, z.phase<ZONE_RADII.length-1? clamp(z.t/ZONE_PHASE_TIME,0,1) : 1)*half;
     for(const e of G.ents){
       if(!e.alive){ e.deathT+=dt; continue; }
-      e.immune=Math.max(0,e.immune-dt); e.moving=false; e.fieldCd=Math.max(0,e.fieldCd-dt); e.scoutT=Math.max(0,e.scoutT-dt); if(e.sprintT>0){ e.sprintT=Math.max(0,e.sprintT-dt); e.immune=Math.max(e.immune,0.3); }
+      e.immune=Math.max(0,e.immune-dt); e.burnGrace=Math.max(0,(e.burnGrace||0)-dt); e.moving=false; e.fieldCd=Math.max(0,e.fieldCd-dt); e.scoutT=Math.max(0,e.scoutT-dt); if(e.sprintT>0){ e.sprintT=Math.max(0,e.sprintT-dt); e.immune=Math.max(e.immune,0.3); }
       if(e.isHuman && e.alive) e.score+=SURVIVE_SCORE*dt;
       if(e.inCombat) continue;
       // sanctuary: while an enemy camps next to a fresh survivor, immunity refreshes (up to SANCTUARY_HOLD)
@@ -952,7 +959,7 @@ function updateWorld(dt){
       } else updateAI(e,dt);
       e.hp=Math.min(e.maxHp, e.hp+OUT_OF_COMBAT_REGEN*(e.cls.passive==='medic'?2:1)*dt);
       const dz=Math.hypot(e.x-z.cx,e.y-z.cy);
-      if(dz>z.radius && ZONE_DAMAGE[z.phase]>0){ e.hp-=ZONE_DAMAGE[z.phase]*dt; if(e===localHuman() && Math.random()<dt*6){ spawnParticles(e.x,e.y-10,2,COL.orange,60,0.5,3,'world'); if(Math.random()<0.3) Audio.sfx.burn(); }
+      if(dz>z.radius && ZONE_DAMAGE[z.phase]>0 && !burnSafe(e)){ e.hp-=ZONE_DAMAGE[z.phase]*dt; if(e===localHuman() && Math.random()<dt*6){ spawnParticles(e.x,e.y-10,2,COL.orange,60,0.5,3,'world'); if(Math.random()<0.3) Audio.sfx.burn(); }
         if(e.hp<=0) killContestant(e,null); }
       for(const c of G.crates){ if(c.taken) continue; if(Math.hypot(c.x-e.x,c.y-e.y)<e.r+14){ c.taken=true; openCrate(e); } }
       if(G.barge && e.alive && Math.hypot(G.barge.x-e.x,G.barge.y-e.y)<40 && !G.over){ G.over=true; G.result={type:'win',who:e}; G.endTimer=1.2; if(e.isHuman){ e.score+=WIN_SCORE; saveHi(e.score); }
@@ -1265,7 +1272,7 @@ function makeSnapshot(){
   const r1=v=>Math.round(v*10)/10;
   return { t:'snap', tm:r1(G.time), z:[G.zone.cx|0,G.zone.cy|0,G.zone.radius|0,G.zone.phase,r1(G.zone.t)], al:G.alive, b:G.barge?[G.barge.x,G.barge.y]:null,
     cr:G.crates.map(c=>[c.x|0,c.y|0]), over:G.over?1:0,
-    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0,r1(e.fieldCd),r1(e.scoutT),r1(e.sprintT),e.prep?1:0,e.rite?1:0]),
+    e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0,r1(e.fieldCd),r1(e.scoutT),r1(e.sprintT),e.prep?1:0,e.rite?1:0,r1(e.burnGrace||0)]),
     c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,t:r1(c.t),fo:c.forced?1:0,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,pw:c.power?[c.power.die,c.power.value,c.power.seq]:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
 }
 function applySnapshot(s){
@@ -1277,7 +1284,7 @@ function applySnapshot(s){
     e.tx=r[1]; e.ty=r[2]; if(e!==me){ if(Math.hypot(e.tx-e.x,e.ty-e.y)>160) { e.x=e.tx; e.y=e.ty; } } else if(Math.hypot(e.tx-e.x,e.ty-e.y)>48){ e.x=e.tx; e.y=e.ty; }
     e.hp=r[3]; e.maxHp=r[4]; e.energy=r[5]; e.maxEn=r[6]; e.alive=!!r[7]; if(e!==me){ e.facing=r[8]; e.moving=!!r[9]; }
     if(e.weapon.type!==r[10]||e.weapon.tier!==r[11]){ e.weapon=makeWeapon(r[10],r[11],e.cls.fistBonus); } e.weapon.upgraded=!!r[12];
-    e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; } e.fieldCd=r[27]; e.scoutT=r[28]; e.sprintT=r[29]; if(r[30]&&!e.prep) e.prep=[{status:'defMod',value:4,turns:3,label:'Braced'}]; if(!r[30]) e.prep=null; e.rite=!!r[31];
+    e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; } e.fieldCd=r[27]; e.scoutT=r[28]; e.sprintT=r[29]; if(r[30]&&!e.prep) e.prep=[{status:'defMod',value:4,turns:3,label:'Braced'}]; if(!r[30]) e.prep=null; e.rite=!!r[31]; e.burnGrace=r[32]||0;
     if(wasAlive && !e.alive){ e.deathT=0; if(e===me) Audio.sfx.death(); } }
   const seen=new Set();
   for(const v of s.c){ seen.add(v.id); let c=combats.find(x=>x.id===v.id);
@@ -1420,9 +1427,9 @@ function drawHUD(g){
     txt(g,`MED ${e.medkits}/${medkitMax(e)}${e.medkits?' [H]':''} · ${ftxt}${flags}`,16,70,10,fb===''||e.medkits?COL.green:'#8e97ad','left',700); }
   const cx=W/2, py=narrow?86:8; g.fillStyle='rgba(10,14,26,0.72)'; g.beginPath(); g.roundRect(cx-120,py,240,40,8); g.fill();
   txt(g,`${G.alive} ALIVE`,cx-60,py+12,14,COL.pink,'center');
-  const dz=e? Math.hypot(e.x-z.cx,e.y-z.cy) : 0; const outside=e && e.alive && dz>z.radius && ZONE_DAMAGE[z.phase]>0;
-  txt(g, z.phase<ZONE_RADII.length-1? `PHASE ${z.phase} · ${fmtTime(ZONE_PHASE_TIME-z.t)}` : 'FINAL RING', cx+50,py+12,12,outside?COL.red:COL.white,'center');
-  txt(g, outside? '!! OUTSIDE THE ASHFALL !!' : (z.phase===0? 'Ashfall begins soon' : `burn ${ZONE_DAMAGE[z.phase]}/s outside`), cx,py+30,10,outside?COL.red:'#8e97ad','center',700);
+  const dz=e? Math.hypot(e.x-z.cx,e.y-z.cy) : 0; const outside=e && e.alive && dz>z.radius && ZONE_DAMAGE[z.phase]>0 && !burnSafe(e); const zs=zoneSpeed();
+  txt(g, z.phase<ZONE_RADII.length-1? `PHASE ${z.phase} · ${fmtTime((ZONE_PHASE_TIME-z.t)/zs)}${zs>1.05?' ×'+zs.toFixed(1):''}` : 'FINAL RING', cx+50,py+12,12,outside?COL.red:zs>1.05?COL.orange:COL.white,'center');
+  txt(g, outside? '!! OUTSIDE THE ASHFALL !!' : (e && e.alive && dz>z.radius && ZONE_DAMAGE[z.phase]>0 && burnSafe(e))? (e.inCombat?'Ashfall held back by the duel':`Ashfall grace ${Math.ceil(e.burnGrace)}s — run!`) : (z.phase===0? 'Ashfall begins soon' : `burn ${ZONE_DAMAGE[z.phase]}/s outside`), cx,py+30,10,outside?COL.red:'#8e97ad','center',700);
   if(outside && Math.sin(timeNow*10)>0){ g.strokeStyle='rgba(255,60,60,0.5)'; g.lineWidth=8; g.strokeRect(4,4,W-8,H-8); }
   if(e && e.alive && e.immune>0 && e.immuneHold>0){ const vult=G.ents.find(o=>o!==e&&o.alive&&!o.inCombat&&dist(o,e)<VULTURE_RANGE);
     txtO(g, vult? `SANCTUARY ${Math.ceil(e.immune)}s · ${vult.name} is circling you — move!` : `SANCTUARY ${Math.ceil(e.immune)}s · Nobody can engage you`, cx, py+56, 12, vult?COL.orange:COL.green, 'center'); }
@@ -1569,7 +1576,7 @@ function renderGuide(){
 <h3>A round, minute by minute</h3>
 <ul><li><b class="k">Land with nothing</b> but your fists, your class's signature attack, its defensive move, and Flee. Every class also has one <b class="k">field action</b> on Q that pays off on the map or in the next fight.</li>
 <li><b class="k">Loot crates</b> (gold boxes) for weapons, medkits, armor plates, power cells. Walk over them.</li>
-<li><b class="k">The Ashfall ring shrinks</b> every ${ZONE_PHASE_TIME} seconds. The pink circle is safe; the dashed circle shows where it closes next. Outside it you burn, harder each phase. The soundtrack speeds up every time it closes.</li>
+<li><b class="k">The Ashfall ring shrinks</b> every ${ZONE_PHASE_TIME} seconds while ten survive, and its clock runs faster as they fall: half the survivors, twice the speed, capped at ×${ZONE_SPEED_MAX} (the multiplier shows next to the countdown). The pink circle is safe; the dashed circle shows where it closes next. Outside it you burn, harder each phase, but <b>never during a fight</b> and not for ${COMBAT_BURN_GRACE} s after one — long duels are safe from the ring, so run the moment it ends. The soundtrack speeds up every time it closes.</li>
 <li><b class="k">Meet survivors</b>: an ENGAGE prompt appears within reach, coloured by how good the matchup is for you. AI will ambush you too.</li>
 <li><b class="k">Survive to the end</b>: when one survivor remains, the barge lands on a beach and the HUD points to it.</li></ul>
 <div class="tw"><table><tr><th>Phase</th><th>Lasts</th><th>Ring size</th><th>Burn HP/s outside</th><th>Tempo</th></tr>${phases}</table></div>

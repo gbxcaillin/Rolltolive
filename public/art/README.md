@@ -41,7 +41,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `weapon.<type>.<tier>` | At the character's hand |
 | `icon.<abilityId>` | Combat action buttons |
 | `icon.weapon.<type>.<tier>`, `item.medkit` | Reserved for HUD inventory (v2) |
-| `portrait.<classId>` | Class select and lobby cards |
+| `portrait.<classId>` | Class picker (select + lobby): 768×1152 JPEG at `portraits/<classId>.jpg`, shown at 2:3; a drawn figure stands in when the file is missing or the game runs from file:// |
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
 | `bg.combat` | Encounter backdrop |

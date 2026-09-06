@@ -59,6 +59,26 @@
   .card .fam{font-size:11px;color:var(--muted);font-style:italic;margin-top:6px}
   .card .key{position:absolute;top:8px;right:10px;color:var(--muted);font-size:11px}
   .card img.por{width:48px;height:48px;float:right;image-rendering:pixelated;margin-left:6px}
+  /* class picker: one big portrait, stats under it (portrait) or beside it (landscape) */
+  .picker{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:1040px}
+  .pk-art{position:relative;width:min(88vw,360px,calc(48vh * 2 / 3));aspect-ratio:2/3;border-radius:14px;overflow:hidden;border:2px solid var(--c);background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--c) 28%,#0b1020) 0%,#0b1020 70%);box-shadow:0 0 40px -10px var(--c);touch-action:pan-y;user-select:none;flex-shrink:0}
+  .pk-art img,.pk-art canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+  .pk-art .pk-num{position:absolute;top:8px;right:12px;color:var(--muted);font-size:11px;letter-spacing:.14em}
+  .pk-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;background:rgba(10,14,26,.55);color:var(--ink);font-size:26px;cursor:pointer;border-radius:8px;z-index:2}
+  .pk-nav:hover{background:rgba(255,62,127,.55)} .pk-nav.l{left:6px} .pk-nav.r{right:6px}
+  .pk-info{flex:1;min-width:0;width:100%;text-align:left}
+  .pk-info .nm{font-weight:900;font-size:28px;letter-spacing:.1em;color:var(--c);text-transform:uppercase;line-height:1}
+  .pk-info .ti{color:var(--muted);font-size:11px;letter-spacing:.2em;text-transform:uppercase;margin:2px 0 8px}
+  .pk-info .st{display:flex;gap:6px;flex-wrap:wrap;font-size:11px;margin:6px 0}
+  .pk-info .st span{background:#0b1020;border:1px solid var(--line);padding:2px 6px;border-radius:4px}
+  .pk-info .st span.ex{border-color:var(--c);color:var(--c)} .pk-info .st span.po{opacity:.45;text-decoration:line-through}
+  .pk-info .ab{font-size:12.5px;color:#cfd6e6;line-height:1.5} .pk-info .ab b{color:var(--c)}
+  .pk-info .fam{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:6px}
+  .pk-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+  .pk-dots button{border:1px solid var(--line);background:#0b1020;color:var(--muted);font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:12px;cursor:pointer}
+  .pk-dots button.on{border-color:var(--c);color:var(--c)} .pk-dots button.sel{background:var(--c);color:#0a0e1a;border-color:var(--c)}
+  .pk-choose{margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  @media (min-width:760px) and (orientation:landscape){ .picker{flex-direction:row;align-items:flex-start} .pk-art{width:min(38vw,420px,calc(76vh * 2 / 3))} .pk-side{flex:1;min-width:0} }
   .plist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}
   .plist span{background:#0b1020;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}
   .plist span.host{border-color:var(--gold)}
@@ -155,8 +175,8 @@
 
 <div id="select" class="screen hidden">
   <h2 id="selTitle">Choose your survivor</h2>
-  <div class="sub" id="selSub">Press 1–6 or tap a card</div>
-  <div class="cards" id="cards"></div>
+  <div class="sub" id="selSub">← → or swipe to browse · Enter to choose · 1–6 quick pick</div>
+  <div id="picker"></div>
 </div>
 
 <div id="lobby" class="screen hidden">
@@ -169,7 +189,7 @@
   </div>
   <div class="status" id="lobbyStatus"></div>
   <div class="plist" id="plist"></div>
-  <div class="cards" id="lobbyCards" style="margin-top:8px"></div>
+  <div id="lobbyPicker" style="margin-top:8px;width:100%;display:flex;justify-content:center"></div>
   <div class="row" style="margin-top:12px"><button class="btn gold hidden" id="startBtn">Start round</button><button class="btn ghost" id="lobbyBack">Back</button></div>
 </div>
 
@@ -269,7 +289,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '590ef2e 20260906-0626';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'daf24b8 20260906-0637';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -470,7 +490,7 @@ function loadArt(){
   fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
     for(const pack of m.packs){ const p=await fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
       for(const a of p.assets){ if(!a.file||a.status!=='ready') continue; const img=new Image();
-        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); };
+        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); if(a.id.startsWith('portrait.')) pickerRefreshArt(); };
         img.src='art/'+a.file+v; } } }).catch(()=>{});
 }
 const sprite = id=>ART.sprites[id];
@@ -1506,6 +1526,40 @@ function toMenu(){ Net.close(); state='menu'; G=null; combats=[]; viewCombat=nul
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
   if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus(NET_DEFAULT_URL? 'Pick a room code and a name, then connect.' : 'This static site has no relay: enter the address of your relay server (wss://...), a room code and a name.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
   state='select'; show('select'); renderSelect(); }
+// ---- class picker (carousel) ----
+const Picker={ idx:0, el:null, onPick:null, selectedId:null, art:null };
+function pickerFallbackCanvas(c){ const cv2=document.createElement('canvas'); cv2.width=360; cv2.height=540; const g=cv2.getContext('2d');
+  const stub={cls:c, facing:1, walk:0, moving:false, weapon:makeWeapon('none',0), id:0, flash:0}; stub.weapon.dice=c.fists;
+  g.fillStyle='rgba(0,0,0,0)'; g.clearRect(0,0,360,540); drawFigure(g,180,470,stub,8,{facing:1,moving:false}); return cv2; }
+function renderPicker(container, onPick, selectedId, startIdx){
+  Picker.el=container; Picker.onPick=onPick; Picker.selectedId=selectedId||null; if(startIdx!=null) Picker.idx=startIdx; pickerDraw(); }
+function pickerDraw(){
+  const container=Picker.el; if(!container) return; const c=CLASSES[Picker.idx]; const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name;
+  const affs=WEAPON_TYPES.map(t=>{ const a=c.affinity[t]; return `<span class="${a==='expert'?'ex':a==='poor'?'po':''}">${t}${a==='expert'?' ★★':a==='skilled'?' ★':''}</span>`; }).join('');
+  const dots=CLASSES.map((k,j)=>`<button data-j="${j}" class="${j===Picker.idx?'on':''}${Picker.selectedId===k.id?' sel':''}" style="--c:${k.color}">${k.name}</button>`).join('');
+  container.innerHTML=`<div class="picker" style="--c:${c.color}">
+    <div class="pk-art" id="pkArt"><button class="pk-nav l" aria-label="Previous">‹</button><button class="pk-nav r" aria-label="Next">›</button><div class="pk-num">${Picker.idx+1} / ${CLASSES.length}</div></div>
+    <div class="pk-side"><div class="pk-info">
+      <div class="nm">${c.name}</div><div class="ti">${c.title}</div>
+      <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
+      <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
+      <div class="ab" style="margin-top:4px"><span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">edge on ${n(2)}</span> · even vs ${n(3)} · <span style="color:${COL.orange}">risky vs ${n(4)}</span> · <span style="color:${COL.red}">fears ${n(5)}</span></div>
+      <div class="st">${affs}</div><div class="fam">${c.family}</div>
+      <div class="pk-choose"><button class="btn gold" id="pkChoose">${Picker.selectedId===c.id?'Chosen ✓':'Choose '+c.name}</button><span class="small">${Picker.idx+1} of ${CLASSES.length} · ← → to browse</span></div>
+    </div><div class="pk-dots">${dots}</div></div></div>`;
+  pickerRefreshArt();
+  container.querySelector('.pk-nav.l').addEventListener('click',ev=>{ ev.stopPropagation(); pickerMove(-1); });
+  container.querySelector('.pk-nav.r').addEventListener('click',ev=>{ ev.stopPropagation(); pickerMove(1); });
+  container.querySelector('#pkChoose').addEventListener('click',()=>{ Audio.sfx.click(); Picker.onPick(Picker.idx); });
+  container.querySelectorAll('.pk-dots button').forEach(b=>b.addEventListener('click',()=>{ Picker.idx=parseInt(b.dataset.j,10); Audio.sfx.click(); pickerDraw(); }));
+  // swipe on the art
+  const art=container.querySelector('#pkArt'); let sx=null, sy=null;
+  art.addEventListener('pointerdown',ev=>{ sx=ev.clientX; sy=ev.clientY; });
+  art.addEventListener('pointerup',ev=>{ if(sx==null) return; const dx=ev.clientX-sx, dy=ev.clientY-sy; sx=null; if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)) pickerMove(dx<0?1:-1); else if(Math.abs(dx)<8 && Math.abs(dy)<8 && !ev.target.classList.contains('pk-nav')) pickerMove(1); });
+}
+function pickerRefreshArt(){ const art=Picker.el && Picker.el.querySelector('#pkArt'); if(!art) return; const c=CLASSES[Picker.idx]; art.querySelectorAll('img,canvas').forEach(x=>x.remove());
+  const sp=sprite('portrait.'+c.id); if(sp){ const im=document.createElement('img'); im.src=sp.img.src; im.alt=c.name; art.prepend(im); } else art.prepend(pickerFallbackCanvas(c)); }
+function pickerMove(d){ Picker.idx=(Picker.idx+d+CLASSES.length)%CLASSES.length; Audio.sfx.click(); pickerDraw(); }
 function classCard(c, idx, onPick, selected){
   const el=document.createElement('div'); el.className='card'+(selected?' sel':''); el.tabIndex=0; el.style.setProperty('--c',c.color);
   const por=sprite('portrait.'+c.id); const affs=WEAPON_TYPES.map(t=>{ const a=c.affinity[t]; return `<span class="${a==='expert'?'ex':a==='poor'?'po':''}" title="${a}">${t}${a==='expert'?' ★★':a==='skilled'?' ★':''}</span>`; }).join('');
@@ -1518,7 +1572,7 @@ function classCard(c, idx, onPick, selected){
 }
 function renderSelect(){
   const i=setup.picks.length; $('selTitle').textContent = setup.humans===1? 'Choose your survivor' : `Player ${i+1} — choose your survivor`;
-  const cards=$('cards'); cards.innerHTML=''; CLASSES.forEach((c,idx)=>cards.appendChild(classCard(c,idx,pickClass,false)));
+  renderPicker($('picker'), pickClass, null, Picker.idx);
 }
 function pickClass(idx){ if(state!=='select') return; Audio.sfx.click(); setup.picks.push(CLASSES[idx]);
   if(setup.picks.length<setup.humans) renderSelect(); else startGame(); }
@@ -1566,7 +1620,7 @@ $('startBtn').addEventListener('click',()=>{ if(!Net.isHost) return; Audio.sfx.c
 function renderLobby(){
   if(state!=='lobby') return; const list=$('plist'); list.innerHTML='';
   Lobby.order().forEach(p=>{ const s=document.createElement('span'); s.className=p.id===Net.hostId?'host':''; s.textContent=`${p.name}${p.id===Net.id?' (you)':''} · ${p.cls?CLASS_BY_ID[p.cls].name:'picking...'}${p.id===Net.hostId?' · host':''}`; list.appendChild(s); });
-  const cards=$('lobbyCards'); cards.innerHTML=''; if(Net.connected) CLASSES.forEach((c,idx)=>cards.appendChild(classCard(c,idx,i=>{ Audio.sfx.click(); Lobby.pick(CLASSES[i].id); },Lobby.myPick===c.id)));
+  const lp=$('lobbyPicker'); if(Net.connected){ renderPicker(lp, i=>{ Lobby.pick(CLASSES[i].id); }, Lobby.myPick, Picker.el===lp?Picker.idx:(Lobby.myPick?CLASSES.findIndex(c=>c.id===Lobby.myPick):0)); } else lp.innerHTML='';
   const n=Object.keys(Lobby.players).length; $('startBtn').classList.toggle('hidden', !(Net.connected&&Net.isHost)); $('startBtn').disabled=!Lobby.myPick; $('startBtn').textContent=`Start round · ${n} player${n===1?'':'s'} + ${CONTESTANTS-n} AI`;
   if(Net.connected) setLobbyStatus(`Room ${Net.room} · ${Net.isHost?'you are the host — pick a class and start':'pick a class, the host starts the round'}`);
 }
@@ -1579,8 +1633,8 @@ window.addEventListener('keydown',e=>{
   if(e.target && e.target.tagName==='INPUT'){ if(e.code==='Enter' && state==='lobby' && !Net.connected) $('connectBtn').click(); return; }
   if(e.repeat) return; keys[e.code]=true; Audio.init();
   if(e.code==='KeyM'){ Audio.muted=!Audio.muted; updateTopButtons(); return; }
-  if(state==='select'){ const n=parseInt(e.key,10); if(n>=1&&n<=6) pickClass(n-1); return; }
-  if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected) Lobby.pick(CLASSES[n-1].id); if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
+  if(state==='select'){ const n=parseInt(e.key,10); if(n>=1&&n<=6) pickClass(n-1); if(e.code==='ArrowLeft') pickerMove(-1); if(e.code==='ArrowRight') pickerMove(1); if(e.code==='Enter'||e.code==='Space') pickClass(Picker.idx); return; }
+  if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected) Lobby.pick(CLASSES[n-1].id); if(Net.connected){ if(e.code==='ArrowLeft') pickerMove(-1); if(e.code==='ArrowRight') pickerMove(1); if(e.code==='Space') Lobby.pick(CLASSES[Picker.idx].id); } if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
   if(state==='title'){ if(e.code==='Enter'||e.code==='Space') startFromTitle(); return; }
   if(state==='guide' || (!$('guide').classList.contains('hidden'))){ if(e.code==='Escape'||e.code==='Enter'||e.code==='Backspace') closeGuide(); return; }
   if(state==='menu'){ if(e.code==='Enter'||e.code==='Space') beginSetup('solo',1); if(e.code==='KeyH') openGuide(); return; }

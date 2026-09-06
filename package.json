@@ -1,6 +1,6 @@
 {
   "name": "ashfall-hosted",
-  "version": "0.1.0+daf24b8",
+  "version": "0.1.0+ae0aa26",
   "private": true,
   "description": "Outborn — hosted build: static game + WebSocket relay in one dependency-free Node process. Synced from gbxcaillin/Rolltolive; do not edit here.",
   "main": "server/relay.js",

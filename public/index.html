@@ -78,6 +78,10 @@
   .pk-dots button{border:1px solid var(--line);background:#0b1020;color:var(--muted);font-family:inherit;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:12px;cursor:pointer}
   .pk-dots button.on{border-color:var(--c);color:var(--c)} .pk-dots button.sel{background:var(--c);color:#0a0e1a;border-color:var(--c)}
   .pk-choose{margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .screen.compact h2{font-size:18px;margin-bottom:2px} .screen.compact .sub{font-size:10px;margin:2px 0 6px} .screen.compact .picker{gap:6px}
+  .screen.compact .pk-info .nm{font-size:22px} .screen.compact .pk-info .ti{margin-bottom:3px} .screen.compact .pk-info .st{font-size:10px;margin:3px 0}
+  .screen.compact .pk-info .ab{font-size:11px;line-height:1.35} .screen.compact .pk-info .fam,.screen.compact .pk-dots,.screen.compact .pk-choose .small{display:none}
+  .screen.compact .pk-choose{margin-top:6px} .screen.compact .pk-choose .btn{padding:8px 18px;font-size:13px}
   @media (min-width:760px) and (orientation:landscape){ .picker{flex-direction:row;align-items:flex-start} .pk-art{width:min(38vw,420px,calc(76vh * 2 / 3))} .pk-side{flex:1;min-width:0} }
   .plist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:8px 0}
   .plist span{background:#0b1020;border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px}
@@ -126,6 +130,9 @@
   #guide svg{display:block;margin:8px auto;max-width:320px}
   .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
   #title{padding:0;background:#0a0e1a;justify-content:center;overflow:hidden;cursor:pointer}
+  #intro{padding:0;background:#000;justify-content:center;overflow:hidden;cursor:pointer}
+  #introVid{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+  #introHint{position:absolute;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));color:rgba(245,242,236,.75);font-size:11px;letter-spacing:.2em;text-transform:uppercase;background:rgba(0,0,0,.45);padding:6px 10px;border-radius:6px;z-index:2}
   #titleImg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .7s;z-index:1}
   #titleBg{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);object-fit:cover;filter:blur(28px) brightness(.45) saturate(1.2);opacity:0;transition:opacity .7s}
   #titleImg.on,#titleBg.on{opacity:1}
@@ -145,6 +152,11 @@
   <div id="titleFallback"><h1 id="titleH1b">Outborn</h1><div class="sub" id="taglineB"></div><button class="btn gold" id="titleStartFb" style="font-size:22px;padding:16px 44px;letter-spacing:.3em">Start</button></div>
   <button id="titleStart" class="hidden" aria-label="Start"></button>
   <div id="titleHint">Tap start · Enter</div>
+</div>
+
+<div id="intro" class="screen hidden">
+  <video id="introVid" playsinline preload="auto"></video>
+  <div id="introHint">Tap to skip</div>
 </div>
 
 <div id="menu" class="screen">
@@ -175,7 +187,7 @@
 
 <div id="select" class="screen hidden">
   <h2 id="selTitle">Choose your survivor</h2>
-  <div class="sub" id="selSub">← → or swipe to browse · Enter to choose · 1–6 quick pick</div>
+  <div class="sub" id="selSub" style="margin-bottom:10px">← → or swipe to browse · Enter to choose · 1–6 quick pick</div>
   <div id="picker"></div>
 </div>
 
@@ -289,7 +301,10 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'daf24b8 20260906-0636';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'ae0aa26 20260906-0655';               // stamped by tools/sync-hosted.sh in the hosted build
+const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
+const PICKER_MIN_ART = 320;        // px: below this art height the class picker switches to compact text instead of shrinking further
+const INTRO_STALL_SECS = 25;       // give up on the intro (go to the menu) if nothing has played after this long
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -509,7 +524,7 @@ const COL = { deep:'#08213f', water:'#12457a', sand:'#e6c47a', grass:'#6ab04c', 
   pink:'#ff3e7f', cyan:'#2ee6ff', gold:'#ffd166', green:'#5cff9d', red:'#ff4d4d', purple:'#b56cff', orange:'#ff8c42', white:'#f5f2ec', ink:'#0a0e1a' };
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.floor(W*DPR); cv.height = Math.floor(H*DPR); ctx.setTransform(DPR,0,0,DPR,0,0); }
-window.addEventListener('resize', ()=>{ resize(); if(typeof layoutTitle==='function') layoutTitle(); }); resize();
+window.addEventListener('resize', ()=>{ resize(); if(typeof layoutTitle==='function') layoutTitle(); if(typeof pickerFit==='function') pickerFit(); }); resize();
 
 // ============================================================================
 //  Map generation (deterministic from seed, so every online client builds the same island)
@@ -1446,10 +1461,10 @@ function render(){
 //  Screens / flow
 // ============================================================================
 const $=id=>document.getElementById(id);
-function show(id){ ['title','menu','select','lobby','pass','pause','end','guide'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+function show(id){ ['title','intro','menu','select','lobby','pass','pause','end','guide'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
 // ---- title screen: key art when served (art/ui/title_*.jpg), drawn wordmark otherwise. Picks the painting by orientation. ----
 const TITLE_ART = { portrait:{id:'ui.title.portrait', box:[0.30,0.855,0.70,0.935]}, landscape:{id:'ui.title.landscape', box:[0.40,0.79,0.60,0.94]} };
-function showTitle(){ state='title'; show('title'); layoutTitle(); }
+function showTitle(){ state='title'; show('title'); layoutTitle(); introPrime(); }
 // Picks the painting whose aspect is closest to the screen and shows it whole (fit inside, bars at the sides on
 // 4:3 tablets and foldables); a blurred copy fills the bars. The START hit zone follows the same fit.
 function layoutTitle(){ if(state!=='title') return; const ar=W/Math.max(1,H); const dl=Math.abs(Math.log(ar/(1672/941))), dp=Math.abs(Math.log(ar/(941/1672))); const a=TITLE_ART[dl<=dp?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), bg=$('titleBg'), hit=$('titleStart');
@@ -1457,7 +1472,19 @@ function layoutTitle(){ if(state!=='title') return; const ar=W/Math.max(1,H); co
     const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.min(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
     hit.style.left=(ox+x0*iw*sc)+'px'; hit.style.top=(oy+y0*ih*sc)+'px'; hit.style.width=((x1-x0)*iw*sc)+'px'; hit.style.height=((y1-y0)*ih*sc)+'px'; hit.classList.remove('hidden'); }
   else { img.classList.remove('on'); bg.classList.remove('on'); $('titleFallback').classList.remove('hidden'); hit.classList.add('hidden'); } }
-function startFromTitle(){ if(state!=='title') return; Audio.init(); Audio.sfx.click(); toMenu(); }
+function startFromTitle(){ if(state!=='title') return; Audio.init(); Audio.sfx.click(); playIntro(); }
+// Intro video: the landscape cut on wide screens, the portrait cut on tall ones, shown whole (letterboxed).
+// Preloaded while the title is up. Ends, errors (missing file, unsupported codec) and taps all lead to the menu.
+const Intro = { t:0 };
+function introSrc(){ const url=INTRO_VIDEO[W>=H?'landscape':'portrait']; return url+(location.protocol.startsWith('http')?'?v='+encodeURIComponent(BUILD):''); }
+function introPrime(){ const v=$('introVid'), url=introSrc(); if(v.dataset.src!==url){ v.dataset.src=url; v.src=url; try{ v.load(); }catch(e){} } }
+function playIntro(src){ const v=$('introVid'); const url=src||introSrc(); if(v.dataset.src!==url){ v.dataset.src=url; v.src=url; }
+  state='intro'; show('intro'); v.muted=false; try{ v.currentTime=0; }catch(e){}
+  const p=v.play(); if(p&&p.catch) p.catch(()=>{ v.muted=true; const q=v.play(); if(q&&q.catch) q.catch(()=>endIntro()); });
+  clearTimeout(Intro.t); Intro.t=setTimeout(()=>{ if(state==='intro' && !(v.currentTime>0)) endIntro(); }, INTRO_STALL_SECS*1000); }
+function endIntro(){ if(state!=='intro') return; clearTimeout(Intro.t); const v=$('introVid'); try{ v.pause(); }catch(e){} toMenu(); }
+$('introVid').addEventListener('ended',endIntro); $('introVid').addEventListener('error',endIntro);
+$('intro').addEventListener('click',endIntro);
 $('title').addEventListener('click',startFromTitle);
 let guideReturn='menu';
 function openGuide(){ guideReturn = state==='pause'?'pause':'menu'; if(!$('guideBody').innerHTML) renderGuide(); $('guide').classList.remove('hidden'); $('guide').scrollTop=0; if(guideReturn==='menu'){ state='guide'; $('menu').classList.add('hidden'); } else $('pause').classList.add('hidden'); }
@@ -1547,7 +1574,7 @@ function pickerDraw(){
       <div class="st">${affs}</div><div class="fam">${c.family}</div>
       <div class="pk-choose"><button class="btn gold" id="pkChoose">${Picker.selectedId===c.id?'Chosen ✓':'Choose '+c.name}</button><span class="small">${Picker.idx+1} of ${CLASSES.length} · ← → to browse</span></div>
     </div><div class="pk-dots">${dots}</div></div></div>`;
-  pickerRefreshArt();
+  pickerRefreshArt(); pickerFit();
   container.querySelector('.pk-nav.l').addEventListener('click',ev=>{ ev.stopPropagation(); pickerMove(-1); });
   container.querySelector('.pk-nav.r').addEventListener('click',ev=>{ ev.stopPropagation(); pickerMove(1); });
   container.querySelector('#pkChoose').addEventListener('click',()=>{ Audio.sfx.click(); Picker.onPick(Picker.idx); });
@@ -1559,6 +1586,13 @@ function pickerDraw(){
 }
 function pickerRefreshArt(){ const art=Picker.el && Picker.el.querySelector('#pkArt'); if(!art) return; const c=CLASSES[Picker.idx]; art.querySelectorAll('img,canvas').forEach(x=>x.remove());
   const sp=sprite('portrait.'+c.id); if(sp){ const im=document.createElement('img'); im.src=sp.img.src; im.alt=c.name; art.prepend(im); } else art.prepend(pickerFallbackCanvas(c)); }
+// Shrinks the art card until the picker (and the rest of its screen) fits without scrolling; grows back on resize.
+function pickerFit(){ const el=Picker.el, art=el&&el.querySelector('#pkArt'), scr=el&&el.closest('.screen'); if(!art||!scr||scr.classList.contains('hidden')) return;
+  const over=()=>{ const kids=[...scr.children].filter(k=>!k.classList.contains('hidden') && k.getBoundingClientRect().height>0); if(!kids.length) return 0; const cs=getComputedStyle(scr);
+    const content=kids[kids.length-1].getBoundingClientRect().bottom-kids[0].getBoundingClientRect().top; return content-(scr.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)); }; // >0 overflow, <0 slack
+  art.style.width=''; scr.classList.remove('compact'); let o=over(); if(o<=0) return;
+  let h=art.getBoundingClientRect().height; if(h-o<PICKER_MIN_ART){ scr.classList.add('compact'); o=over(); h=art.getBoundingClientRect().height; } // compact: text shrinks, art may grow into the slack
+  art.style.width=Math.min(0.88*W, 360, Math.max(120, h-o)*2/3)+'px'; }
 function pickerMove(d){ Picker.idx=(Picker.idx+d+CLASSES.length)%CLASSES.length; Audio.sfx.click(); pickerDraw(); }
 function classCard(c, idx, onPick, selected){
   const el=document.createElement('div'); el.className='card'+(selected?' sel':''); el.tabIndex=0; el.style.setProperty('--c',c.color);
@@ -1634,8 +1668,9 @@ window.addEventListener('keydown',e=>{
   if(e.repeat) return; keys[e.code]=true; Audio.init();
   if(e.code==='KeyM'){ Audio.muted=!Audio.muted; updateTopButtons(); return; }
   if(state==='select'){ const n=parseInt(e.key,10); if(n>=1&&n<=6) pickClass(n-1); if(e.code==='ArrowLeft') pickerMove(-1); if(e.code==='ArrowRight') pickerMove(1); if(e.code==='Enter'||e.code==='Space') pickClass(Picker.idx); return; }
-  if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected) Lobby.pick(CLASSES[n-1].id); if(Net.connected){ if(e.code==='ArrowLeft') pickerMove(-1); if(e.code==='ArrowRight') pickerMove(1); if(e.code==='Space') Lobby.pick(CLASSES[Picker.idx].id); } if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
+  if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected){ Picker.idx=n-1; Lobby.pick(CLASSES[n-1].id); } if(Net.connected){ if(e.code==='ArrowLeft') pickerMove(-1); if(e.code==='ArrowRight') pickerMove(1); if(e.code==='Space') Lobby.pick(CLASSES[Picker.idx].id); } if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
   if(state==='title'){ if(e.code==='Enter'||e.code==='Space') startFromTitle(); return; }
+  if(state==='intro'){ endIntro(); return; }
   if(state==='guide' || (!$('guide').classList.contains('hidden'))){ if(e.code==='Escape'||e.code==='Enter'||e.code==='Backspace') closeGuide(); return; }
   if(state==='menu'){ if(e.code==='Enter'||e.code==='Space') beginSetup('solo',1); if(e.code==='KeyH') openGuide(); return; }
   if(state==='pause'){ if(e.code==='KeyP'||e.code==='Escape'||e.code==='Enter') togglePause(); return; }
@@ -1684,7 +1719,7 @@ function frame(now){
 }
 $('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · online via '+location.host:'');
 loadArt(); if(!mapCanvas) genMap(12345); $('menuBest').textContent='BEST '+hiScore; showTitle(); requestAnimationFrame(frame);
-window.__game = { skipTitle(){ if(state==='title') toMenu(); }, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
+window.__game = { skipTitle(){ if(state==='title') toMenu(); }, playIntro, endIntro, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
   beginSetup, pickClass, tryEngage, tryMedkit, tryAction, uiChoose, uiRoll, ABILITIES, CLASSES, startCombat, killContestant, localHuman, abilityList, makeWeapon, hostStartRound };
 </script>
 </body>

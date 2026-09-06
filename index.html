@@ -266,7 +266,7 @@ const AI_SIGHT = 300;              // px distance an AI notices targets
 const AI_DECIDE_INTERVAL = 0.5;    // s between AI decisions
 const AI_GRACE = 25;               // seconds before AI start hunting anyone
 const AI_HUNT_CHANCE = 0.02;       // per-decision chance an AI starts hunting (× aggression, grows with phase)
-const ZONE_PHASE_TIME = 50;        // seconds per Ashfall phase
+const ZONE_PHASE_TIME = 100;       // seconds per Ashfall phase
 const ZONE_RADII = [1.05,0.78,0.56,0.38,0.24,0.14,0.08]; // fraction of half-map per phase
 const ZONE_DAMAGE = [0,3,5,8,12,18,25];                  // HP/s outside the ring per phase
 const HOTSEAT_TURN = 20;           // seconds per human turn in hotseat mode
@@ -287,6 +287,7 @@ const CRATE_SCORE = 25;
 const WIN_SCORE = 1000;
 const SURVIVE_SCORE = 2;           // per second alive
 const DICE_ROLL_TIME = 0.75;       // dice tumble duration
+const POWER_SHOW_TIME = 2.4;       // seconds the power die (d6/d12/d20 result) stays on screen after a resolve
 const RESOLVE_TIME = 0.95;          // pause after an action resolves
 const AI_THINK_TIME = 0.45;        // AI "thinking" delay in combat
 const SHAKE_HIT = 7, SHAKE_CRIT = 16;
@@ -294,6 +295,12 @@ const MUSIC_BASE_BPM = 72;         // soundtrack tempo at phase 0
 const MUSIC_BPM_STEP = 14;         // tempo added each time the Ashfall closes (phase 6 = 156 BPM)
 const MUSIC_VOLUME = 0.55;         // master level of the procedural soundtrack (0 = off)
 const FUMBLE_SELF_DAMAGE = 3;
+const DAMAGE_SCALE = 1.15;         // every hit's damage is multiplied by this (before armour) — a slight global damage lift
+// Dice tiers. Every action rolls the d20 check (vs DEF; natural 1 fumbles, natural 20 crits). Damage and effect strength
+// then come from a POWER DIE by ability tier: d6 for the basic Attack, d12 for signature and defensive moves, d20 for
+// moves unlocked by a weapon. Multi-hit moves roll the power die once; their extra strikes use the d6.
+const POWER_DIE = { basic:6, special:12, unlocked:20 };
+const WEAPON_TIER_BONUS = [1,2,4,6]; // flat damage added by a weapon at tier 1-4 (on top of the power die and ATK)
 // Class matchup circle (rock-paper-scissors). Each class hunts the next one, has the edge on the one after,
 // is even with the opposite, at risk against the fourth and fears the fifth. Bonus applies to hit AND damage.
 const MATCHUP_CYCLE = ['warden','bruiser','wraith','techno','hexblade','alch'];
@@ -434,63 +441,66 @@ const WEAPON_NAMES = {
   arcane:['Bone Wand','Ember Staff','Frost Scepter','Eclipse Focus'],
   tech:['Shock Prod','Tesla Gauntlet','Nano Blaster','Singularity Cannon']
 };
-const TIER_DICE = [[1,8],[1,10],[2,8],[2,10]];
 const WEAPON_COLORS = {none:'#e8c39e',blade:'#dfe6f0',blunt:'#c8a57a',ranged:'#9aa7bd',arcane:'#b56cff',tech:'#2ee6ff'};
 // each weapon type carries two moves; the second unlocks only with skilled/expert affinity
 const WEAPON_MOVES = { blade:['cleave','flurry'], blunt:['crush','stagger'], ranged:['aimed','volley'], arcane:['ember','hex'], tech:['overclock','drones'] };
 // class affinity levels with a weapon type
 const AFF = { expert:{hit:2,dmg:2,moves:2,rank:3,label:'expert'}, skilled:{hit:1,dmg:1,moves:2,rank:2,label:'skilled'}, basic:{hit:0,dmg:0,moves:1,rank:1,label:'basic'}, poor:{hit:-2,dmg:-1,moves:0,rank:0,label:'poor'} };
-function makeWeapon(type, tier){ if(type==='none') return {type:'none',tier:0,name:'Fists',dice:[1,4],flat:0,upgraded:false};
-  tier=clamp(tier,1,4); return {type, tier, name:WEAPON_NAMES[type][tier-1], dice:TIER_DICE[tier-1], flat: tier===4?2:0, upgraded:false}; }
+function makeWeapon(type, tier, fistBonus){ if(type==='none') return {type:'none',tier:0,name:'Fists',flat:fistBonus||0,upgraded:false};
+  tier=clamp(tier,1,4); return {type, tier, name:WEAPON_NAMES[type][tier-1], flat:WEAPON_TIER_BONUS[tier-1], upgraded:false}; }
+const fistStr = c=>'d6'+(c.fistBonus?'+'+c.fistBonus:'');
 
 const ABILITIES = {
-  attack:   {name:'Attack', cost:0, cd:0, kind:'attack', weaponDmg:true, desc:'Weapon dice + ATK.'},
+  attack:   {name:'Attack', tier:'basic', cost:0, cd:0, kind:'attack', weaponDmg:true, desc:'d6 + weapon + ATK.'},
   flee:     {name:'Flee', cost:0, cd:0, kind:'flee', desc:'d20 + SPD vs 10 + their SPD. Fail: free hit on you.'},
   medkit:   {name:'Medkit', cost:0, cd:0, kind:'item', desc:'Use a medkit. Natural 1 wastes it.'},
-  // defensive moves (one per class, available from the start)
-  kite:     {name:'Kite', cost:5, cd:3, kind:'buff', self:[{status:'defMod',value:4,turns:2,label:'Kiting'}], energyGain:6, desc:'+4 DEF for 2 turns, recover 6 EN.'},
-  shielddrone:{name:'Shield Drone', cost:8, cd:4, kind:'buff', self:[{status:'shield',value:12,turns:3,label:'Shield'}], desc:'Absorbs the next 12 damage (3 turns).'},
-  guard:    {name:'Guard', cost:4, cd:2, kind:'buff', self:[{status:'defMod',value:5,turns:2,label:'Guard'},{status:'brace',value:2,turns:2,label:'Guard'}], desc:'+5 DEF and hits deal 2 less for 2 turns.'},
-  mirror:   {name:'Mirror Curse', cost:7, cd:4, kind:'buff', self:[{status:'reflect',value:0.5,turns:2,label:'Mirror'}], desc:'Half the damage you take is reflected for 2 turns.'},
-  purge:    {name:'Purge', cost:6, cd:3, kind:'cleanse', heal:[1,6], healFlat:2, desc:'Cleanse poisons, hexes and cracks. Heal 1d6+2.'},
-  dirtytrick:{name:'Dirty Trick', cost:3, cd:2, kind:'trick', target:[{status:'hitMod',value:-4,turns:2,label:'Blinded'}], self:[{status:'hitMod',value:2,turns:2,label:'Opening'}], desc:'Sand in the eyes: target -4 to hit, you +2 (2 turns). Only a 1 fails.'},
-  // signatures (one per class, available from the start)
-  snare:    {name:'Snare Trap', cost:8, cd:4, kind:'attack', extra:[1,6], onHit:{status:'stun',value:1,turns:1,label:'Snared'}, desc:'1d6. Target loses next turn.'},
-  arc:      {name:'Arc Bolt', cost:6, cd:1, kind:'attack', extra:[2,6], hitBonus:2, desc:'2d6 lightning, +2 to hit.'},
-  slam:     {name:'Ground Slam', cost:9, cd:3, kind:'attack', extra:[1,10], onHit:{status:'defMod',value:-3,turns:2,label:'Cracked'}, desc:'1d10. Target -3 DEF for 2 turns.'},
-  leech:    {name:'Soul Leech', cost:8, cd:3, kind:'attack', extra:[2,6], hitBonus:1, leech:0.5, desc:'2d6. Heal half the damage.'},
-  stim:     {name:'Stim Shot', cost:10, cd:3, kind:'heal', heal:[3,6], healFlat:2, desc:'Heal 3d6+2.'},
-  venom:    {name:'Venom Strike', cost:7, cd:3, kind:'attack', extra:[1,6], hitBonus:1, onHit:{status:'dot',value:3,turns:3,label:'Venom'}, desc:'1d6 + 3 poison/turn for 3 turns.'},
-  // weapon moves
-  cleave:   {name:'Cleave', cost:5, cd:1, kind:'attack', weaponDmg:true, extra:[1,6], desc:'Weapon +1d6.'},
-  flurry:   {name:'Flurry', cost:9, cd:3, kind:'attack', weaponDmg:true, hits:2, desc:'Two weapon attacks.'},
-  crush:    {name:'Crushing Blow', cost:6, cd:2, kind:'attack', weaponDmg:true, extra:[1,8], hitBonus:-2, desc:'Weapon +1d8, -2 to hit.'},
-  stagger:  {name:'Stagger', cost:8, cd:3, kind:'attack', weaponDmg:true, onHit:{status:'stun',value:1,turns:1,label:'Staggered'}, desc:'Weapon dmg. Target loses next turn.'},
-  aimed:    {name:'Aimed Shot', cost:6, cd:2, kind:'attack', weaponDmg:true, hitBonus:4, extra:[1,6], desc:'Weapon +1d6, +4 to hit.'},
-  volley:   {name:'Volley', cost:10, cd:3, kind:'attack', weaponDmg:true, hits:3, hitBonus:-2, desc:'Three weapon attacks at -2.'},
-  ember:    {name:'Ember Bolt', cost:6, cd:1, kind:'attack', weaponDmg:true, extra:[1,6], hitBonus:2, desc:'Weapon +1d6 fire, +2 to hit.'},
-  hex:      {name:'Hex of Rot', cost:7, cd:4, kind:'debuff', target:[{status:'hitMod',value:-4,turns:3,label:'Hexed'}], desc:'Target -4 to hit for 3 turns.'},
-  overclock:{name:'Overclock', cost:8, cd:4, kind:'buff', self:[{status:'hitMod',value:4,turns:2,label:'Overclock'},{status:'dmgMod',value:4,turns:2,label:'Overclock'}], desc:'+4 hit, +4 dmg for 2 turns.'},
-  drones:   {name:'Drone Swarm', cost:10, cd:4, kind:'attack', extra:[1,4], onHit:{status:'dot',value:4,turns:3,label:'Drones'}, desc:'1d4, then 4 dmg/turn for 3 turns.'}
+  // defensive moves (one per class, available from the start) — the d12 sets how strong the effect is
+  kite:     {name:'Kite', tier:'special', cost:5, cd:3, kind:'buff', self:[{status:'defMod',value:4,turns:2,label:'Kiting'}], energyGain:r=>r, desc:'+4 DEF for 2 turns and recover d12 EN.'},
+  shielddrone:{name:'Shield Drone', tier:'special', cost:8, cd:4, kind:'buff', self:[{status:'shield',value:r=>r+6,turns:3,label:'Shield'}], desc:'A d12+6 shield absorbs damage for 3 turns.'},
+  guard:    {name:'Guard', tier:'special', cost:4, cd:2, kind:'buff', self:[{status:'defMod',value:r=>3+Math.ceil(r/4),turns:2,label:'Guard'},{status:'brace',value:2,turns:2,label:'Guard'}], desc:'d12: +4 to +6 DEF, hits deal 2 less (2 turns).'},
+  mirror:   {name:'Mirror Curse', tier:'special', cost:7, cd:4, kind:'buff', self:[{status:'reflect',value:r=>(r+6)/24,turns:2,label:'Mirror'}], desc:'d12: reflect 30–75% of damage taken for 2 turns.'},
+  purge:    {name:'Purge', tier:'special', cost:6, cd:3, kind:'cleanse', heal:[1,12], healFlat:0, desc:'Cleanse poisons, hexes and cracks. Heal d12.'},
+  dirtytrick:{name:'Dirty Trick', tier:'special', cost:3, cd:2, kind:'trick', target:[{status:'hitMod',value:r=>-(2+Math.ceil(r/4)),turns:2,label:'Blinded'}], self:[{status:'hitMod',value:2,turns:2,label:'Opening'}], desc:'Sand in the eyes, d12: target −3 to −5 to hit, you +2 (2 turns). Only a 1 fails.'},
+  // signatures (one per class, available from the start) — d12 + ATK
+  snare:    {name:'Snare Trap', tier:'special', cost:8, cd:4, kind:'attack', onHit:{status:'stun',value:1,turns:1,label:'Snared'}, desc:'d12 + ATK. Target loses next turn.'},
+  arc:      {name:'Arc Bolt', tier:'special', cost:6, cd:1, kind:'attack', hitBonus:2, desc:'d12 + ATK lightning, +2 to hit.'},
+  slam:     {name:'Ground Slam', tier:'special', cost:9, cd:3, kind:'attack', onHit:{status:'defMod',value:-3,turns:2,label:'Cracked'}, desc:'d12 + ATK. Target −3 DEF for 2 turns.'},
+  leech:    {name:'Soul Leech', tier:'special', cost:8, cd:3, kind:'attack', hitBonus:1, leech:0.5, desc:'d12 + ATK. Heal half the damage.'},
+  stim:     {name:'Stim Shot', tier:'special', cost:10, cd:3, kind:'heal', heal:[1,12], healFlat:6, desc:'Heal d12+6.'},
+  venom:    {name:'Venom Strike', tier:'special', cost:7, cd:3, kind:'attack', hitBonus:1, onHit:{status:'dot',value:3,turns:3,label:'Venom'}, desc:'d12 + ATK, then 3 poison/turn for 3 turns.'},
+  // weapon moves (unlocked by carrying a weapon you can use) — d20 + weapon + ATK
+  cleave:   {name:'Cleave', tier:'unlocked', cost:5, cd:1, kind:'attack', weaponDmg:true, desc:'d20 + weapon + ATK.'},
+  flurry:   {name:'Flurry', tier:'unlocked', cost:9, cd:3, kind:'attack', weaponDmg:true, hits:2, desc:'A d20 strike, then a d6 strike.'},
+  crush:    {name:'Crushing Blow', tier:'unlocked', cost:6, cd:2, kind:'attack', weaponDmg:true, flat:3, hitBonus:-2, desc:'d20 + weapon + ATK + 3, −2 to hit.'},
+  stagger:  {name:'Stagger', tier:'unlocked', cost:8, cd:3, kind:'attack', weaponDmg:true, onHit:{status:'stun',value:1,turns:1,label:'Staggered'}, desc:'d20 + weapon + ATK. Target loses next turn.'},
+  aimed:    {name:'Aimed Shot', tier:'unlocked', cost:6, cd:2, kind:'attack', weaponDmg:true, hitBonus:4, desc:'d20 + weapon + ATK, +4 to hit.'},
+  volley:   {name:'Volley', tier:'unlocked', cost:10, cd:3, kind:'attack', weaponDmg:true, hits:3, hitBonus:-2, desc:'A d20 strike then two d6 strikes, all at −2.'},
+  ember:    {name:'Ember Bolt', tier:'unlocked', cost:6, cd:1, kind:'attack', weaponDmg:true, hitBonus:2, desc:'d20 + weapon + ATK fire, +2 to hit.'},
+  hex:      {name:'Hex of Rot', tier:'unlocked', cost:7, cd:4, kind:'debuff', target:[{status:'hitMod',value:r=>-(3+Math.ceil(r/7)),turns:3,label:'Hexed'}], desc:'d20: target −4 to −6 to hit for 3 turns.'},
+  overclock:{name:'Overclock', tier:'unlocked', cost:8, cd:4, kind:'buff', self:[{status:'hitMod',value:r=>2+Math.ceil(r/5),turns:2,label:'Overclock'},{status:'dmgMod',value:r=>2+Math.ceil(r/5),turns:2,label:'Overclock'}], desc:'d20: +3 to +6 hit and damage for 2 turns.'},
+  drones:   {name:'Drone Swarm', tier:'unlocked', cost:10, cd:4, kind:'attack', onHit:{status:'dot',value:4,turns:3,label:'Drones'}, desc:'d20 + ATK, then 4 dmg/turn for 3 turns.'}
 };
+const powerDie = ab=>POWER_DIE[ab.tier]||0, rollDie = n=>1+Math.floor(Math.random()*n);
+// status entries may size their value from the power roll
+const statusWith = (st, r)=>({...st, value: typeof st.value==='function'? st.value(r) : st.value});
 
 const CLASSES = [
-  {id:'warden', name:'Warden', title:'Wasteland Ranger', color:'#7bd88f', hp:58, def:13, atk:3, spd:6, en:30, fists:[1,6],
+  {id:'warden', name:'Warden', title:'Wasteland Ranger', color:'#7bd88f', hp:58, def:13, atk:3, spd:6, en:30, fistBonus:0,
    signature:'snare', defensive:'kite', field:{id:'scout',name:'Scout',key:'Q',cost:15,cd:30,desc:'Reveal every survivor on the minimap for 10 s, with an arrow to the nearest.'}, passive:'keeneye', passiveName:'Keen Eye', passiveDesc:'Spots enemies from three times further away (minimap).',
    affinity:{ranged:'expert',blade:'skilled',blunt:'basic',tech:'basic',arcane:'poor'}, family:'Fighting for a daughter waiting at the checkpoint.'},
-  {id:'techno', name:'Technomancer', title:'Reactor Witch', color:'#2ee6ff', hp:50, def:12, atk:2, spd:5, en:45, fists:[1,6],
+  {id:'techno', name:'Technomancer', title:'Reactor Witch', color:'#2ee6ff', hp:50, def:12, atk:2, spd:5, en:45, fistBonus:0,
    signature:'arc', defensive:'shielddrone', field:{id:'tinker',name:'Tinker',key:'Q',cost:UPGRADE_COST,cd:0,desc:'Upgrade the weapon you carry by one tier (once per weapon).'}, passive:'tinker', passiveName:'Field Tinker', passiveDesc:'Press Q to upgrade the weapon you carry by one tier (20 EN, once per weapon).',
    affinity:{tech:'expert',arcane:'skilled',ranged:'basic',blade:'poor',blunt:'poor'}, family:'Fighting for a brother locked in the reactor wards.'},
-  {id:'bruiser', name:'Bruiser', title:'Scrapyard Titan', color:'#ff8c42', hp:80, def:15, atk:2, spd:3, en:25, fists:[1,10],
+  {id:'bruiser', name:'Bruiser', title:'Scrapyard Titan', color:'#ff8c42', hp:80, def:15, atk:2, spd:3, en:25, fistBonus:2,
    signature:'slam', defensive:'guard', field:{id:'brace',name:'Brace',key:'Q',cost:15,cd:0,desc:'Start your next fight with +4 DEF for 3 turns.'}, passive:'ironhide', passiveName:'Ironhide', passiveDesc:'Every hit taken deals 2 less damage. Fists hit for 1d10.',
    affinity:{blunt:'expert',blade:'skilled',tech:'basic',ranged:'poor',arcane:'poor'}, family:'Fighting for three kids in the dust camps.'},
-  {id:'hexblade', name:'Hexblade', title:'Cursed Duelist', color:'#b56cff', hp:58, def:13, atk:3, spd:5, en:35, fists:[1,8],
+  {id:'hexblade', name:'Hexblade', title:'Cursed Duelist', color:'#b56cff', hp:58, def:13, atk:3, spd:5, en:35, fistBonus:1,
    signature:'leech', defensive:'mirror', field:{id:'rite',name:'Blood Rite',key:'Q',cost:0,hpCost:10,cd:0,desc:'Pay 10 HP: your first attack next fight cannot miss and crits on 15+.'}, passive:'bloodpact', passiveName:'Blood Pact', passiveDesc:'Kills restore 40% HP instead of 15%.',
    affinity:{blade:'expert',arcane:'skilled',blunt:'basic',ranged:'poor',tech:'poor'}, family:"Fighting to keep a dead partner's promise."},
-  {id:'alch', name:'Alchemist', title:'Field Medic', color:'#ffd166', hp:62, def:12, atk:2, spd:5, en:40, fists:[1,6],
+  {id:'alch', name:'Alchemist', title:'Field Medic', color:'#ffd166', hp:62, def:12, atk:2, spd:5, en:40, fistBonus:0,
    signature:'stim', defensive:'purge', field:{id:'brew',name:'Brew',key:'Q',cost:15,cd:40,desc:'Brew a medkit from 15 EN (needs a free slot).'}, passive:'medic', passiveName:'Field Medic', passiveDesc:'Medkits heal double, carries one extra, regenerates twice as fast.',
    affinity:{arcane:'expert',ranged:'skilled',tech:'basic',blade:'basic',blunt:'poor'}, family:'Fighting for a father on the transplant list.'},
-  {id:'wraith', name:'Wraith', title:'Ash Scavenger', color:'#ff3e7f', hp:52, def:14, atk:4, spd:8, en:35, fists:[1,8],
+  {id:'wraith', name:'Wraith', title:'Ash Scavenger', color:'#ff3e7f', hp:52, def:14, atk:4, spd:8, en:35, fistBonus:1,
    signature:'venom', defensive:'dirtytrick', field:{id:'sprint',name:'Shadow Sprint',key:'Q',cost:12,cd:15,desc:'4 s at +70% speed; nobody can engage you meanwhile.'}, passive:'scavenger', passiveName:'Scavenger', passiveDesc:'Moves 15% faster, crate weapons come one tier higher, crates show on the minimap.',
    affinity:{blade:'expert',ranged:'skilled',tech:'basic',blunt:'basic',arcane:'poor'}, family:'Fighting for nobody. Just the way out.'}
 ];
@@ -709,7 +719,7 @@ function newGame(seed, roster){
   particles=[]; floats=[]; shake=0; flashA=0; pendingPass=null; combats=[]; viewCombat=null; combatIdSeq=1;
   genMap(seed);
   const ents=roster.map(r=>makeContestant(r.id, CLASS_BY_ID[r.clsId], r.human, r.humanIndex, r.name, r.netId));
-  ents.forEach(e=>{ e.weapon=makeWeapon('none',0); e.weapon.dice=e.cls.fists; });
+  ents.forEach(e=>{ e.weapon=makeWeapon('none',0,e.cls.fistBonus); });
   const rng=mulberry32(seed^0x9e3779b9); const placed=[]; ents.forEach(e=>{ const p=randomWalkableTile(220,placed,rng); e.x=e.tx=p.x; e.y=e.ty=p.y; placed.push(p); });
   const zc=(()=>{ for(let i=0;i<200;i++){ const tx=Math.floor(MAP_W*0.35+rng()*MAP_W*0.3), ty=Math.floor(MAP_H*0.35+rng()*MAP_H*0.3); if(!solidAt(tx,ty)) return {x:tx*TILE+TILE/2,y:ty*TILE+TILE/2}; } return {x:MAP_W*TILE/2,y:MAP_H*TILE/2}; })();
   G = { seed, ents, crates:[], zone:{cx:zc.x, cy:zc.y, phase:0, t:0, radius:ZONE_RADII[0]*MAP_W*TILE/2}, time:0,
@@ -757,7 +767,7 @@ function saveHi(score){ score=Math.round(score); if(score>hiScore){ hiScore=scor
 // ============================================================================
 //  Combat model (pure rules; used by the interactive fights and the off-screen simulation)
 // ============================================================================
-function attackRoll(user,target,ab,nat){
+function attackRoll(user,target,ab,nat,strike){
   const mu=matchupBonus(user,target); const total = nat + hitMod(user) + (ab.hitBonus||0) + mu;
   const di=target.statuses.findIndex(s=>s.status==='dodge');
   if(di>=0){ target.statuses.splice(di,1); return {type:'dodge', nat, total}; }
@@ -765,14 +775,14 @@ function attackRoll(user,target,ab,nat){
   const need=defVal(target); let critMin=ab.critMin||20, rite=false; if(user.rite){ rite=true; user.rite=false; critMin=Math.min(critMin,15); }
   const hit = nat===20 || rite || total>=need;
   if(!hit) return {type:'miss', nat, total, need};
-  let dmg=0; if(ab.weaponDmg) dmg += rollDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk;
-  if(ab.extra) dmg += rollDice(ab.extra); dmg += dmgMod(user) + mu;
-  const crit = nat >= critMin; if(crit) dmg*=2;
+  const pdie = strike? POWER_DIE.basic : powerDie(ab), pval=rollDie(pdie); // extra strikes of a multi-hit move use the d6
+  let dmg = pval + user.atk + (ab.weaponDmg? (user.weapon.flat||0) : 0) + (ab.flat||0) + dmgMod(user) + mu;
+  const crit = nat >= critMin; if(crit) dmg*=2; dmg=Math.round(dmg*DAMAGE_SCALE);
   if(target.cls.passive==='ironhide') dmg-=2; dmg-=sumStatus(target,'brace'); dmg=Math.max(1,dmg);
   let absorbed=0; const sh=target.statuses.find(x=>x.status==='shield'); if(sh){ absorbed=Math.min(sh.value,dmg); sh.value-=absorbed; dmg-=absorbed; if(sh.value<=0) target.statuses=target.statuses.filter(x=>x!==sh); }
   let reflected=0; const rf=sumStatus(target,'reflect'); if(rf>0 && dmg>0){ reflected=Math.floor(dmg*rf); user.hp-=reflected; }
   target.hp -= dmg; user.dmgDealt += dmg; if(user.isHuman) user.score += dmg; target.flash=1;
-  const r={type:'hit', nat, total, dmg, crit, need, absorbed, reflected, rite};
+  const r={type:'hit', nat, total, dmg, crit, need, absorbed, reflected, rite, pdie, pval};
   if(ab.leech){ const h=Math.min(Math.floor(dmg*ab.leech), user.maxHp-user.hp); if(h>0){ user.hp+=h; r.heal=h; } }
   if(ab.onHit && target.hp>0){ applyStatus(target, ab.onHit, user._second); r.status=ab.onHit.label; }
   return r;
@@ -780,20 +790,21 @@ function attackRoll(user,target,ab,nat){
 function resolveAction(user, target, abId, nat){
   const ab=ABILITIES[abId], ev=[]; user.energy=Math.max(0,user.energy-ab.cost); if(ab.cd) user.cds[abId]=ab.cd+1;
   if(ab.kind==='attack'){ const hits=ab.hits||1;
-    for(let i=0;i<hits;i++){ const n=i===0?nat:d20(); ev.push(attackRoll(user,target,ab,n)); if(target.hp<=0||user.hp<=0) break; } }
+    for(let i=0;i<hits;i++){ const n=i===0?nat:d20(); ev.push(attackRoll(user,target,ab,n,i>0)); if(target.hp<=0||user.hp<=0) break; } }
   else if(ab.kind==='heal'){ if(nat===1) ev.push({type:'fail',nat});
-    else { let amt=rollDice(ab.heal)+(ab.healFlat||0); if(nat===20) amt*=2; amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20}); } }
+    else { const pval=rollDice(ab.heal); let amt=pval+(ab.healFlat||0); if(nat===20) amt*=2; amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20,pdie:ab.heal[1],pval}); } }
   else if(ab.kind==='item'){ if(user.medkits<=0){ ev.push({type:'fail',nat}); return ev; } user.medkits--;
     if(nat===1) ev.push({type:'fail',nat,wasted:true}); else { let amt=medkitHeal(user)*(nat===20?2:1); amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20}); } }
   else if(ab.kind==='buff'){ if(nat===1) ev.push({type:'fail',nat});
-    else { ab.self.forEach(s=>applyStatus(user,{...s,turns:s.turns+(nat===20?1:0)},user._second)); if(ab.energyGain) user.energy=Math.min(user.maxEn,user.energy+ab.energyGain); ev.push({type:'buff',nat,label:ab.self[0].label,crit:nat===20}); } }
+    else { const pdie=powerDie(ab), pval=rollDie(pdie); ab.self.forEach(s=>applyStatus(user,{...statusWith(s,pval),turns:s.turns+(nat===20?1:0)},user._second));
+      if(ab.energyGain){ const g=typeof ab.energyGain==='function'? ab.energyGain(pval) : ab.energyGain; user.energy=Math.min(user.maxEn,user.energy+g); } ev.push({type:'buff',nat,label:ab.self[0].label,crit:nat===20,pdie,pval}); } }
   else if(ab.kind==='cleanse'){ if(nat===1) ev.push({type:'fail',nat});
     else { const before=user.statuses.length; user.statuses=user.statuses.filter(st=>!(st.status==='dot'||st.status==='stun'||((st.status==='hitMod'||st.status==='defMod')&&st.value<0))); const n=before-user.statuses.length;
-      let amt=rollDice(ab.heal)+(ab.healFlat||0); if(nat===20) amt*=2; amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20,cleansed:n}); } }
+      const pval=rollDice(ab.heal); let amt=pval+(ab.healFlat||0); if(nat===20) amt*=2; amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20,cleansed:n,pdie:ab.heal[1],pval}); } }
   else if(ab.kind==='trick'){ if(nat===1) ev.push({type:'fail',nat});
-    else { ab.target.forEach(st=>applyStatus(target,{...st,turns:st.turns+(nat===20?1:0)},user._second)); (ab.self||[]).forEach(st=>applyStatus(user,{...st,turns:st.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total:nat,label:ab.target[0].label,crit:nat===20}); } }
+    else { const pdie=powerDie(ab), pval=rollDie(pdie); ab.target.forEach(st=>applyStatus(target,{...statusWith(st,pval),turns:st.turns+(nat===20?1:0)},user._second)); (ab.self||[]).forEach(st=>applyStatus(user,{...statusWith(st,pval),turns:st.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total:nat,label:ab.target[0].label,crit:nat===20,pdie,pval}); } }
   else if(ab.kind==='debuff'){ const total=nat+hitMod(user)+matchupBonus(user,target); const need=defVal(target);
-    if(nat!==1 && (nat===20||total>=need)){ ab.target.forEach(s=>applyStatus(target,{...s,turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total,label:ab.target[0].label,crit:nat===20}); }
+    if(nat!==1 && (nat===20||total>=need)){ const pdie=powerDie(ab), pval=rollDie(pdie); ab.target.forEach(s=>applyStatus(target,{...statusWith(s,pval),turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total,label:ab.target[0].label,crit:nat===20,pdie,pval}); }
     else ev.push({type:'miss',nat,total,need}); }
   return ev;
 }
@@ -809,7 +820,7 @@ function endRound(e){ for(const s of e.statuses){ if(s.fresh) s.fresh=false; els
 function abilityUsable(e,id){ const ab=ABILITIES[id]; if(id==='medkit') return e.medkits>0; return (e.cds[id]||0)<=0 && e.energy>=ab.cost; }
 function expectedDamage(user,target,ab){ if(ab.kind!=='attack') return 0;
   const mu=matchupBonus(user,target); const need=defVal(target)-(hitMod(user)+(ab.hitBonus||0)+mu); const chance=clamp((21-need)/20,0.05,0.95);
-  let avg=(ab.weaponDmg? avgDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk:0)+avgDice(ab.extra)+dmgMod(user)+mu; avg*=(ab.hits||1);
+  const hits=ab.hits||1; let avg=((powerDie(ab)+1)/2 + (hits-1)*(POWER_DIE.basic+1)/2 + hits*(user.atk+(ab.weaponDmg?(user.weapon.flat||0):0)+(ab.flat||0)+dmgMod(user)+mu))*DAMAGE_SCALE;
   if(ab.onHit && ab.onHit.status==='dot') avg+=ab.onHit.value*ab.onHit.turns*0.8; if(ab.onHit && ab.onHit.status==='stun') avg+=6;
   return chance*avg; }
 function aiChoose(user, target, round){
@@ -1079,7 +1090,7 @@ function updateCombatObj(c,dt){
     case 'skip': if(c.t>0.9) advanceTurn(c); break;
     case 'end': if(c.t>1.7) closeCombat(c); break;
   }
-  c.dice.pop=Math.max(0,c.dice.pop-dt*2);
+  c.dice.pop=Math.max(0,c.dice.pop-dt*2); if(c.power) c.power.t+=dt;
 }
 function beginTurnFlow(c){
   const u=actorOf(c), t=otherOf(c); c.t=0; c.chosen=null;
@@ -1096,16 +1107,16 @@ function resolveChosen(c){
     if(fleeRoll(u,t,nat)){ combatLog(c,`${u.name} rolled ${nat}+${u.spd} — escaped!`, COL.cyan); presentEvents(c,c.turn,'flee',[{type:'fled'}],nat); c.fleer=u; c.phase='end'; return; }
     combatLog(c,`${u.name} rolled ${nat} — ${V(u,'fail','fails')} to flee!`, COL.red); presentEvents(c,c.turn,'flee',[{type:'miss',nat,total:nat+u.spd,need:10+t.spd}],nat); c.forced=true; return;
   }
-  const ev=resolveAction(u,t,c.chosen,nat); c.lunge=1;
+  const ev=resolveAction(u,t,c.chosen,nat); c.lunge=1; const pe=ev.find(e=>e.pdie); c.power = pe? {die:pe.pdie, value:pe.pval, t:0, seq:(c.pseq=(c.pseq||0)+1)} : null;
   for(const e of ev){
     switch(e.type){
-      case 'hit': combatLog(c,`${u.name} rolled ${e.nat}${e.rite?' (Blood Rite: cannot miss)':` (${e.total} vs ${e.need})`} — ${e.crit?'CRITICAL! ':'hit for '}${e.dmg}${e.crit?' damage!':''}${e.absorbed?` (${e.absorbed} absorbed)`:''}${e.reflected?` · ${e.reflected} reflected back`:''}${e.heal?` and drained ${e.heal}`:''}${e.status?` · ${e.status}`:''}`, e.crit?COL.gold:COL.white); break;
+      case 'hit': combatLog(c,`${u.name} rolled ${e.nat}${e.rite?' (Blood Rite: cannot miss)':` (${e.total} vs ${e.need})`} — d${e.pdie} ${e.pval}: ${e.crit?'CRITICAL! ':'hit for '}${e.dmg}${e.crit?' damage!':''}${e.absorbed?` (${e.absorbed} absorbed)`:''}${e.reflected?` · ${e.reflected} reflected back`:''}${e.heal?` and drained ${e.heal}`:''}${e.status?` · ${e.status}`:''}`, e.crit?COL.gold:COL.white); break;
       case 'miss': combatLog(c,`${u.name} rolled ${e.nat} (${e.total} vs ${e.need}) — miss.`, COL.red); break;
       case 'dodge': combatLog(c,`${t.name} ${V(t,'vanish','vanishes')} — the attack whiffs!`, COL.purple); break;
       case 'fumble': combatLog(c,`NATURAL 1! ${u.name} ${V(u,'fumble and take','fumbles and takes')} ${e.self}.`, COL.orange); break;
-      case 'heal': combatLog(c,`${u.name} rolled ${e.nat} — ${e.crit?'DOUBLE ':''}heal ${e.amt}${e.cleansed?` and cleansed ${e.cleansed} effect${e.cleansed>1?'s':''}`:''}.`, COL.green); break;
-      case 'buff': combatLog(c,`${u.name} rolled ${e.nat} — ${e.label} active${e.crit?' (extended)':''}.`, COL.cyan); break;
-      case 'debuff': combatLog(c,`${u.name} rolled ${e.nat} (${e.total}) — ${t.name} ${V(t,'are','is')} ${e.label}${e.crit?' (extended)':''}.`, COL.purple); break;
+      case 'heal': combatLog(c,`${u.name} rolled ${e.nat}${e.pdie?` — d${e.pdie} ${e.pval}`:''} — ${e.crit?'DOUBLE ':''}heal ${e.amt}${e.cleansed?` and cleansed ${e.cleansed} effect${e.cleansed>1?'s':''}`:''}.`, COL.green); break;
+      case 'buff': combatLog(c,`${u.name} rolled ${e.nat} — d${e.pdie} ${e.pval} — ${e.label} active${e.crit?' (extended)':''}.`, COL.cyan); break;
+      case 'debuff': combatLog(c,`${u.name} rolled ${e.nat} (${e.total}) — d${e.pdie} ${e.pval} — ${t.name} ${V(t,'are','is')} ${e.label}${e.crit?' (extended)':''}.`, COL.purple); break;
       case 'fail': combatLog(c,`NATURAL 1! ${u.name}'s ${ABILITIES[c.chosen].name} ${e.wasted?'is wasted':'fizzles'}.`, COL.orange); break;
     }
   }
@@ -1169,8 +1180,8 @@ function buildChoices(c,u){
   const t=otherOf(c); cpBody.innerHTML=''; cpRoll.style.display='none'; cpWait.style.display='none'; cpBody.style.display='grid';
   abilityList(u).forEach((id,i)=>{ const ab=ABILITIES[id]; const b=document.createElement('button'); b.className='abt'+(id==='flee'?' flee':id==='medkit'?' med':''); b.type='button';
     const cd=u.cds[id]||0, can=abilityUsable(u,id);
-    let meta=''; if(id==='attack') meta=`${u.weapon.name} ${diceStr(u.weapon.dice)}${u.weapon.flat?'+'+u.weapon.flat:''}+${u.atk}${u.weapon.type!=='none'?' · '+affOf(u).label:''}`;
-    else if(id==='flee') meta=`need ${Math.max(2,10+t.spd-u.spd)}+`; else if(id==='medkit') meta=`${u.medkits} left · Heals ${medkitHeal(u)}`; else meta=`${ab.cost} EN · CD ${ab.cd}`+(cd>0?` · Ready in ${cd}`:'');
+    let meta=''; if(id==='attack') meta=`d6${u.weapon.flat?'+'+u.weapon.flat:''}+${u.atk} ATK · ${u.weapon.name}${u.weapon.type!=='none'?' · '+affOf(u).label:''}`;
+    else if(id==='flee') meta=`need ${Math.max(2,10+t.spd-u.spd)}+`; else if(id==='medkit') meta=`${u.medkits} left · Heals ${medkitHeal(u)}`; else meta=`d${powerDie(ab)} · ${ab.cost} EN · CD ${ab.cd}`+(cd>0?` · Ready in ${cd}`:'');
     const ic=sprite('icon.'+id); b.innerHTML=`<div class="n"><span>${ab.name}</span><i>${i+1}</i></div><div class="d">${ab.desc}</div><div class="m">${meta}</div>`+(ic?`<img src="${ic.img.src}" alt="">`:'');
     b.disabled=!can; b.addEventListener('click',()=>uiChoose(id)); cpBody.appendChild(b); });
 }
@@ -1255,7 +1266,7 @@ function makeSnapshot(){
   return { t:'snap', tm:r1(G.time), z:[G.zone.cx|0,G.zone.cy|0,G.zone.radius|0,G.zone.phase,r1(G.zone.t)], al:G.alive, b:G.barge?[G.barge.x,G.barge.y]:null,
     cr:G.crates.map(c=>[c.x|0,c.y|0]), over:G.over?1:0,
     e:G.ents.map(e=>[e.id,e.x|0,e.y|0,r1(e.hp),e.maxHp,e.energy|0,e.maxEn,e.alive?1:0,e.facing,e.moving?1:0,e.weapon.type,e.weapon.tier,e.weapon.upgraded?1:0,e.kills,r1(e.immune),e.inCombat?1:0,e.def,e.atk,e.score|0,e.medkits,e.dmgDealt,e.crates,e.placement,e.armor,r1(e.immuneHold),Math.round(e.ai.aggression*100)/100,e.isHuman?1:0,r1(e.fieldCd),r1(e.scoutT),r1(e.sprintT),e.prep?1:0,e.rite?1:0]),
-    c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,t:r1(c.t),fo:c.forced?1:0,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
+    c:combats.map(c=>({id:c.id,f:[c.f[0].id,c.f[1].id],turn:c.turn,round:c.round,ph:c.phase,ch:c.chosen,nat:c.nat,t:r1(c.t),fo:c.forced?1:0,dv:c.dice.value,dr:c.dice.rolling?1:0,dvis:c.dice.visible?1:0,pw:c.power?[c.power.die,c.power.value,c.power.seq]:0,log:c.log,w:c.winner?c.winner.id:0,l:c.loser?c.loser.id:0,fl:c.fleer?c.fleer.id:0,st:[c.f[0].statuses,c.f[1].statuses],cd:[c.f[0].cds,c.f[1].cds]})) };
 }
 function applySnapshot(s){
   const me=localHuman();
@@ -1265,7 +1276,7 @@ function applySnapshot(s){
   for(const r of s.e){ const e=entById(r[0]); if(!e) continue; const wasAlive=e.alive;
     e.tx=r[1]; e.ty=r[2]; if(e!==me){ if(Math.hypot(e.tx-e.x,e.ty-e.y)>160) { e.x=e.tx; e.y=e.ty; } } else if(Math.hypot(e.tx-e.x,e.ty-e.y)>48){ e.x=e.tx; e.y=e.ty; }
     e.hp=r[3]; e.maxHp=r[4]; e.energy=r[5]; e.maxEn=r[6]; e.alive=!!r[7]; if(e!==me){ e.facing=r[8]; e.moving=!!r[9]; }
-    if(e.weapon.type!==r[10]||e.weapon.tier!==r[11]){ e.weapon=makeWeapon(r[10],r[11]); if(r[10]==='none') e.weapon.dice=e.cls.fists; } e.weapon.upgraded=!!r[12];
+    if(e.weapon.type!==r[10]||e.weapon.tier!==r[11]){ e.weapon=makeWeapon(r[10],r[11],e.cls.fistBonus); } e.weapon.upgraded=!!r[12];
     e.kills=r[13]; e.immune=r[14]; e.inCombat=!!r[15]; e.def=r[16]; e.atk=r[17]; e.score=r[18]; e.medkits=r[19]; e.dmgDealt=r[20]; e.crates=r[21]; e.placement=r[22]; e.armor=r[23]; e.immuneHold=r[24]; e.ai.aggression=r[25]; if(e.isHuman && !r[26]){ e.isHuman=false; e.netId=null; } e.fieldCd=r[27]; e.scoutT=r[28]; e.sprintT=r[29]; if(r[30]&&!e.prep) e.prep=[{status:'defMod',value:4,turns:3,label:'Braced'}]; if(!r[30]) e.prep=null; e.rite=!!r[31];
     if(wasAlive && !e.alive){ e.deathT=0; if(e===me) Audio.sfx.death(); } }
   const seen=new Set();
@@ -1273,7 +1284,7 @@ function applySnapshot(s){
     const fa=entById(v.f[0]), fb=entById(v.f[1]); if(!fa||!fb) continue;
     if(!c){ c={id:v.id,f:[fa,fb],turn:0,round:1,phase:'intro',t:0,chosen:null,nat:20,dice:{value:20,t:0,angle:0,rolling:false,visible:false,pop:0},log:[],lunge:0,winner:null,loser:null,fleer:null,forced:false,mirror:true}; combats.push(c); }
     if(c.phase!==v.ph||c.turn!==v.turn) c.t=0;
-    c.turn=v.turn; c.round=v.round; c.phase=v.ph; c.chosen=v.ch; c.nat=v.nat; if(!v.dr && c.dice.rolling){ c.dice.pop=1; } if(!v.dr) c.dice.value=v.dv; c.dice.rolling=!!v.dr; c.dice.visible=!!v.dvis;
+    c.turn=v.turn; c.round=v.round; c.phase=v.ph; c.chosen=v.ch; c.nat=v.nat; if(!v.dr && c.dice.rolling){ c.dice.pop=1; } if(!v.dr) c.dice.value=v.dv; c.dice.rolling=!!v.dr; c.dice.visible=!!v.dvis; if(v.pw){ if(!c.power||c.power.seq!==v.pw[2]) c.power={die:v.pw[0],value:v.pw[1],seq:v.pw[2],t:0}; } else c.power=null;
     c.hostT=v.t; c.forced=!!v.fo; c.log=v.log; c.winner=v.w?entById(v.w):null; c.loser=v.l?entById(v.l):null; c.fleer=v.fl?entById(v.fl):null; fa.statuses=v.st[0]; fb.statuses=v.st[1]; fa.cds=v.cd[0]; fb.cds=v.cd[1];
     if(me && c.f.includes(me) && viewCombat!==c) enterCombatView(c); }
   combats=combats.filter(c=>{ if(seen.has(c.id)) return true; if(c===viewCombat) leaveCombatView(); return false; });
@@ -1286,7 +1297,7 @@ function updateClient(dt){
     G.inT+=dt; const changed=(d.dx!==G.lastIn?.dx||d.dy!==G.lastIn?.dy); if(G.inT>=NET_INPUT_INTERVAL||changed){ G.inT=0; G.lastIn={dx:d.dx,dy:d.dy}; Net.toHost({t:'in',d:[Math.round(d.dx*100)/100,Math.round(d.dy*100)/100]}); } }
   for(const e of G.ents){ if(e===me) continue; if(!e.alive){ e.deathT+=dt; continue; } const k=Math.min(1,dt*10); e.x+=(e.tx-e.x)*k; e.y+=(e.ty-e.y)*k; if(e.moving) e.walk+=dt; }
   if(G.barge) G.barge.t+=dt;
-  for(const c of combats){ c.t+=dt; if(c.dice.rolling){ c.dice.angle+=dt*12; if(Math.floor(c.t*20)!==Math.floor((c.t-dt)*20)){ c.dice.value=d20(); if(c===viewCombat) Audio.sfx.dice(); } } c.dice.pop=Math.max(0,c.dice.pop-dt*2); c.lunge=Math.max(0,c.lunge-dt*3); }
+  for(const c of combats){ c.t+=dt; if(c.power) c.power.t+=dt; if(c.dice.rolling){ c.dice.angle+=dt*12; if(Math.floor(c.t*20)!==Math.floor((c.t-dt)*20)){ c.dice.value=d20(); if(c===viewCombat) Audio.sfx.dice(); } } c.dice.pop=Math.max(0,c.dice.pop-dt*2); c.lunge=Math.max(0,c.lunge-dt*3); }
 }
 // a disconnected player's survivor keeps fighting as an AI so the round stays whole
 function botify(e){ e.isHuman=false; e.netId=null; if(!/\(bot\)$/.test(e.name)) e.name=e.name.slice(0,9)+' (bot)'; e.netIn={dx:0,dy:0}; e.netEngage=false; e.ai.state='wander'; e.ai.target=null; }
@@ -1439,6 +1450,12 @@ function drawHUD(g){
     actBtn.x=W-180; actBtn.y=H-44; const hu=e&&canField(e); g.globalAlpha=hu?0.95:0.35; g.fillStyle=hu?COL.cyan:'#333a4d'; g.beginPath(); g.arc(actBtn.x,actBtn.y,actBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'ACT',actBtn.x,actBtn.y,11,'#0a0e1a','center'); }
   if(G.over && G.result){ g.fillStyle='rgba(0,0,0,0.35)'; g.fillRect(0,0,W,H); }
 }
+// The power die: d6 as a rounded square, d12 as a pentagon, d20 as the hexagon. Pops in, holds, fades.
+function drawPowerDie(g,x,y,r,sides,value,t){ const pop=clamp(t/0.18,0,1), fade=clamp((POWER_SHOW_TIME-t)/0.4,0,1); if(fade<=0) return;
+  const col= sides===20? COL.gold : sides===12? COL.purple : COL.cyan; const sc=(0.6+0.4*pop)*(1+0.15*Math.max(0,1-t/0.3));
+  g.save(); g.translate(x,y); g.globalAlpha=fade; g.scale(sc,sc); g.shadowColor=col; g.shadowBlur=18; g.fillStyle='#0e1322'; g.strokeStyle=col; g.lineWidth=2.5; g.beginPath();
+  if(sides===6) g.roundRect(-r*0.85,-r*0.85,r*1.7,r*1.7,r*0.25); else { const n=sides===12?5:6; for(let i=0;i<n;i++){ const a=i*2*Math.PI/n-Math.PI/2; g.lineTo(Math.cos(a)*r,Math.sin(a)*r); } g.closePath(); }
+  g.fill(); g.shadowBlur=0; g.stroke(); txtO(g,String(value),0,r*0.05,Math.round(r*0.85),value===sides?COL.gold:COL.white,'center'); txtO(g,'d'+sides,0,r+11,10,col,'center',800); g.restore(); }
 function drawD20(g,x,y,r,value,angle,glow,pop,rolling){
   g.save(); g.translate(x,y); const s=1+pop*0.25; g.scale(s,s);
   if(glow){ g.shadowColor=glow; g.shadowBlur=30; }
@@ -1479,7 +1496,8 @@ function drawCombat(g){
   }
   const dr=Math.min(52,W*0.09), dy=fighterPos(0).y-90;
   if(c.dice.visible){ drawD20(g,W/2,dy,dr,c.dice.value,c.dice.angle, c.dice.rolling?null:(c.nat===20?COL.gold:c.nat===1?COL.red:COL.cyan), c.dice.pop, c.dice.rolling);
-    if(!c.dice.rolling && c.phase!=='rolling'){ txtO(g, c.nat===20?'NATURAL 20!':c.nat===1?'NATURAL 1':'', W/2, dy+dr+22, 18, c.nat===20?COL.gold:COL.red,'center'); } }
+    if(!c.dice.rolling && c.phase!=='rolling'){ txtO(g, c.nat===20?'NATURAL 20!':c.nat===1?'NATURAL 1':'', W/2, dy+dr+22, 18, c.nat===20?COL.gold:COL.red,'center'); }
+    if(c.power && !c.dice.rolling) drawPowerDie(g, W/2, dy+dr+(c.nat===20||c.nat===1?62:48), dr*0.55, c.power.die, c.power.value, c.power.t); }
   else if(c.phase==='await' && myTurn(c)){ const p=Math.sin(timeNow*6)*3; drawD20(g,W/2,dy,dr+p,20,timeNow,COL.cyan,0,false); txtO(g, isTouch?'TAP TO ROLL':'SPACE TO ROLL', W/2, dy+dr+28, 14, COL.cyan,'center'); }
   else if(c.phase==='intro'){ txtO(g,'ENCOUNTER',W/2,dy-20,Math.min(46,W/12),COL.pink,'center'); txtO(g,`${c.f[0].name} strikes first`,W/2,dy+20,14,COL.gold,'center'); }
   const lw=W<700? W-118 : Math.min(W-20,560), lf=W<700? 11 : 12; g.fillStyle='rgba(10,14,26,0.55)'; g.beginPath(); g.roundRect(10,10,lw,18*c.log.length+14,8); g.fill();
@@ -1538,8 +1556,8 @@ function renderGuide(){
   const phases=ZONE_RADII.map((r,i)=>`<tr><td>${i===0?'0 (drop)':i}</td><td>${i===ZONE_RADII.length-1?'stays':ZONE_PHASE_TIME+' s'}</td><td>${Math.round(r*100)}%</td><td>${ZONE_DAMAGE[i]||'none'}</td><td>${MUSIC_BASE_BPM+MUSIC_BPM_STEP*i}</td></tr>`).join('');
   const classes=CLASSES.map(c=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>MATCHUP_CYCLE[(i+k)%6];
     const aff=WEAPON_TYPES.map(t=>`${t} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
-    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · Fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
-  const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">${diceStr(TIER_DICE[i])}${i===3?'+2':''}</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
+    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · Fists ${fistStr(c)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
+  const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">+${WEAPON_TIER_BONUS[i]} dmg</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
   // matchup ring as SVG
   const R=110, cx=150, cy=150; const pts=MATCHUP_CYCLE.map((id,i)=>{ const a=-Math.PI/2+i*Math.PI/3; return {id, x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R}; });
   const arrows=pts.map((p,i)=>{ const q=pts[(i+1)%6]; const dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy); const ux=dx/d, uy=dy/d; return `<line x1="${p.x+ux*33}" y1="${p.y+uy*33}" x2="${q.x-ux*37}" y2="${q.y-uy*37}" stroke="${col(p.id)}" stroke-width="3" marker-end="url(#ah)"/>`; }).join('');
@@ -1563,8 +1581,8 @@ function renderGuide(){
 <h3>Fighting: the d20</h3>
 <ul><li>Initiative: d20 + SPD, higher acts first. Turns alternate; energy regenerates ${ENERGY_REGEN} per turn.</li>
 <li><b class="k">Attacks</b>: roll d20 + ATK + weapon affinity + matchup + buffs against the target's DEF. Meet it and you hit. <b>Natural 20</b> always hits and doubles damage. <b>Natural 1</b> fumbles: you hurt yourself for ${FUMBLE_SELF_DAMAGE}.</li>
-<li>Damage = weapon dice + ATK + affinity + matchup (+ the ability's extra dice). Bruisers take 2 less from every hit.</li>
-<li><b class="k">Heals and buffs</b> also roll: a 1 fizzles, a 20 doubles the heal or extends the buff.</li>
+<li><b class="k">Power dice</b>: after the d20 check, the move's own die decides how hard it lands — <b>d6</b> for the basic Attack, <b>d12</b> for your signature and defensive move, <b>d20</b> for moves a weapon unlocks. Damage = power die + ATK + weapon bonus (+${WEAPON_TIER_BONUS.join('/+')} by tier) + affinity + matchup, then ×${DAMAGE_SCALE}. Bruisers take 2 less from every hit.</li>
+<li><b class="k">Heals and buffs</b> also roll the d20: a 1 fizzles, a 20 doubles the heal or extends the buff. Their d12 (or d20 for weapon moves) sets the strength: shield size, energy recovered, how blind the target is.</li>
 <li><b class="k">Status effects</b> (poison, drones, snares, hexes, cracked armour) last a set number of rounds. A stunned fighter loses their turn.</li>
 <li><b class="k">Flee</b>: d20 + your SPD vs 10 + their SPD. Fail and they get a free strike. Success puts you a few tiles away with a short immunity.</li>
 <li>Killing someone heals you 15% (Hexblade 40%), raises ATK by one (max +4), and lets you take their weapon and medkits if they are better.</li></ul>
@@ -1600,7 +1618,7 @@ function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, human
 // ---- class picker (carousel) ----
 const Picker={ idx:0, el:null, onPick:null, selectedId:null, art:null };
 function pickerFallbackCanvas(c){ const cv2=document.createElement('canvas'); cv2.width=360; cv2.height=540; const g=cv2.getContext('2d');
-  const stub={cls:c, facing:1, walk:0, moving:false, weapon:makeWeapon('none',0), id:0, flash:0}; stub.weapon.dice=c.fists;
+  const stub={cls:c, facing:1, walk:0, moving:false, weapon:makeWeapon('none',0,c.fistBonus), id:0, flash:0};
   g.fillStyle='rgba(0,0,0,0)'; g.clearRect(0,0,360,540); drawFigure(g,180,470,stub,8,{facing:1,moving:false}); return cv2; }
 function renderPicker(container, onPick, selectedId, startIdx){
   Picker.el=container; Picker.onPick=onPick; Picker.selectedId=selectedId||null; if(startIdx!=null) Picker.idx=startIdx; pickerDraw(); }
@@ -1612,7 +1630,7 @@ function pickerDraw(){
     <div class="pk-art" id="pkArt"><button class="pk-nav l" aria-label="Previous">‹</button><button class="pk-nav r" aria-label="Next">›</button><div class="pk-num">${Picker.idx+1} / ${CLASSES.length}</div></div>
     <div class="pk-side"><div class="pk-info">
       <div class="nm">${c.name}</div><div class="ti">${c.title}</div>
-      <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
+      <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${fistStr(c)}</span></div>
       <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
       <div class="ab" style="margin-top:4px"><span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">Edge on ${n(2)}</span> · Even vs ${n(3)} · <span style="color:${COL.orange}">Risky vs ${n(4)}</span> · <span style="color:${COL.red}">Fears ${n(5)}</span></div>
       <div class="st">${affs}</div><div class="fam">${c.family}</div>
@@ -1642,7 +1660,7 @@ function classCard(c, idx, onPick, selected){
   const el=document.createElement('div'); el.className='card'+(selected?' sel':''); el.tabIndex=0; el.style.setProperty('--c',c.color);
   const por=sprite('portrait.'+c.id); const affs=WEAPON_TYPES.map(t=>{ const a=c.affinity[t]; return `<span class="${a==='expert'?'ex':a==='poor'?'po':''}" title="${a}">${t}${a==='expert'?' ★★':a==='skilled'?' ★':''}</span>`; }).join('');
   el.innerHTML=`<div class="key">${idx+1}</div>${por?`<img class="por" src="${por.img.src}" alt="">`:''}<div class="nm">${c.name}</div><div class="ti">${c.title}</div>
-    <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
+    <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${fistStr(c)}</span></div>
     <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
     <div class="ab" style="margin-top:4px">${(()=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name; return `<span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">Edge on ${n(2)}</span> · Even vs ${n(3)} · <span style="color:${COL.orange}">Risky vs ${n(4)}</span> · <span style="color:${COL.red}">Fears ${n(5)}</span>`; })()}</div>
     <div class="st">${affs}</div><div class="fam">${c.family}</div>`;
@@ -1763,7 +1781,7 @@ function frame(now){
 }
 $('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · Online via '+location.host:'');
 loadArt(); if(!mapCanvas) genMap(12345); $('menuBest').textContent='BEST '+hiScore; showTitle(); requestAnimationFrame(frame);
-window.__game = { skipTitle(){ if(state==='title') toMenu(); }, playIntro, endIntro, portraitCutout, ART, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
+window.__game = { skipTitle(){ if(state==='title') toMenu(); }, playIntro, endIntro, portraitCutout, ART, simulateCombat, resolveAction, aiChoose, beginTurn, endRound, ABILITIES, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
   beginSetup, pickClass, tryEngage, tryMedkit, tryAction, uiChoose, uiRoll, ABILITIES, CLASSES, startCombat, killContestant, localHuman, abilityList, makeWeapon, hostStartRound };
 </script>
 </body>

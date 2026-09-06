@@ -19,7 +19,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
  │ (real-time) │ ◀────────────────────── │ (turn-based)│ ◀───────────────── │  resolve     │
  └─────────────┘   win / flee / die      └─────────────┘   next turn        └──────────────┘
         │
-        ▼  the Ashfall (safe zone) shrinks every 50 s and forces the survivors together
+        ▼  the Ashfall (safe zone) shrinks every 100 s and forces the survivors together
         ▼  last survivor → extraction barge appears → walk to it → ESCAPE
 ```
 
@@ -72,7 +72,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 
 ## 6. Progression: fists → weapon → moves
 
-Everyone lands with **Attack** (bare fists: 1d6, Hexblade and Wraith 1d8, Bruiser 1d10, plus ATK),
+Everyone lands with **Attack** (a d6 plus ATK; Hexblade and Wraith fists add +1, Bruiser +2),
 **one signature ability**, **one defensive move**, and **Flee**. That is the whole action bar at the start.
 
 Weapons found in crates or taken from the dead add moves. Each weapon type carries two moves.
@@ -111,24 +111,24 @@ their defensive move under half health.
 
 | Class | HP | DEF | ATK | SPD | EN | Fists | Signature | Passive perk | Expert / skilled with |
 |---|---|---|---|---|---|---|---|---|---|
-| **Warden** | 58 | 13 | +3 | 6 | 30 | 1d6 | Snare Trap: 1d6, target loses next turn | Keen Eye: spots enemies 3× further on the minimap | ranged / blade |
-| **Technomancer** | 50 | 12 | +2 | 5 | 45 | 1d6 | Arc Bolt: 2d6, +2 hit | Field Tinker: Q upgrades your weapon one tier (20 EN, once per weapon) | tech / arcane |
-| **Bruiser** | 80 | 15 | +2 | 3 | 25 | 1d10 | Ground Slam: 1d10, target −3 DEF | Ironhide: every hit taken −2 damage | blunt / blade |
-| **Hexblade** | 58 | 13 | +3 | 5 | 35 | 1d8 | Soul Leech: 2d6, heal half | Blood Pact: kills heal 40 % | blade / arcane |
-| **Alchemist** | 62 | 12 | +2 | 5 | 40 | 1d6 | Stim Shot: heal 3d6+2 | Field Medic: medkits heal double, +1 carried, 2× regen | arcane / ranged |
-| **Wraith** | 52 | 14 | +4 | 8 | 35 | 1d8 | Venom Strike: 1d6 + 3 poison/turn ×3 | Scavenger: +15 % speed, crate weapons +1 tier, crates on minimap | blade / ranged |
+| **Warden** | 58 | 13 | +3 | 6 | 30 | d6 | Snare Trap: d12 + ATK, target loses next turn | Keen Eye: spots enemies 3× further on the minimap | ranged / blade |
+| **Technomancer** | 50 | 12 | +2 | 5 | 45 | d6 | Arc Bolt: d12 + ATK, +2 hit | Field Tinker: Q upgrades your weapon one tier (20 EN, once per weapon) | tech / arcane |
+| **Bruiser** | 80 | 15 | +2 | 3 | 25 | d6+2 | Ground Slam: d12 + ATK, target −3 DEF | Ironhide: every hit taken −2 damage | blunt / blade |
+| **Hexblade** | 58 | 13 | +3 | 5 | 35 | d6+1 | Soul Leech: d12 + ATK, heal half | Blood Pact: kills heal 40 % | blade / arcane |
+| **Alchemist** | 62 | 12 | +2 | 5 | 40 | d6 | Stim Shot: heal d12+6 | Field Medic: medkits heal double, +1 carried, 2× regen | arcane / ranged |
+| **Wraith** | 52 | 14 | +4 | 8 | 35 | d6+1 | Venom Strike: d12 + ATK, then 3 poison/turn ×3 | Scavenger: +15 % speed, crate weapons +1 tier, crates on minimap | blade / ranged |
 
 Poor fits: Warden–arcane, Technomancer–blade/blunt, Bruiser–ranged/arcane, Hexblade–ranged/tech,
 Alchemist–blunt, Wraith–arcane. Everything else is basic.
 
 ## 7. Weapons and their moves
 
-| Type | T1 (1d8) | T2 (1d10) | T3 (2d8) | T4 (2d10+2) | Move 1 (basic+) | Move 2 (skilled+) |
+| Type | T1 (+1) | T2 (+2) | T3 (+4) | T4 (+6) | Move 1 (basic+) | Move 2 (skilled+) |
 |---|---|---|---|---|---|---|
-| Blade | Shiv | Rune Machete | Plasma Katana | Voidreaver | Cleave: weapon +1d6 | Flurry: two attacks |
-| Blunt | Lead Pipe | Rebar Maul | Gravity Hammer | Titan Fist | Crushing Blow: weapon +1d8, −2 hit | Stagger: weapon dmg, target loses a turn |
-| Ranged | Rusty Revolver | Scrap Bow | Railgun | Storm Rifle | Aimed Shot: weapon +1d6, +4 hit | Volley: three attacks at −2 |
-| Arcane | Bone Wand | Ember Staff | Frost Scepter | Eclipse Focus | Ember Bolt: weapon +1d6, +2 hit | Hex of Rot: target −4 hit ×3 turns |
+| Blade | Shiv | Rune Machete | Plasma Katana | Voidreaver | Cleave: d20 + weapon + ATK | Flurry: a d20 strike then a d6 strike |
+| Blunt | Lead Pipe | Rebar Maul | Gravity Hammer | Titan Fist | Crushing Blow: d20 + weapon + ATK + 3, −2 hit | Stagger: d20 + weapon + ATK, target loses a turn |
+| Ranged | Rusty Revolver | Scrap Bow | Railgun | Storm Rifle | Aimed Shot: d20 + weapon + ATK, +4 hit | Volley: a d20 strike then two d6 strikes, all at −2 |
+| Arcane | Bone Wand | Ember Staff | Frost Scepter | Eclipse Focus | Ember Bolt: d20 + weapon + ATK, +2 hit | Hex of Rot: d20 sets −4 to −6 hit ×3 turns |
 | Tech | Shock Prod | Tesla Gauntlet | Nano Blaster | Singularity Cannon | Overclock: +4 hit +4 dmg ×2 turns | Drone Swarm: 1d4 then 4/turn ×3 |
 
 Crates: weapon 45 % (tier rises with the Ashfall phase), medkit 25 %, armor plate 12 % (+1 DEF,
@@ -170,6 +170,14 @@ can walk away. Pressing Engage yourself ends your own sanctuary early: attacking
 
 - Attack: roll d20. Natural 20 always hits and deals double damage. Natural 1 is a fumble
   (you hurt yourself for 3). Otherwise hit if `d20 + ATK + proficiency + buffs ≥ target DEF + buffs`.
+- **Power dice** (the second die, shown under the d20 after the check): each move has a tier that
+  decides the die it rolls for effect. `basic` = d6 (Attack), `special` = d12 (every class's
+  signature and defensive move), `unlocked` = d20 (moves a weapon unlocks).
+  Damage = power die + ATK + weapon tier bonus (+1/+2/+4/+6) + affinity + matchup, ×1.15
+  (`DAMAGE_SCALE`), doubled on a crit, then armour. Multi-hit moves roll their power die once; the
+  extra strikes are d6. Defensive and buff moves size their effect from the roll (shield = d12+6,
+  Kite recovers d12 energy, Guard gives +4 to +6 DEF, Mirror reflects 30–75 %, Dirty Trick blinds
+  for −3 to −5, Overclock +3 to +6, Hex −4 to −6).
 - Heal / buff: natural 1 fails, natural 20 doubles the heal (or extends the buff by a turn).
 - Debuff: must beat the target's DEF like an attack.
 - Flee: `d20 + SPD ≥ 10 + enemy SPD`. Failure gives the enemy a free strike.

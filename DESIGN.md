@@ -245,6 +245,18 @@ the script sets the level (0 disables it).
 Every draw call checks for a sprite before falling back to primitives. `art/*.json` lists all 110
 assets with sizes, frames, anchors and briefs; `art/README.md` explains the pipeline.
 
+### Intro video
+After START the game plays a short cinematic (`art/ui/intro_portrait.mp4` on tall screens, `art/ui/intro_landscape.mp4`
+on wide ones), shown whole on black. Tap, click or any key skips; `ended`, a load error or an unsupported codec all
+land on the menu, and the video is preloaded while the title is up so it usually starts instantly. Headless test
+browsers cannot decode H.264, so the tests only cover the skip and error paths plus a generated WebM for the
+play-to-end path.
+
+### Class picker fit
+The picker never scrolls: after each draw it measures its screen and shrinks the 2:3 art card to fit. If that would
+leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
+no family line or jump dots) and lets the art grow back into the freed space.
+
 ## 13. Title review
 
 "Roll to Live" is honest about the two pillars (dice, survival) but it reads like an instruction

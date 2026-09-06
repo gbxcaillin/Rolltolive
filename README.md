@@ -7,8 +7,9 @@ extraction barge to the Safe City.
 
 ## Play
 
-Open `index.html` in any modern browser. No build, no assets: one file, works offline from a
-double-click, on desktop or phone.
+Open `index.html` in any modern browser. No build step: one file, works offline from a
+double-click, on desktop or phone. The `art/` folder beside it is optional and adds the painted
+title, class portraits and the intro video (tap or any key skips it).
 
 - **Solo**: you against 9 AI survivors.
 - **Online**: several devices in one round. Run `node server/relay.js` (no dependencies) and enter

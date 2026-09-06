@@ -45,6 +45,7 @@ Opened from `file://` the browser blocks fetches, so the primitives are used. Th
 | `item.crate`, `item.barge`, `fx.skull` | Overworld props |
 | `dice.d20` | The roll; frames 0–19 faces, 20+ tumble |
 | `bg.combat` | Encounter backdrop |
+| `ui.intro.portrait`, `ui.intro.landscape` | Intro video (mp4, H.264 + AAC, ~15 s) played once after START: the portrait cut on tall screens, the landscape cut on wide ones, letterboxed to fit; tap or any key skips; a missing file or unsupported codec goes straight to the menu. Preloaded while the title shows. |
 | `ui.title.portrait`, `ui.title.landscape` | Title screen key art, chosen by orientation, drawn with object-fit cover; `startButton` marks the painted START plate |
 | `ui.logo` | Reserved (v2) |
 

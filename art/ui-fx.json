@@ -1,6 +1,6 @@
 {
   "category": "ui-fx",
-  "$comment": "Interface and effects. dice.d20: frames 0\u201319 are the settled faces 1\u201320 (frame 0 = face 1), frames 20+ are tumbling frames used while rolling. Ability icons appear inside the combat buttons at 22px.",
+  "$comment": "Interface and effects. dice.d20: frames 0–19 are the settled faces 1–20 (frame 0 = face 1), frames 20+ are tumbling frames used while rolling. Ability icons appear inside the combat buttons at 22px.",
   "assets": [
     {
       "id": "ui.title.portrait",
@@ -39,6 +39,30 @@
         0.94
       ],
       "description": "Outborn title key art, landscape. Same rules as the portrait one."
+    },
+    {
+      "id": "ui.intro.portrait",
+      "file": "ui/intro_portrait.mp4",
+      "status": "ready",
+      "kind": "video",
+      "frameW": 480,
+      "frameH": 832,
+      "seconds": 15,
+      "codec": "H.264 + AAC (mp4)",
+      "usage": "Plays once after START on tall screens (height > width), letterboxed to fit; tap or any key skips. Preloaded while the title is showing.",
+      "prompt": "15 s cinematic, vertical 9:16: a lone survivor steps off a rusted barge onto Ashfield's black-sand shore at dawn, storm ring glowing violet on the horizon, ruined observatory on the ridge, painterly post-apocalyptic science-and-magic style matching the title key art."
+    },
+    {
+      "id": "ui.intro.landscape",
+      "file": "ui/intro_landscape.mp4",
+      "status": "ready",
+      "kind": "video",
+      "frameW": 832,
+      "frameH": 480,
+      "seconds": 15,
+      "codec": "H.264 + AAC (mp4)",
+      "usage": "Plays once after START on wide screens (width >= height), letterboxed to fit; tap or any key skips. Preloaded while the title is showing.",
+      "prompt": "15 s cinematic, horizontal 16:9: same shot as the portrait cut, wider framing shows the whole shoreline and the Ashfall storm ring closing over the island."
     },
     {
       "id": "dice.d20",

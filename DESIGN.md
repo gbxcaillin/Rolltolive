@@ -142,11 +142,11 @@ after, is **even** with the opposite class (and with its own), is **at risk** ag
 
 | Relation | Bonus | Warden | Bruiser | Wraith | Technomancer | Hexblade | Alchemist |
 |---|---|---|---|---|---|---|---|
-| hunts | +3 | Bruiser | Wraith | Technomancer | Hexblade | Alchemist | Warden |
-| edge on | +1 | Wraith | Technomancer | Hexblade | Alchemist | Warden | Bruiser |
-| even | 0 | Technomancer | Hexblade | Alchemist | Warden | Bruiser | Wraith |
-| risky vs | −1 | Hexblade | Alchemist | Warden | Bruiser | Wraith | Technomancer |
-| fears | −3 | Alchemist | Warden | Bruiser | Wraith | Technomancer | Hexblade |
+| Hunts | +3 | Bruiser | Wraith | Technomancer | Hexblade | Alchemist | Warden |
+| Edge on | +1 | Wraith | Technomancer | Hexblade | Alchemist | Warden | Bruiser |
+| Even | 0 | Technomancer | Hexblade | Alchemist | Warden | Bruiser | Wraith |
+| Risky vs | −1 | Hexblade | Alchemist | Warden | Bruiser | Wraith | Technomancer |
+| Fears | −3 | Alchemist | Warden | Bruiser | Wraith | Technomancer | Hexblade |
 
 Why: the Warden kites the slow Bruiser; Ironhide shrugs off the Wraith's knives; the Wraith
 assassinates the squishy Technomancer; science disrupts the Hexblade's magic; curses rot the

@@ -207,6 +207,24 @@ OVERWORLD                                   COMBAT
 └────────────────────────────────────────┘ └────────────────────────────────────────┘
 ```
 
+CLASS PICKER (select screen and online lobby)
+```
+portrait phone                     landscape / tablet (≥760px wide)
+┌──────────────────────┐           ┌────────────────────────────────────────────┐
+│  CHOOSE YOUR SURVIVOR│           │ ┌────────┐  WARDEN  · Wasteland Ranger      │
+│ ┌──────────────────┐ │           │ │        │  HP 58 DEF 13 ATK +3 SPD 6 EN 30 │
+│ │ ‹   portrait   › │ │  1 / 6    │ │ ‹ art ›│  Snare Trap · Kite · Scout ·     │
+│ │   (2:3, swipe)   │ │           │ │  2:3   │  Keen Eye · matchups · affinity  │
+│ └──────────────────┘ │           │ │        │  [ CHOOSE WARDEN ]  1 of 6       │
+│  WARDEN · stats      │           │ └────────┘  ○ ○ ● ○ ○ ○ (jump dots)         │
+│  abilities, matchups │           └────────────────────────────────────────────┘
+│  [ CHOOSE WARDEN ]   │
+│  ○ ○ ● ○ ○ ○         │   ← → / swipe / tap art = next · Enter or Space = choose
+└──────────────────────┘   1–6 still quick-pick · lobby: Space picks, Enter (host) starts
+```
+The art card uses `portrait.<classId>` from the art manifest; offline (file://) it falls back to the drawn
+figure so the picker never shows a broken image.
+
 ## 11. Audio
 
 Everything is synthesized with the Web Audio API; no files. Sound effects cover dice, hits, crits,

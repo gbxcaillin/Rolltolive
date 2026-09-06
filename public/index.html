@@ -227,9 +227,14 @@ const RESOLVE_TIME = 0.95;          // pause after an action resolves
 const AI_THINK_TIME = 0.45;        // AI "thinking" delay in combat
 const SHAKE_HIT = 7, SHAKE_CRIT = 16;
 const FUMBLE_SELF_DAMAGE = 3;
+// Class matchup circle (rock-paper-scissors). Each class hunts the next one, has the edge on the one after,
+// is even with the opposite, at risk against the fourth and fears the fifth. Bonus applies to hit AND damage.
+const MATCHUP_CYCLE = ['warden','bruiser','wraith','techno','hexblade','alch'];
+const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
+const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '61d3938 20260906-0109';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '531c8b1 20260906-0115';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -580,6 +585,10 @@ function localHuman(){ if(!G) return null; if(setup.mode==='online') return G.en
 const entById = id=>G && G.ents.find(e=>e.id===id);
 function powerOf(e){ return e.hp + e.atk*10 + e.weapon.tier*15 + e.kills*10 + e.def*3; }
 function affOf(e){ return e.weapon.type==='none'? AFF.basic : AFF[e.cls.affinity[e.weapon.type]]; }
+function matchupIdx(a,b){ return (MATCHUP_CYCLE.indexOf(b.cls.id)-MATCHUP_CYCLE.indexOf(a.cls.id)+6)%6; }
+function matchupBonus(a,b){ return MATCHUP_BONUS[matchupIdx(a,b)]; }
+function matchupLabel(a,b){ return MATCHUP_LABEL[matchupIdx(a,b)]; }
+function matchupColor(a,b){ const v=matchupBonus(a,b); return v>1?COL.green:v>0?COL.cyan:v===0?COL.white:v>-2?COL.orange:COL.red; }
 function weaponValue(e,w){ return w.type==='none'? 0 : w.tier*10 + AFF[e.cls.affinity[w.type]].rank*4; }
 function abilityList(e){ const ids=['attack', e.cls.signature]; const w=e.weapon;
   if(w.type!=='none'){ const n=affOf(e).moves; for(let i=0;i<n;i++) ids.push(WEAPON_MOVES[w.type][i]); }
@@ -600,14 +609,14 @@ function saveHi(score){ score=Math.round(score); if(score>hiScore){ hiScore=scor
 //  Combat model (pure rules; used by the interactive fights and the off-screen simulation)
 // ============================================================================
 function attackRoll(user,target,ab,nat){
-  const total = nat + hitMod(user) + (ab.hitBonus||0);
+  const mu=matchupBonus(user,target); const total = nat + hitMod(user) + (ab.hitBonus||0) + mu;
   const di=target.statuses.findIndex(s=>s.status==='dodge');
   if(di>=0){ target.statuses.splice(di,1); return {type:'dodge', nat, total}; }
   if(nat===1){ user.hp -= FUMBLE_SELF_DAMAGE; return {type:'fumble', nat, total, self:FUMBLE_SELF_DAMAGE}; }
   const need=defVal(target), hit = nat===20 || total>=need;
   if(!hit) return {type:'miss', nat, total, need};
   let dmg=0; if(ab.weaponDmg) dmg += rollDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk;
-  if(ab.extra) dmg += rollDice(ab.extra); dmg += dmgMod(user);
+  if(ab.extra) dmg += rollDice(ab.extra); dmg += dmgMod(user) + mu;
   const crit = nat >= (ab.critMin||20); if(crit) dmg*=2;
   if(target.cls.passive==='ironhide') dmg-=2; dmg=Math.max(1,dmg);
   target.hp -= dmg; user.dmgDealt += dmg; if(user.isHuman) user.score += dmg; target.flash=1;
@@ -626,7 +635,7 @@ function resolveAction(user, target, abId, nat){
     if(nat===1) ev.push({type:'fail',nat,wasted:true}); else { let amt=medkitHeal(user)*(nat===20?2:1); amt=Math.min(amt,user.maxHp-user.hp); user.hp+=amt; ev.push({type:'heal',nat,amt,crit:nat===20}); } }
   else if(ab.kind==='buff'){ if(nat===1) ev.push({type:'fail',nat});
     else { ab.self.forEach(s=>applyStatus(user,{...s,turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'buff',nat,label:ab.self[0].label,crit:nat===20}); } }
-  else if(ab.kind==='debuff'){ const total=nat+hitMod(user); const need=defVal(target);
+  else if(ab.kind==='debuff'){ const total=nat+hitMod(user)+matchupBonus(user,target); const need=defVal(target);
     if(nat!==1 && (nat===20||total>=need)){ ab.target.forEach(s=>applyStatus(target,{...s,turns:s.turns+(nat===20?1:0)},user._second)); ev.push({type:'debuff',nat,total,label:ab.target[0].label,crit:nat===20}); }
     else ev.push({type:'miss',nat,total,need}); }
   return ev;
@@ -642,8 +651,8 @@ function beginTurn(e){
 function endRound(e){ for(const s of e.statuses){ if(s.fresh) s.fresh=false; else s.turns--; } e.statuses=e.statuses.filter(s=>s.turns>0); }
 function abilityUsable(e,id){ const ab=ABILITIES[id]; if(id==='medkit') return e.medkits>0; return (e.cds[id]||0)<=0 && e.energy>=ab.cost; }
 function expectedDamage(user,target,ab){ if(ab.kind!=='attack') return 0;
-  const need=defVal(target)-(hitMod(user)+(ab.hitBonus||0)); const chance=clamp((21-need)/20,0.05,0.95);
-  let avg=(ab.weaponDmg? avgDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk:0)+avgDice(ab.extra)+dmgMod(user); avg*=(ab.hits||1);
+  const mu=matchupBonus(user,target); const need=defVal(target)-(hitMod(user)+(ab.hitBonus||0)+mu); const chance=clamp((21-need)/20,0.05,0.95);
+  let avg=(ab.weaponDmg? avgDice(user.weapon.dice)+(user.weapon.flat||0)+user.atk:0)+avgDice(ab.extra)+dmgMod(user)+mu; avg*=(ab.hits||1);
   if(ab.onHit && ab.onHit.status==='dot') avg+=ab.onHit.value*ab.onHit.turns*0.8; if(ab.onHit && ab.onHit.status==='stun') avg+=6;
   return chance*avg; }
 function aiChoose(user, target, round){
@@ -849,7 +858,7 @@ function decideAI(e){
   const aggro=Math.min(1, ai.aggression + z.phase*0.07), sight=AI_SIGHT*(e.cls.passive==='keeneye'?1.6:1);
   let best=null,bd=sight;
   for(const o of G.ents){ if(o===e||!o.alive||o.immune>0||o.inCombat) continue; const d=dist(e,o); if(d>=bd) continue;
-    const edge=powerOf(e)/Math.max(1,powerOf(o)); if(edge>=(aggro<0.5?1.1:0.85) || z.phase>=4){ best=o; bd=d; } }
+    const edge=powerOf(e)/Math.max(1,powerOf(o))*(1+0.12*matchupBonus(e,o)); if(edge>=(aggro<0.5?1.1:0.85) || z.phase>=4){ best=o; bd=d; } }
   if(best && G.time>AI_GRACE && Math.random()<aggro*AI_HUNT_CHANCE*(1+z.phase*0.6)){ ai.state='hunt'; ai.target=best; return; }
   let bc=null, bcd=420; for(const c of G.crates){ if(c.taken) continue; const d=Math.hypot(c.x-e.x,c.y-e.y); if(d<bcd){bcd=d;bc=c;} }
   if(bc){ ai.state='loot'; ai.target=bc; return; }
@@ -869,6 +878,7 @@ function startCombat(a,b){
     [a,b].forEach(e=>{ e.statuses=[]; e.cds={}; e.moving=false; e.inCombat=true; e.ai.state='wander'; });
     const c={id:combatIdSeq++, f, turn:0, round:1, phase:'intro', t:0, chosen:null, nat:20, dice:{value:20,t:0,angle:0,rolling:false,visible:false,pop:0}, log:[], lunge:0, winner:null, loser:null, fleer:null, forced:false};
     combatLog(c,`${a.name} vs ${b.name}. ${f[0].name} ${V(f[0],'win','wins')} initiative (${Math.max(ia,ib)}).`, COL.gold);
+    const mu=matchupBonus(a,b); if(mu) combatLog(c, mu>0? `${a.cls.name} vs ${b.cls.name}: ${a.name} ${V(a,'have','has')} the matchup (${mu>0?'+':''}${mu} hit & dmg).` : `${a.cls.name} vs ${b.cls.name}: ${b.name} ${V(b,'have','has')} the matchup (+${-mu} hit & dmg).`, mu>0?a.cls.color:b.cls.color);
     combats.push(c); const me=localHuman(); if(me && f.includes(me)) enterCombatView(c);
   };
   const defender = a.isHuman? null : b;
@@ -1190,7 +1200,7 @@ function drawWorld(g){
     txtO(g,e.name,e.x,e.y-58,10,e===me?COL.white:e.cls.color,'center',800);
     if(e.inCombat) txtO(g,'⚔',e.x,e.y-70,11,COL.pink,'center');
   }
-  if(me && me.alive && !G.over && !viewCombat){ const n=nearestEngageable(me); if(n){ const p=Math.sin(timeNow*8)*2; txtO(g, isTouch?'ENGAGE':'[E] ENGAGE', n.x, n.y-72-p, 13, COL.pink,'center'); g.strokeStyle=COL.pink; g.lineWidth=2; g.beginPath(); g.arc(n.x,n.y-12,24+p,0,7); g.stroke(); } }
+  if(me && me.alive && !G.over && !viewCombat){ const n=nearestEngageable(me); if(n){ const p=Math.sin(timeNow*8)*2; const mu=matchupBonus(me,n); txtO(g, (isTouch?'ENGAGE':'[E] ENGAGE')+' · '+matchupLabel(me,n)+(mu?` ${mu>0?'+':''}${mu}`:''), n.x, n.y-72-p, 13, matchupColor(me,n),'center'); g.strokeStyle=matchupColor(me,n); g.lineWidth=2; g.beginPath(); g.arc(n.x,n.y-12,24+p,0,7); g.stroke(); } }
   const z=G.zone; g.fillStyle='rgba(140,10,50,0.42)'; g.beginPath(); g.rect(cam.x-50,cam.y-50,W+100,H+100); g.moveTo(z.cx+z.radius,z.cy); g.arc(z.cx,z.cy,z.radius,0,Math.PI*2,true); g.fill('evenodd');
   g.strokeStyle=COL.pink; g.lineWidth=3+Math.sin(timeNow*5)*1; g.shadowColor=COL.pink; g.shadowBlur=14; g.beginPath(); g.arc(z.cx,z.cy,z.radius,0,7); g.stroke(); g.shadowBlur=0;
   if(z.phase<ZONE_RADII.length-1){ g.strokeStyle='rgba(255,255,255,0.35)'; g.setLineDash([8,8]); g.lineWidth=1.5; g.beginPath(); g.arc(z.cx,z.cy,ZONE_RADII[z.phase+1]*MAP_W*TILE/2,0,7); g.stroke(); g.setLineDash([]); }
@@ -1224,7 +1234,7 @@ function drawHUD(g){
   g.save(); g.globalAlpha=0.9; g.drawImage(miniCanvas,mx,my,ms,ms); g.globalAlpha=1; g.strokeStyle=COL.pink; g.lineWidth=1.5; g.beginPath(); g.arc(mx+z.cx*sc,my+z.cy*sc,z.radius*sc,0,7); g.stroke();
   if(G.barge){ g.fillStyle=COL.gold; g.beginPath(); g.arc(mx+G.barge.x*sc,my+G.barge.y*sc,3+Math.sin(timeNow*6),0,7); g.fill(); }
   if(e){ const dr=detectRange(e); g.strokeStyle='rgba(255,255,255,0.25)'; g.beginPath(); g.arc(mx+e.x*sc,my+e.y*sc,dr*sc,0,7); g.stroke();
-    for(const o of aliveEnts()){ if(o===e) continue; if(z.phase>=3 || dist(o,e)<dr){ g.fillStyle=o.isHuman?COL.cyan:COL.red; g.fillRect(mx+o.x*sc-1.5,my+o.y*sc-1.5,3,3); } }
+    for(const o of aliveEnts()){ if(o===e) continue; if(z.phase>=3 || dist(o,e)<dr){ g.fillStyle=matchupColor(e,o); g.fillRect(mx+o.x*sc-1.5,my+o.y*sc-1.5,3,3); } }
     if(e.cls.passive==='scavenger') for(const c of G.crates){ g.fillStyle=COL.gold; g.fillRect(mx+c.x*sc-1,my+c.y*sc-1,2,2); }
     g.fillStyle=COL.white; g.beginPath(); g.arc(mx+e.x*sc,my+e.y*sc,3,0,7); g.fill(); }
   g.strokeStyle='rgba(255,255,255,0.4)'; g.strokeRect(mx+0.5,my+0.5,ms-1,ms-1); g.restore();
@@ -1264,7 +1274,8 @@ function drawCombat(g){
     const bw=Math.min(240,W*0.36), bx=p.x-bw/2, by=p.y-s*50-52;
     txtO(g,e.name.toUpperCase(),p.x,by-24,Math.min(20,W/34),e===localHuman()?COL.white:e.cls.color,'center'); txtO(g,`${e.cls.name} · ${e.weapon.name}`,p.x,by-8,11,'#aab3c8','center',700);
     bar(g,bx,by,bw,12,e.hp/e.maxHp,e.hp/e.maxHp<0.3?COL.red:(e===localHuman()?COL.green:COL.pink)); txtO(g,`${Math.max(0,Math.round(e.hp))} / ${e.maxHp}`,p.x,by+6,11,COL.white,'center',800);
-    bar(g,bx,by+15,bw,6,e.energy/e.maxEn,COL.cyan); txt(g,`EN ${Math.round(e.energy)}  DEF ${defVal(e)}  HIT +${hitMod(e)}  MED ${e.medkits}`,bx,by+30,10,'#aab3c8','left',700);
+    bar(g,bx,by+15,bw,6,e.energy/e.maxEn,COL.cyan); const mu=matchupBonus(e,c.f[1-i]); txt(g,`EN ${Math.round(e.energy)}  DEF ${defVal(e)}  HIT ${hitMod(e)+mu>=0?'+':''}${hitMod(e)+mu}  MED ${e.medkits}`,bx,by+30,10,'#aab3c8','left',700);
+    if(mu){ txt(g,`${matchupLabel(e,c.f[1-i])} ${mu>0?'+':''}${mu}`,bx+bw,by+30,10,matchupColor(e,c.f[1-i]),'right',900); }
     let sx=bx; for(const st of e.statuses){ const label=`${st.label} ${st.status==='dot'?st.value+'/t':st.status==='stun'?'':(st.value>0?'+':'')+(st.status==='dodge'?'':st.value)} ${st.turns}t`; g.font='700 10px "Segoe UI",Roboto,sans-serif'; const w=g.measureText(label).width+10;
       g.fillStyle = st.value<0||st.status==='dot'||st.status==='stun'? 'rgba(181,108,255,0.35)' : 'rgba(46,230,255,0.3)'; g.beginPath(); g.roundRect(sx,by+38,w,15,4); g.fill(); txt(g,label,sx+5,by+46,10,COL.white,'left',700); sx+=w+4; }
     if(c.phase!=='end' && c.turn===i){ const ty=p.y+14; g.fillStyle=COL.gold; g.beginPath(); g.moveTo(p.x,ty); g.lineTo(p.x-8,ty+12); g.lineTo(p.x+8,ty+12); g.closePath(); g.fill(); }
@@ -1309,6 +1320,7 @@ function classCard(c, idx, onPick, selected){
   el.innerHTML=`<div class="key">${idx+1}</div>${por?`<img class="por" src="${por.img.src}" alt="">`:''}<div class="nm">${c.name}</div><div class="ti">${c.title}</div>
     <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
     <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
+    <div class="ab" style="margin-top:4px">${(()=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name; return `<span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">edge on ${n(2)}</span> · even vs ${n(3)} · <span style="color:${COL.orange}">risky vs ${n(4)}</span> · <span style="color:${COL.red}">fears ${n(5)}</span>`; })()}</div>
     <div class="st">${affs}</div><div class="fam">${c.family}</div>`;
   el.addEventListener('click',()=>onPick(idx)); el.addEventListener('keydown',ev=>{ if(ev.key==='Enter') onPick(idx); }); return el;
 }

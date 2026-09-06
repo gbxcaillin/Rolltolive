@@ -163,8 +163,8 @@
   <h1 id="titleH1">Outborn</h1>
   <div class="sub" id="tagline">Roll to live. Ten dropped on the island. One seat on the barge.</div>
   <div class="row" style="margin-bottom:14px">
-    <button class="btn gold" data-mode="solo">Solo · vs 9 AI</button>
-    <button class="btn cyan" data-mode="online">Online · play with friends</button>
+    <button class="btn gold" data-mode="solo">Solo · Vs 9 AI</button>
+    <button class="btn cyan" data-mode="online">Online · Play with friends</button>
     <button class="btn" data-mode="hotseat" data-humans="2">Hotseat 2P</button>
     <button class="btn" data-mode="hotseat" data-humans="3">3P</button>
     <button class="btn" data-mode="hotseat" data-humans="4">4P</button>
@@ -172,9 +172,9 @@
   <div class="menuRow2"><button class="btn ghost" id="guideBtn">How to play</button></div>
   <div class="box">
     <table class="ctl">
-      <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · touch: left joystick</td></tr>
-      <tr><td>Engage nearby survivor</td><td><kbd>E</kbd> or <kbd>Space</kbd> · touch: ENGAGE button</td></tr>
-      <tr><td>Use medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · touch: MED / ACT buttons</td></tr>
+      <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · Touch: left joystick</td></tr>
+      <tr><td>Engage nearby survivor</td><td><kbd>E</kbd> or <kbd>Space</kbd> · Touch: ENGAGE button</td></tr>
+      <tr><td>Use medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · Touch: MED / ACT buttons</td></tr>
       <tr><td>Pick ability in combat</td><td><kbd>1</kbd>–<kbd>6</kbd> or tap</td></tr>
       <tr><td>Roll the d20</td><td><kbd>Space</kbd> / <kbd>Enter</kbd> or tap the dice</td></tr>
       <tr><td>Pause · Mute · Guide</td><td><kbd>P</kbd> · <kbd>M</kbd> · <kbd>H</kbd></td></tr>
@@ -223,7 +223,7 @@
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows / joystick</td></tr>
       <tr><td>Engage</td><td><kbd>E</kbd> / <kbd>Space</kbd> / ENGAGE button</td></tr>
-      <tr><td>Medkit · field action</td><td><kbd>H</kbd> · <kbd>Q</kbd></td></tr>
+      <tr><td>Medkit · Field action</td><td><kbd>H</kbd> · <kbd>Q</kbd></td></tr>
       <tr><td>Combat</td><td><kbd>1</kbd>–<kbd>6</kbd> choose · <kbd>Space</kbd> roll</td></tr>
       <tr><td>Mute</td><td><kbd>M</kbd></td></tr>
     </table>
@@ -301,7 +301,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'ae0aa26 20260906-0657';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = '9d298a1 20260906-0702';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
 const PICKER_MIN_ART = 320;        // px: below this art height the class picker switches to compact text instead of shrinking further
 const INTRO_STALL_SECS = 25;       // give up on the intro (go to the menu) if nothing has played after this long
@@ -950,7 +950,7 @@ function openCrate(e){
     const w=makeWeapon(type,tier); const aff=AFF[e.cls.affinity[type]];
     if(weaponValue(e,w)>weaponValue(e,e.weapon)){ e.weapon=w; netToastTo(e,`Equipped ${w.name} (T${w.tier} ${w.type}, ${aff.label} fit${aff.moves>1?', 2 moves':aff.moves?', 1 move':', no moves'})`,'gold'); }
     else netToastTo(e,`Found ${w.name} (T${w.tier}, ${aff.label} fit) — kept ${e.weapon.name}`,'');
-  } else if(r<0.70){ if(e.medkits<medkitMax(e)){ e.medkits++; netToastTo(e,`Medkit stored (${e.medkits}/${medkitMax(e)}) · press H`,'green'); } else { const h=Math.min(medkitHeal(e),e.maxHp-e.hp); e.hp+=h; netToastTo(e,`Bag full — used medkit +${Math.round(h)}`,'green'); } }
+  } else if(r<0.70){ if(e.medkits<medkitMax(e)){ e.medkits++; netToastTo(e,`Medkit stored (${e.medkits}/${medkitMax(e)}) · Press H`,'green'); } else { const h=Math.min(medkitHeal(e),e.maxHp-e.hp); e.hp+=h; netToastTo(e,`Bag full — used medkit +${Math.round(h)}`,'green'); } }
   else if(r<0.82){ if(e.armor<3){ e.armor++; e.def++; netToastTo(e,'Armor plate: +1 DEF','cyan'); } else { e.hp=Math.min(e.maxHp,e.hp+15); netToastTo(e,'Spare plate: +15 HP','green'); } }
   else if(r<0.92){ e.maxEn+=10; e.energy=e.maxEn; netToastTo(e,'Power cell: +10 max EN, refilled','cyan'); }
   else { if(e.isHuman){ e.score+=75; netToastTo(e,'Supply cache: +75 score','gold'); } else { e.hp=Math.min(e.maxHp,e.hp+20); } }
@@ -1149,7 +1149,7 @@ function buildChoices(c,u){
   abilityList(u).forEach((id,i)=>{ const ab=ABILITIES[id]; const b=document.createElement('button'); b.className='abt'+(id==='flee'?' flee':id==='medkit'?' med':''); b.type='button';
     const cd=u.cds[id]||0, can=abilityUsable(u,id);
     let meta=''; if(id==='attack') meta=`${u.weapon.name} ${diceStr(u.weapon.dice)}${u.weapon.flat?'+'+u.weapon.flat:''}+${u.atk}${u.weapon.type!=='none'?' · '+affOf(u).label:''}`;
-    else if(id==='flee') meta=`need ${Math.max(2,10+t.spd-u.spd)}+`; else if(id==='medkit') meta=`${u.medkits} left · heals ${medkitHeal(u)}`; else meta=`${ab.cost} EN · CD ${ab.cd}`+(cd>0?` · ready in ${cd}`:'');
+    else if(id==='flee') meta=`need ${Math.max(2,10+t.spd-u.spd)}+`; else if(id==='medkit') meta=`${u.medkits} left · Heals ${medkitHeal(u)}`; else meta=`${ab.cost} EN · CD ${ab.cd}`+(cd>0?` · Ready in ${cd}`:'');
     const ic=sprite('icon.'+id); b.innerHTML=`<div class="n"><span>${ab.name}</span><i>${i+1}</i></div><div class="d">${ab.desc}</div><div class="m">${meta}</div>`+(ic?`<img src="${ic.img.src}" alt="">`:'');
     b.disabled=!can; b.addEventListener('click',()=>uiChoose(id)); cpBody.appendChild(b); });
 }
@@ -1375,7 +1375,7 @@ function drawHUD(g){
   txt(g, outside? '!! OUTSIDE THE ASHFALL !!' : (z.phase===0? 'Ashfall begins soon' : `burn ${ZONE_DAMAGE[z.phase]}/s outside`), cx,py+30,10,outside?COL.red:'#8e97ad','center',700);
   if(outside && Math.sin(timeNow*10)>0){ g.strokeStyle='rgba(255,60,60,0.5)'; g.lineWidth=8; g.strokeRect(4,4,W-8,H-8); }
   if(e && e.alive && e.immune>0 && e.immuneHold>0){ const vult=G.ents.find(o=>o!==e&&o.alive&&!o.inCombat&&dist(o,e)<VULTURE_RANGE);
-    txtO(g, vult? `SANCTUARY ${Math.ceil(e.immune)}s · ${vult.name} is circling you — move!` : `SANCTUARY ${Math.ceil(e.immune)}s · nobody can engage you`, cx, py+56, 12, vult?COL.orange:COL.green, 'center'); }
+    txtO(g, vult? `SANCTUARY ${Math.ceil(e.immune)}s · ${vult.name} is circling you — move!` : `SANCTUARY ${Math.ceil(e.immune)}s · Nobody can engage you`, cx, py+56, 12, vult?COL.orange:COL.green, 'center'); }
   const sy=narrow?132:52, sw=narrow?200:222; g.fillStyle='rgba(10,14,26,0.72)'; g.beginPath(); g.roundRect(W-sw-8,sy,sw,36,8); g.fill();
   txt(g,`SCORE ${Math.round(e?e.score:0)}`,W-sw,sy+11,13,COL.gold); txt(g,`BEST ${hiScore}`,W-sw,sy+27,10,'#8e97ad','left',700);
   txt(g,`K ${e?e.kills:0}`,W-16,sy+11,12,COL.white,'right');
@@ -1393,7 +1393,7 @@ function drawHUD(g){
     g.save(); g.translate(ax,ay); g.rotate(ang); g.fillStyle=matchupColor(e,n); g.beginPath(); g.moveTo(14,0); g.lineTo(-8,-8); g.lineTo(-3,0); g.lineTo(-8,8); g.closePath(); g.fill(); g.restore(); txtO(g,`${n.name} · ${matchupLabel(e,n)} · ${Math.round(nd/TILE)}m`,ax,ay+20,11,matchupColor(e,n),'center'); } }
   if(G.barge && e){ const ang=Math.atan2(G.barge.y-e.y,G.barge.x-e.x); const d=Math.hypot(G.barge.x-e.x,G.barge.y-e.y); if(d>200){ const ax=W/2+Math.cos(ang)*Math.min(W,H)*0.3, ay=H/2+Math.sin(ang)*Math.min(W,H)*0.3;
     g.save(); g.translate(ax,ay); g.rotate(ang); g.fillStyle=COL.gold; g.beginPath(); g.moveTo(16,0); g.lineTo(-10,-10); g.lineTo(-4,0); g.lineTo(-10,10); g.closePath(); g.fill(); g.restore(); txtO(g,`BARGE ${Math.round(d/TILE)}m`,ax,ay+22,11,COL.gold,'center'); } }
-  if(G.hintT>0 && !G.over){ g.globalAlpha=clamp(G.hintT,0,1); txtO(g, isTouch? 'Drag left side to move · ENGAGE to fight · open crates' : 'WASD move · E engage · H medkit · Q field action · P pause', W/2, H-(isTouch?100:30), 13, COL.white,'center'); g.globalAlpha=1; }
+  if(G.hintT>0 && !G.over){ g.globalAlpha=clamp(G.hintT,0,1); txtO(g, isTouch? 'Drag left side to move · ENGAGE to fight · Open crates' : 'WASD move · E engage · H medkit · Q field action · P pause', W/2, H-(isTouch?100:30), 13, COL.white,'center'); g.globalAlpha=1; }
   if(isTouch){ if(joy){ g.globalAlpha=0.35; g.fillStyle='#fff'; g.beginPath(); g.arc(joy.ox,joy.oy,48,0,7); g.fill(); g.globalAlpha=0.7; g.beginPath(); g.arc(joy.ox+joy.dx*40,joy.oy+joy.dy*40,22,0,7); g.fill(); g.globalAlpha=1; }
     engageBtn.x=W-52; engageBtn.y=H-52; const n=e&&nearestEngageable(e); g.globalAlpha=n?0.95:0.4; g.fillStyle=n?COL.pink:'#333a4d'; g.beginPath(); g.arc(engageBtn.x,engageBtn.y,engageBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'ENGAGE',engageBtn.x,engageBtn.y,11,COL.white,'center');
     medBtn.x=W-120; medBtn.y=H-44; const hm=e&&e.medkits>0; g.globalAlpha=hm?0.95:0.35; g.fillStyle=hm?COL.green:'#333a4d'; g.beginPath(); g.arc(medBtn.x,medBtn.y,medBtn.r,0,7); g.fill(); g.globalAlpha=1; txt(g,'MED',medBtn.x,medBtn.y,11,'#0a0e1a','center');
@@ -1494,7 +1494,7 @@ function renderGuide(){
   const phases=ZONE_RADII.map((r,i)=>`<tr><td>${i===0?'0 (drop)':i}</td><td>${i===ZONE_RADII.length-1?'stays':ZONE_PHASE_TIME+' s'}</td><td>${Math.round(r*100)}%</td><td>${ZONE_DAMAGE[i]||'none'}</td><td>${MUSIC_BASE_BPM+MUSIC_BPM_STEP*i}</td></tr>`).join('');
   const classes=CLASSES.map(c=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>MATCHUP_CYCLE[(i+k)%6];
     const aff=WEAPON_TYPES.map(t=>`${t} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
-    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
+    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · Fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence): ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}): ${c.field.desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
   const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">${diceStr(TIER_DICE[i])}${i===3?'+2':''}</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
   // matchup ring as SVG
   const R=110, cx=150, cy=150; const pts=MATCHUP_CYCLE.map((id,i)=>{ const a=-Math.PI/2+i*Math.PI/3; return {id, x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R}; });
@@ -1515,7 +1515,7 @@ function renderGuide(){
 <div class="tw"><table><tr><th>Action</th><th>Keyboard</th><th>Touch</th></tr>
 <tr><td>Move</td><td>WASD / arrows</td><td>drag on the left half</td></tr><tr><td>Engage the survivor in reach</td><td>E / Space</td><td>ENGAGE</td></tr>
 <tr><td>Use a medkit (${MEDKIT_HEAL} HP, Alchemist ${MEDKIT_HEAL*2})</td><td>H</td><td>MED</td></tr><tr><td>Field action (Scout, Tinker, Brace, Blood Rite, Brew, Shadow Sprint)</td><td>Q</td><td>ACT</td></tr>
-<tr><td>Choose an ability in a fight</td><td>1–6</td><td>tap</td></tr><tr><td>Roll the d20</td><td>Space / Enter</td><td>tap the dice</td></tr><tr><td>Pause · mute</td><td>P · M</td><td>top-right buttons</td></tr></table></div>
+<tr><td>Choose an ability in a fight</td><td>1–6</td><td>tap</td></tr><tr><td>Roll the d20</td><td>Space / Enter</td><td>tap the dice</td></tr><tr><td>Pause · Mute</td><td>P · M</td><td>Top-right buttons</td></tr></table></div>
 <h3>Fighting: the d20</h3>
 <ul><li>Initiative: d20 + SPD, higher acts first. Turns alternate; energy regenerates ${ENERGY_REGEN} per turn.</li>
 <li><b class="k">Attacks</b>: roll d20 + ATK + weapon affinity + matchup + buffs against the target's DEF. Meet it and you hit. <b>Natural 20</b> always hits and doubles damage. <b>Natural 1</b> fumbles: you hurt yourself for ${FUMBLE_SELF_DAMAGE}.</li>
@@ -1525,7 +1525,7 @@ function renderGuide(){
 <li><b class="k">Flee</b>: d20 + your SPD vs 10 + their SPD. Fail and they get a free strike. Success puts you a few tiles away with a short immunity.</li>
 <li>Killing someone heals you 15% (Hexblade 40%), raises ATK by one (max +4), and lets you take their weapon and medkits if they are better.</li></ul>
 <h3>Classes</h3>
-<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · defence · field action · passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
+<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · Defence · Field action · Passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
 <h3>The matchup circle</h3>
 <p>Each class hunts the next one round the circle (<b>+${MATCHUP_BONUS[1]}</b> to hit and damage, and the victim gets −${MATCHUP_BONUS[1]}), has the edge on the one after (+${MATCHUP_BONUS[2]}), is even with the opposite class and with its own, and is on the losing side of the other two. The ENGAGE prompt says <span style="color:${COL.green}">PREY</span>, <span style="color:${COL.cyan}">EDGE</span>, EVEN, <span style="color:${COL.orange}">RISKY</span> or <span style="color:${COL.red}">AVOID</span> before you commit, and minimap dots use the same colours. Chase your prey. Run from your predator.</p>
 ${ring}
@@ -1570,7 +1570,7 @@ function pickerDraw(){
       <div class="nm">${c.name}</div><div class="ti">${c.title}</div>
       <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
       <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
-      <div class="ab" style="margin-top:4px"><span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">edge on ${n(2)}</span> · even vs ${n(3)} · <span style="color:${COL.orange}">risky vs ${n(4)}</span> · <span style="color:${COL.red}">fears ${n(5)}</span></div>
+      <div class="ab" style="margin-top:4px"><span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">Edge on ${n(2)}</span> · Even vs ${n(3)} · <span style="color:${COL.orange}">Risky vs ${n(4)}</span> · <span style="color:${COL.red}">Fears ${n(5)}</span></div>
       <div class="st">${affs}</div><div class="fam">${c.family}</div>
       <div class="pk-choose"><button class="btn gold" id="pkChoose">${Picker.selectedId===c.id?'Chosen ✓':'Choose '+c.name}</button><span class="small">${Picker.idx+1} of ${CLASSES.length} · ← → to browse</span></div>
     </div><div class="pk-dots">${dots}</div></div></div>`;
@@ -1600,7 +1600,7 @@ function classCard(c, idx, onPick, selected){
   el.innerHTML=`<div class="key">${idx+1}</div>${por?`<img class="por" src="${por.img.src}" alt="">`:''}<div class="nm">${c.name}</div><div class="ti">${c.title}</div>
     <div class="st"><span>HP ${c.hp}</span><span>DEF ${c.def}</span><span>ATK +${c.atk}</span><span>SPD ${c.spd}</span><span>EN ${c.en}</span><span>Fists ${diceStr(c.fists)}</span></div>
     <div class="ab"><b>${ABILITIES[c.signature].name}</b> — ${ABILITIES[c.signature].desc}<br><b>${ABILITIES[c.defensive].name}</b> (defence) — ${ABILITIES[c.defensive].desc}<br><b>${c.field.name}</b> (Q, ${c.field.hpCost?c.field.hpCost+' HP':c.field.cost+' EN'}${c.field.cd?', '+c.field.cd+' s':''}) — ${c.field.desc}<br><b>${c.passiveName}</b> — ${c.passiveDesc}</div>
-    <div class="ab" style="margin-top:4px">${(()=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name; return `<span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">edge on ${n(2)}</span> · even vs ${n(3)} · <span style="color:${COL.orange}">risky vs ${n(4)}</span> · <span style="color:${COL.red}">fears ${n(5)}</span>`; })()}</div>
+    <div class="ab" style="margin-top:4px">${(()=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>CLASS_BY_ID[MATCHUP_CYCLE[(i+k)%6]].name; return `<span style="color:${COL.green}">Hunts ${n(1)}</span> · <span style="color:${COL.cyan}">Edge on ${n(2)}</span> · Even vs ${n(3)} · <span style="color:${COL.orange}">Risky vs ${n(4)}</span> · <span style="color:${COL.red}">Fears ${n(5)}</span>`; })()}</div>
     <div class="st">${affs}</div><div class="fam">${c.family}</div>`;
   el.addEventListener('click',()=>onPick(idx)); el.addEventListener('keydown',ev=>{ if(ev.key==='Enter') onPick(idx); }); return el;
 }
@@ -1653,7 +1653,7 @@ $('lobbyBack').addEventListener('click',()=>{ Audio.sfx.click(); toMenu(); });
 $('startBtn').addEventListener('click',()=>{ if(!Net.isHost) return; Audio.sfx.click(); hostStartRound(); });
 function renderLobby(){
   if(state!=='lobby') return; const list=$('plist'); list.innerHTML='';
-  Lobby.order().forEach(p=>{ const s=document.createElement('span'); s.className=p.id===Net.hostId?'host':''; s.textContent=`${p.name}${p.id===Net.id?' (you)':''} · ${p.cls?CLASS_BY_ID[p.cls].name:'picking...'}${p.id===Net.hostId?' · host':''}`; list.appendChild(s); });
+  Lobby.order().forEach(p=>{ const s=document.createElement('span'); s.className=p.id===Net.hostId?'host':''; s.textContent=`${p.name}${p.id===Net.id?' (you)':''} · ${p.cls?CLASS_BY_ID[p.cls].name:'picking...'}${p.id===Net.hostId?' · Host':''}`; list.appendChild(s); });
   const lp=$('lobbyPicker'); if(Net.connected){ renderPicker(lp, i=>{ Lobby.pick(CLASSES[i].id); }, Lobby.myPick, Picker.el===lp?Picker.idx:(Lobby.myPick?CLASSES.findIndex(c=>c.id===Lobby.myPick):0)); } else lp.innerHTML='';
   const n=Object.keys(Lobby.players).length; $('startBtn').classList.toggle('hidden', !(Net.connected&&Net.isHost)); $('startBtn').disabled=!Lobby.myPick; $('startBtn').textContent=`Start round · ${n} player${n===1?'':'s'} + ${CONTESTANTS-n} AI`;
   if(Net.connected) setLobbyStatus(`Room ${Net.room} · ${Net.isHost?'you are the host — pick a class and start':'pick a class, the host starts the round'}`);
@@ -1717,7 +1717,7 @@ function frame(now){
   catch(err){ console.error(err); acc=0; }
   requestAnimationFrame(frame);
 }
-$('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · online via '+location.host:'');
+$('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · Online via '+location.host:'');
 loadArt(); if(!mapCanvas) genMap(12345); $('menuBest').textContent='BEST '+hiScore; showTitle(); requestAnimationFrame(frame);
 window.__game = { skipTitle(){ if(state==='title') toMenu(); }, playIntro, endIntro, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
   beginSetup, pickClass, tryEngage, tryMedkit, tryAction, uiChoose, uiRoll, ABILITIES, CLASSES, startCombat, killContestant, localHuman, abilityList, makeWeapon, hostStartRound };

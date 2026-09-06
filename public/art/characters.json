@@ -104,12 +104,12 @@
     },
     {
       "id": "portrait.warden",
-      "file": "portraits/warden.png",
-      "status": "needed",
-      "description": "Warden portrait bust for the class-select card and lobby. Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
+      "file": "portraits/warden.jpg",
+      "status": "ready",
+      "description": "Warden full-body portrait for the class picker and lobby (dark gradient background, 2:3). Wasteland ranger. Hooded, lean, scrap bow on the back, practical layered clothes, green accents.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1
@@ -217,12 +217,12 @@
     },
     {
       "id": "portrait.techno",
-      "file": "portraits/techno.png",
-      "status": "needed",
-      "description": "Technomancer portrait bust for the class-select card and lobby. Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
+      "file": "portraits/techno.jpg",
+      "status": "ready",
+      "description": "Technomancer full-body portrait for the class picker and lobby (dark gradient background, 2:3). Reactor witch. Goggles, cables, glowing cyan tech gauntlet, patched lab coat over armor.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1
@@ -330,12 +330,12 @@
     },
     {
       "id": "portrait.bruiser",
-      "file": "portraits/bruiser.png",
-      "status": "needed",
-      "description": "Bruiser portrait bust for the class-select card and lobby. Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
+      "file": "portraits/bruiser.jpg",
+      "status": "ready",
+      "description": "Bruiser full-body portrait for the class picker and lobby (dark gradient background, 2:3). Scrapyard titan. Big frame, welded helmet, orange rust-metal plates, rebar weapon.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1
@@ -443,12 +443,12 @@
     },
     {
       "id": "portrait.hexblade",
-      "file": "portraits/hexblade.png",
-      "status": "needed",
-      "description": "Hexblade portrait bust for the class-select card and lobby. Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
+      "file": "portraits/hexblade.jpg",
+      "status": "ready",
+      "description": "Hexblade full-body portrait for the class picker and lobby (dark gradient background, 2:3). Cursed duelist. Horned mask, purple rune tattoos, tattered cloak, runed blade.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1
@@ -556,12 +556,12 @@
     },
     {
       "id": "portrait.alch",
-      "file": "portraits/alch.png",
-      "status": "needed",
-      "description": "Alchemist portrait bust for the class-select card and lobby. Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
+      "file": "portraits/alch.jpg",
+      "status": "ready",
+      "description": "Alchemist full-body portrait for the class picker and lobby (dark gradient background, 2:3). Field medic. Gas mask with gold lenses, satchel of vials, yellow chemical stains.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1
@@ -669,12 +669,12 @@
     },
     {
       "id": "portrait.wraith",
-      "file": "portraits/wraith.png",
-      "status": "needed",
-      "description": "Wraith portrait bust for the class-select card and lobby. Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
+      "file": "portraits/wraith.jpg",
+      "status": "ready",
+      "description": "Wraith full-body portrait for the class picker and lobby (dark gradient background, 2:3). Ash scavenger. Pink scarf-mask, dark hood, fast and wiry, knives and a revolver.",
       "kind": "image",
-      "frameW": 96,
-      "frameH": 96,
+      "frameW": 768,
+      "frameH": 1152,
       "anchor": [
         0.5,
         1

@@ -115,6 +115,29 @@ Alchemist–blunt, Wraith–arcane. Everything else is basic.
 Crates: weapon 45 % (tier rises with the Ashfall phase), medkit 25 %, armor plate 12 % (+1 DEF,
 max +3), power cell 8 %, supply cache 10 %.
 
+### Class matchups (rock-paper-scissors)
+
+The six classes sit on a circle. Each class **hunts** the next one, has the **edge** on the one
+after, is **even** with the opposite class (and with its own), is **at risk** against the fourth and
+**fears** the fifth. The bonus applies to hit *and* damage, both ways, so a hunt is a +6 swing.
+
+| Relation | Bonus | Warden | Bruiser | Wraith | Technomancer | Hexblade | Alchemist |
+|---|---|---|---|---|---|---|---|
+| hunts | +3 | Bruiser | Wraith | Technomancer | Hexblade | Alchemist | Warden |
+| edge on | +1 | Wraith | Technomancer | Hexblade | Alchemist | Warden | Bruiser |
+| even | 0 | Technomancer | Hexblade | Alchemist | Warden | Bruiser | Wraith |
+| risky vs | −1 | Hexblade | Alchemist | Warden | Bruiser | Wraith | Technomancer |
+| fears | −3 | Alchemist | Warden | Bruiser | Wraith | Technomancer | Hexblade |
+
+Why: the Warden kites the slow Bruiser; Ironhide shrugs off the Wraith's knives; the Wraith
+assassinates the squishy Technomancer; science disrupts the Hexblade's magic; curses rot the
+Alchemist's chemistry; gas clouds beat the Warden's line of sight.
+
+The game tells you before you commit: the ENGAGE prompt reads PREY / EDGE / EVEN / RISKY / AVOID
+with the bonus, minimap dots are coloured the same way, and the class cards list who to chase and
+who to run from. AI weigh matchups when choosing targets, so a Bruiser will chase a Wraith and
+steer clear of a Warden.
+
 ### Duels and sanctuary (anti-vulture rules)
 
 A fight is a **duel circle** (110 px). Anyone who is not part of it is pushed out and AI will not

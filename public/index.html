@@ -95,6 +95,16 @@
   .topbtns button{background:rgba(10,14,26,.7);border:1px solid var(--line);color:var(--ink);border-radius:6px;width:36px;height:36px;font-size:16px;cursor:pointer}
   .small{font-size:12px;color:var(--muted);text-align:center;max-width:560px;line-height:1.5}
   .status{font-size:12px;color:var(--cyan);letter-spacing:.1em;min-height:16px;text-align:center}
+  #guide .box{max-width:860px;text-align:left}
+  #guide h3{margin:18px 0 6px;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+  #guide h3:first-child{margin-top:0}
+  #guide p,#guide li{font-size:13.5px;line-height:1.55;color:#d6dbe8} #guide ul{margin:4px 0 4px 18px;padding:0}
+  #guide table{border-collapse:collapse;width:100%;font-size:12px;margin:6px 0}
+  #guide th,#guide td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top} #guide th{color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+  #guide .tw{overflow-x:auto;max-width:100%}
+  #guide b.k{color:var(--cyan)} #guide .cls{font-weight:900}
+  #guide svg{display:block;margin:8px auto;max-width:320px}
+  .menuRow2{display:flex;gap:10px;justify-content:center;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -112,6 +122,7 @@
     <button class="btn" data-mode="hotseat" data-humans="3">3P</button>
     <button class="btn" data-mode="hotseat" data-humans="4">4P</button>
   </div>
+  <div class="menuRow2"><button class="btn ghost" id="guideBtn">How to play</button></div>
   <div class="box">
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · touch: left joystick</td></tr>
@@ -119,7 +130,7 @@
       <tr><td>Use medkit · class action</td><td><kbd>H</kbd> · <kbd>Q</kbd> · touch: MED / ACT buttons</td></tr>
       <tr><td>Pick ability in combat</td><td><kbd>1</kbd>–<kbd>6</kbd> or tap</td></tr>
       <tr><td>Roll the d20</td><td><kbd>Space</kbd> / <kbd>Enter</kbd> or tap the dice</td></tr>
-      <tr><td>Pause · Mute</td><td><kbd>P</kbd> · <kbd>M</kbd></td></tr>
+      <tr><td>Pause · Mute · Guide</td><td><kbd>P</kbd> · <kbd>M</kbd> · <kbd>H</kbd></td></tr>
     </table>
     <div class="small" style="margin-top:10px">You land with your fists and one signature ability. Weapons unlock new moves, and each class handles each weapon differently. Stay inside the Ashfall ring. Last survivor reaches the barge to the Safe City.</div>
   </div>
@@ -147,6 +158,12 @@
   <div class="row" style="margin-top:12px"><button class="btn gold hidden" id="startBtn">Start round</button><button class="btn ghost" id="lobbyBack">Back</button></div>
 </div>
 
+<div id="guide" class="screen hidden">
+  <h2>How to play</h2>
+  <div class="box" id="guideBody"></div>
+  <div class="row" style="margin-top:14px"><button class="btn gold" id="guideBack">Back</button></div>
+</div>
+
 <div id="pass" class="screen hidden">
   <h2 id="passTitle">Pass the device</h2>
   <div class="sub" id="passSub"></div>
@@ -164,7 +181,7 @@
       <tr><td>Mute</td><td><kbd>M</kbd></td></tr>
     </table>
   </div>
-  <div class="row" style="margin-top:14px"><button class="btn gold" id="resumeBtn">Resume</button><button class="btn ghost" id="quitBtn">Quit to menu</button></div>
+  <div class="row" style="margin-top:14px"><button class="btn gold" id="resumeBtn">Resume</button><button class="btn ghost" id="pauseGuideBtn">How to play</button><button class="btn ghost" id="quitBtn">Quit to menu</button></div>
 </div>
 
 <div id="end" class="screen hidden">
@@ -226,6 +243,9 @@ const DICE_ROLL_TIME = 0.75;       // dice tumble duration
 const RESOLVE_TIME = 0.95;          // pause after an action resolves
 const AI_THINK_TIME = 0.45;        // AI "thinking" delay in combat
 const SHAKE_HIT = 7, SHAKE_CRIT = 16;
+const MUSIC_BASE_BPM = 72;         // soundtrack tempo at phase 0
+const MUSIC_BPM_STEP = 14;         // tempo added each time the Ashfall closes (phase 6 = 156 BPM)
+const MUSIC_VOLUME = 0.55;         // master level of the procedural soundtrack (0 = off)
 const FUMBLE_SELF_DAMAGE = 3;
 // Class matchup circle (rock-paper-scissors). Each class hunts the next one, has the edge on the one after,
 // is even with the opposite, at risk against the fourth and fears the fifth. Bonus applies to hit AND damage.
@@ -234,7 +254,7 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = '531c8b1 20260906-0115';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'e0da05b 20260906-0133';               // stamped by tools/sync-hosted.sh in the hosted build
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
 // else a local relay when opened from file://. Static hosts (github.io) have no relay of their own, so the field is left empty.
@@ -279,6 +299,14 @@ const Audio = {
     const g=this.ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
     s.connect(f).connect(g).connect(this.ctx.destination); s.start(t); s.stop(t+dur+0.02);
   },
+  // absolute-time variants for the sequencer
+  toneAt(t, f, dur, type='square', vol=0.12, slide=0){ if(!this.ctx||this.muted) return; const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type=type;
+    o.frequency.setValueAtTime(Math.max(20,f),t); if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(20,f+slide),t+dur);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.0008,t+dur);
+    o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t+dur+0.03); },
+  noiseAt(t, dur, vol=0.2, freq=1200, q=0.8){ if(!this.ctx||this.muted) return; if(!this._nb){ const len=this.ctx.sampleRate; const b=this.ctx.createBuffer(1,len,this.ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1; this._nb=b; }
+    const s=this.ctx.createBufferSource(); s.buffer=this._nb; s.loop=true; const f=this.ctx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q;
+    const g=this.ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0008,t+dur); s.connect(f).connect(g).connect(this.ctx.destination); s.start(t); s.stop(t+dur+0.02); },
   sfx:{
     click(){ Audio.tone(900,0.05,'square',0.05); },
     dice(){ Audio.tone(rnd(700,1400),0.03,'triangle',0.05); Audio.noise(0.03,0.05,3000); },
@@ -295,11 +323,49 @@ const Audio = {
     engage(){ Audio.noise(0.2,0.3,200,0,0.5); Audio.tone(90,0.35,'sine',0.25,-40); Audio.tone(1200,0.08,'square',0.05,0,0.15); },
     win(){ [523,659,784,1047,1319].forEach((f,i)=>Audio.tone(f,0.35,'square',0.09,0,i*0.12)); },
     lose(){ [400,330,262,196].forEach((f,i)=>Audio.tone(f,0.4,'sawtooth',0.08,0,i*0.2)); },
-    zone(){ Audio.tone(220,0.25,'square',0.07,0); Audio.tone(220,0.25,'square',0.07,0,0.3); },
+    zone(){ Audio.tone(110,0.9,'sawtooth',0.12,660); Audio.tone(220,0.25,'square',0.07,0,0.9); Audio.tone(220,0.25,'square',0.07,0,1.2); Audio.noise(0.8,0.12,300,0,0.5); },
     burn(){ Audio.noise(0.1,0.05,600); },
     flee(){ Audio.noise(0.3,0.15,1500); Audio.tone(600,0.3,'sine',0.06,400); },
     stun(){ Audio.tone(1000,0.1,'square',0.06,-600); Audio.tone(700,0.1,'square',0.06,-500,0.1); },
     barge(){ Audio.tone(110,0.8,'sine',0.2,0); Audio.tone(165,0.8,'sine',0.15,0,0.4); Audio.tone(220,1.0,'triangle',0.1,0,0.8); }
+  }
+};
+
+// ============================================================================
+//  Procedural soundtrack. A 16-step sequencer scheduled on the audio clock. Tempo = base + step × Ashfall phase,
+//  so the pulse jumps every time the ring closes; layers (hats, arpeggio, off-beat kicks) come in with later phases
+//  and with fights. Outside the ring the kick becomes a heartbeat.
+// ============================================================================
+const Music = {
+  next:0, step:0, lastPhase:-1,
+  bpm(){ return MUSIC_BASE_BPM + MUSIC_BPM_STEP*(G? G.zone.phase : 0); },
+  tick(){
+    if(!Audio.ctx || Audio.muted || !G || state!=='play' || MUSIC_VOLUME<=0){ this.next=0; return; }
+    const now=Audio.ctx.currentTime; if(this.next<now){ this.next=now+0.05; this.step=Math.floor(this.step/16)*16; }
+    if(G.zone.phase!==this.lastPhase){ this.lastPhase=G.zone.phase; }
+    const spb=60/this.bpm()/4;                     // one 16th note
+    while(this.next < now+0.3){ this.play(this.step, this.next, spb); this.step++; this.next+=spb; }
+  },
+  play(i,t,spb){
+    const ph=G.zone.phase, fight=!!viewCombat, v=MUSIC_VOLUME, b=i%16, bar=(i>>4);
+    const me=localHuman(); const outside = me && me.alive && !me.inCombat && ZONE_DAMAGE[ph]>0 && Math.hypot(me.x-G.zone.cx,me.y-G.zone.cy)>G.zone.radius;
+    const root = 41.2*Math.pow(2, ph/12);           // E1, up a semitone per phase
+    const prog=[1,1,1.189,0.891][bar%4];            // i - i - III - VII (minor feel)
+    // kick: beats 1 & 3; off-beat from phase 3; heartbeat pattern when burning
+    const kickOn = outside ? (b%8===0 || b%8===3) : (b%8===0 || (ph>=3 && b===10) || (fight && b===6));
+    if(kickOn){ Audio.toneAt(t, outside?70:55, 0.28, 'sine', v*(outside?0.9:0.55), outside?-50:-40); Audio.noiseAt(t,0.03,v*0.15,400); }
+    // snare/clap in fights on 2 & 4
+    if(fight && (b===4||b===12)) Audio.noiseAt(t,0.12,v*0.22,1800,0.6);
+    // hats: every other 16th from phase 1, every 16th from phase 4
+    if(ph>=1 && (b%2===0 || ph>=4)) Audio.noiseAt(t, b%4===0?0.06:0.03, v*(b%4===0?0.10:0.05), 6000, 1.2);
+    // bass: root pulse on quarter notes, syncopated from phase 2
+    if(b%4===0 || (ph>=2 && b%8===7)) Audio.toneAt(t, root*prog, spb*2.6, 'sawtooth', v*0.22, 0);
+    // pad drone: one long note per bar
+    if(b===0){ Audio.toneAt(t, root*2*prog, spb*16, 'triangle', v*0.09, 0); Audio.toneAt(t, root*3*prog, spb*16, 'sine', v*0.05, 0); }
+    // arpeggio: phase 4+ always, phase 2+ in fights
+    if((ph>=4 || (fight && ph>=2)) && b%2===1){ const sc=[0,3,7,10,12,15]; const n=sc[(i*5+bar)%sc.length]; Audio.toneAt(t, root*4*prog*Math.pow(2,n/12), spb*1.5, 'square', v*0.06, 0); }
+    // final ring: extra urgency tick on every step
+    if(ph>=ZONE_RADII.length-1 && b%4===2) Audio.toneAt(t, 1760, 0.03, 'square', v*0.04, 0);
   }
 };
 
@@ -1308,7 +1374,69 @@ function render(){
 //  Screens / flow
 // ============================================================================
 const $=id=>document.getElementById(id);
-function show(id){ ['menu','select','lobby','pass','pause','end'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+function show(id){ ['menu','select','lobby','pass','pause','end','guide'].forEach(s=>$(s).classList.toggle('hidden', s!==id)); }
+let guideReturn='menu';
+function openGuide(){ guideReturn = state==='pause'?'pause':'menu'; if(!$('guideBody').innerHTML) renderGuide(); $('guide').classList.remove('hidden'); $('guide').scrollTop=0; if(guideReturn==='menu'){ state='guide'; $('menu').classList.add('hidden'); } else $('pause').classList.add('hidden'); }
+function closeGuide(){ $('guide').classList.add('hidden'); if(guideReturn==='pause') $('pause').classList.remove('hidden'); else { state='menu'; $('menu').classList.remove('hidden'); } }
+function renderGuide(){
+  const cn=id=>CLASS_BY_ID[id].name, col=id=>CLASS_BY_ID[id].color;
+  const phases=ZONE_RADII.map((r,i)=>`<tr><td>${i===0?'0 (drop)':i}</td><td>${i===ZONE_RADII.length-1?'stays':ZONE_PHASE_TIME+' s'}</td><td>${Math.round(r*100)}%</td><td>${ZONE_DAMAGE[i]||'none'}</td><td>${MUSIC_BASE_BPM+MUSIC_BPM_STEP*i}</td></tr>`).join('');
+  const classes=CLASSES.map(c=>{ const i=MATCHUP_CYCLE.indexOf(c.id), n=k=>MATCHUP_CYCLE[(i+k)%6];
+    const aff=WEAPON_TYPES.map(t=>`${t} <i style="opacity:.7">${AFF[c.affinity[t]].label}</i>`).join(', ');
+    return `<tr><td><span class="cls" style="color:${c.color}">${c.name}</span><br><span style="color:var(--muted)">${c.title}</span></td><td>HP ${c.hp} · DEF ${c.def} · ATK +${c.atk} · SPD ${c.spd} · EN ${c.en} · fists ${diceStr(c.fists)}</td><td><b>${ABILITIES[c.signature].name}</b>: ${ABILITIES[c.signature].desc}<br><b>${c.passiveName}</b>: ${c.passiveDesc}</td><td>${aff}</td><td><span style="color:${COL.green}">hunts ${cn(n(1))}</span><br><span style="color:${COL.cyan}">edge on ${cn(n(2))}</span><br>even vs ${cn(n(3))}<br><span style="color:${COL.orange}">risky vs ${cn(n(4))}</span><br><span style="color:${COL.red}">fears ${cn(n(5))}</span></td></tr>`; }).join('');
+  const weapons=WEAPON_TYPES.map(t=>`<tr><td><b>${t}</b></td>${WEAPON_NAMES[t].map((n,i)=>`<td>${n}<br><i style="opacity:.7">${diceStr(TIER_DICE[i])}${i===3?'+2':''}</i></td>`).join('')}<td>${WEAPON_MOVES[t].map((m,i)=>`<b>${ABILITIES[m].name}</b> <i style="opacity:.7">(${i?'skilled+':'basic+'})</i>: ${ABILITIES[m].desc}`).join('<br>')}</td></tr>`).join('');
+  // matchup ring as SVG
+  const R=110, cx=150, cy=150; const pts=MATCHUP_CYCLE.map((id,i)=>{ const a=-Math.PI/2+i*Math.PI/3; return {id, x:cx+Math.cos(a)*R, y:cy+Math.sin(a)*R}; });
+  const arrows=pts.map((p,i)=>{ const q=pts[(i+1)%6]; const dx=q.x-p.x, dy=q.y-p.y, d=Math.hypot(dx,dy); const ux=dx/d, uy=dy/d; return `<line x1="${p.x+ux*33}" y1="${p.y+uy*33}" x2="${q.x-ux*37}" y2="${q.y-uy*37}" stroke="${col(p.id)}" stroke-width="3" marker-end="url(#ah)"/>`; }).join('');
+  const nodes=pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="31" fill="#0b1020" stroke="${col(p.id)}" stroke-width="2.5"/><text x="${p.x}" y="${p.y+3.5}" text-anchor="middle" font-size="${cn(p.id).length>7?7.5:9}" font-weight="900" fill="${col(p.id)}">${cn(p.id).toUpperCase()}</text>`).join('');
+  const ring=`<svg viewBox="0 0 300 300" width="320" height="320"><defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#f5f2ec"/></marker></defs>${arrows}${nodes}<text x="150" y="150" text-anchor="middle" font-size="10" fill="#8e97ad">arrow = hunts (+${MATCHUP_BONUS[1]})</text></svg>`;
+  $('guideBody').innerHTML=`
+<h3>The goal</h3>
+<p>Ten survivors are dropped on an island. You want the only seat on the extraction barge to the Safe City. Be the <b class="k">last one alive</b>, then walk to the barge when it lands. You lose the moment your HP hits zero, whether in a fight or burning outside the ring.</p>
+<h3>A round, minute by minute</h3>
+<ul><li><b class="k">Land with nothing</b> but your fists, your class's signature ability, and Flee.</li>
+<li><b class="k">Loot crates</b> (gold boxes) for weapons, medkits, armor plates, power cells. Walk over them.</li>
+<li><b class="k">The Ashfall ring shrinks</b> every ${ZONE_PHASE_TIME} seconds. The pink circle is safe; the dashed circle shows where it closes next. Outside it you burn, harder each phase. The soundtrack speeds up every time it closes.</li>
+<li><b class="k">Meet survivors</b>: an ENGAGE prompt appears within reach, coloured by how good the matchup is for you. AI will ambush you too.</li>
+<li><b class="k">Survive to the end</b>: when one survivor remains, the barge lands on a beach and the HUD points to it.</li></ul>
+<div class="tw"><table><tr><th>Phase</th><th>Lasts</th><th>Ring size</th><th>Burn HP/s outside</th><th>Tempo</th></tr>${phases}</table></div>
+<h3>Controls</h3>
+<div class="tw"><table><tr><th>Action</th><th>Keyboard</th><th>Touch</th></tr>
+<tr><td>Move</td><td>WASD / arrows</td><td>drag on the left half</td></tr><tr><td>Engage the survivor in reach</td><td>E / Space</td><td>ENGAGE</td></tr>
+<tr><td>Use a medkit (${MEDKIT_HEAL} HP, Alchemist ${MEDKIT_HEAL*2})</td><td>H</td><td>MED</td></tr><tr><td>Class action (Technomancer: tinker)</td><td>Q</td><td>ACT</td></tr>
+<tr><td>Choose an ability in a fight</td><td>1–6</td><td>tap</td></tr><tr><td>Roll the d20</td><td>Space / Enter</td><td>tap the dice</td></tr><tr><td>Pause · mute</td><td>P · M</td><td>top-right buttons</td></tr></table></div>
+<h3>Fighting: the d20</h3>
+<ul><li>Initiative: d20 + SPD, higher acts first. Turns alternate; energy regenerates ${ENERGY_REGEN} per turn.</li>
+<li><b class="k">Attacks</b>: roll d20 + ATK + weapon affinity + matchup + buffs against the target's DEF. Meet it and you hit. <b>Natural 20</b> always hits and doubles damage. <b>Natural 1</b> fumbles: you hurt yourself for ${FUMBLE_SELF_DAMAGE}.</li>
+<li>Damage = weapon dice + ATK + affinity + matchup (+ the ability's extra dice). Bruisers take 2 less from every hit.</li>
+<li><b class="k">Heals and buffs</b> also roll: a 1 fizzles, a 20 doubles the heal or extends the buff.</li>
+<li><b class="k">Status effects</b> (poison, drones, snares, hexes, cracked armour) last a set number of rounds. A stunned fighter loses their turn.</li>
+<li><b class="k">Flee</b>: d20 + your SPD vs 10 + their SPD. Fail and they get a free strike. Success puts you a few tiles away with a short immunity.</li>
+<li>Killing someone heals you 15% (Hexblade 40%), raises ATK by one (max +4), and lets you take their weapon and medkits if they are better.</li></ul>
+<h3>Classes</h3>
+<div class="tw"><table><tr><th>Class</th><th>Stats</th><th>Signature · passive</th><th>Weapon affinity</th><th>Matchups</th></tr>${classes}</table></div>
+<h3>The matchup circle</h3>
+<p>Each class hunts the next one round the circle (<b>+${MATCHUP_BONUS[1]}</b> to hit and damage, and the victim gets −${MATCHUP_BONUS[1]}), has the edge on the one after (+${MATCHUP_BONUS[2]}), is even with the opposite class and with its own, and is on the losing side of the other two. The ENGAGE prompt says <span style="color:${COL.green}">PREY</span>, <span style="color:${COL.cyan}">EDGE</span>, EVEN, <span style="color:${COL.orange}">RISKY</span> or <span style="color:${COL.red}">AVOID</span> before you commit, and minimap dots use the same colours. Chase your prey. Run from your predator.</p>
+${ring}
+<h3>Weapons and moves</h3>
+<p>A weapon adds moves to your action bar. How many you can use, and the hit/damage bonus, depends on your class's affinity with that weapon type: <b>expert</b> +2/+2 and both moves, <b>skilled</b> +1/+1 and both moves, <b>basic</b> the first move only, <b>poor</b> −2 to hit and no moves. The game keeps whichever weapon is better <i>for you</i>, so a Warden keeps a T2 bow over a T3 wand.</p>
+<div class="tw"><table><tr><th>Type</th><th>Tier 1</th><th>Tier 2</th><th>Tier 3</th><th>Tier 4</th><th>Moves</th></tr>${weapons}</table></div>
+<h3>Loot</h3>
+<ul><li><b class="k">Weapon</b> (45%): tier rises with the phase. Wraiths find one tier higher.</li><li><b class="k">Medkit</b> (25%): stored, up to ${MEDKIT_MAX} (Alchemist ${MEDKIT_MAX+1}). Use on the map with H, or as a combat action that costs your turn.</li>
+<li><b class="k">Armor plate</b> (12%): +1 DEF, up to +3.</li><li><b class="k">Power cell</b> (8%): +10 max energy, refilled.</li><li><b class="k">Supply cache</b> (10%): score.</li></ul>
+<h3>Duels and sanctuary</h3>
+<p>A fight throws a <b class="k">duel circle</b> around the two fighters. Nobody else can enter it, so a third player can't stand on top of a fight waiting to pounce. When it ends, the survivor gets <b class="k">sanctuary</b>: ${SANCTUARY} seconds in which nobody can engage them, shown as a green ring with a countdown. If an enemy keeps circling within reach, sanctuary keeps refreshing up to ${SANCTUARY_HOLD} seconds and the HUD names the vulture, so walk away. Pressing Engage yourself ends your own sanctuary early.</p>
+<h3>Modes</h3>
+<ul><li><b class="k">Solo</b>: you against nine AI. The island keeps running while you fight.</li>
+<li><b class="k">Online</b>: friends on their own devices. The first to join a room hosts; bots fill the round to ten. Everyone moves at once and fights run in parallel. If the host drops, another player takes over and the round continues. The dead spectate.</li>
+<li><b class="k">Hotseat</b>: two to four people share one device. ${HOTSEAT_TURN}-second walking turns, then pass. Whoever is attacked plays their own defence. The island pauses during fights.</li></ul>
+<h3>Score</h3>
+<p>+${SURVIVE_SCORE} per second alive, +${CRATE_SCORE} per crate, +1 per point of damage dealt, +${KILL_SCORE} × phase per kill, +${WIN_SCORE} for escaping. Your best is saved on this device.</p>
+<h3>Five tips</h3>
+<ul><li>Find any weapon before you fight anyone. Fists are a last resort.</li><li>Read the ENGAGE colour. A PREY fight is a +6 swing in your favour; an AVOID fight is the opposite.</li>
+<li>Stay inside the dashed circle before the ring moves, not after. Burn damage scales fast.</li><li>Save a medkit for the final ring. Heals in a fight cost a turn, on the map they are free.</li><li>Flee early or not at all. A failed flee hands your opponent a free hit.</li></ul>`;
+}
+$('guideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('pauseGuideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('guideBack').addEventListener('click',()=>{ Audio.sfx.click(); closeGuide(); });
 function updateTopButtons(){ $('topbtns').classList.toggle('hidden', !(state==='play'||state==='pause'||state==='pass')); $('btnMute').textContent=Audio.muted?'✕':'♪'; }
 function toMenu(){ Net.close(); state='menu'; G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
@@ -1389,7 +1517,8 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyM'){ Audio.muted=!Audio.muted; updateTopButtons(); return; }
   if(state==='select'){ const n=parseInt(e.key,10); if(n>=1&&n<=6) pickClass(n-1); return; }
   if(state==='lobby'){ const n=parseInt(e.key,10); if(n>=1&&n<=6&&Net.connected) Lobby.pick(CLASSES[n-1].id); if(e.code==='Enter'&&Net.isHost&&Lobby.myPick) hostStartRound(); return; }
-  if(state==='menu'){ if(e.code==='Enter'||e.code==='Space') beginSetup('solo',1); return; }
+  if(state==='guide' || (!$('guide').classList.contains('hidden'))){ if(e.code==='Escape'||e.code==='Enter'||e.code==='Backspace') closeGuide(); return; }
+  if(state==='menu'){ if(e.code==='Enter'||e.code==='Space') beginSetup('solo',1); if(e.code==='KeyH') openGuide(); return; }
   if(state==='pause'){ if(e.code==='KeyP'||e.code==='Escape'||e.code==='Enter') togglePause(); return; }
   if(state==='pass'){ if(e.code==='Enter'||e.code==='Space') $('passBtn').click(); return; }
   if(state==='end'){ if(e.code==='Enter'||e.code==='Space') toMenu(); return; }
@@ -1430,7 +1559,7 @@ function update(dt){
 }
 function frame(now){
   let d=(now-last)/1000; last=now; if(d>0.25) d=0.25; acc+=d; let n=0;
-  try{ while(acc>=STEP && n<6){ update(STEP); acc-=STEP; n++; } if(n===6) acc=0; render(); }
+  try{ while(acc>=STEP && n<6){ update(STEP); acc-=STEP; n++; } if(n===6) acc=0; render(); Music.tick(); }
   catch(err){ console.error(err); acc=0; }
   requestAnimationFrame(frame);
 }

@@ -311,9 +311,9 @@ const MATCHUP_BONUS = [0, 3, 1, 0, -1, -3];      // by cycle distance 0..5
 const MATCHUP_LABEL = ['MIRROR','PREY','EDGE','EVEN','RISKY','AVOID'];
 const NET_SNAP_INTERVAL = 0.1;     // host snapshot period (s)
 const NET_INPUT_INTERVAL = 1/15;   // client input send period (s)
-const BUILD = 'f8fb732 20260906-1152';               // stamped by tools/sync-hosted.sh in the hosted build
+const BUILD = 'e77b825 20260906-1159';               // stamped by tools/sync-hosted.sh in the hosted build
 const INTRO_VIDEO = { portrait:'art/ui/intro_portrait.mp4', landscape:'art/ui/intro_landscape.mp4' }; // played once after START; tap or any key skips
-const SHEET_WALK_FPS = 5;          // run-sheet frames per second of movement (6 frames: one stride cycle every 1.2 s); lower = slower, more readable
+const SHEET_WALK_FPS = 3.5;        // run-sheet frames per second of movement (6 frames: one stride cycle every 1.7 s); lower = slower, more readable
 const PORTRAIT_WORLD_H = 58;       // px: portrait height on the overworld at scale 1 (drawn figure is ~42)
 const PORTRAIT_RIM = 0.6;          // alpha of the class-coloured rim drawn behind overworld portraits so they read against busy tiles (0 = off)
 const PORTRAIT_ANIM = { bob:2.4, rock:0.06, lean:0.09, breathe:0.015 }; // single-image animation: walk bounce (px), rock and forward lean (rad), idle breathing (scale)

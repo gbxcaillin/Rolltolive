@@ -19,7 +19,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
  │ (real-time) │ ◀────────────────────── │ (turn-based)│ ◀───────────────── │  resolve     │
  └─────────────┘   win / flee / die      └─────────────┘   next turn        └──────────────┘
         │
-        ▼  the Ashfall (safe zone) shrinks every 100 s and forces the survivors together
+        ▼  the Ashfall (safe zone) shrinks every 100 s, faster as survivors fall and forces the survivors together
         ▼  last survivor → extraction barge appears → walk to it → ESCAPE
 ```
 
@@ -51,6 +51,13 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 | Pause / controls | P or Esc | Tap ⏸ (top-right) |
 | How to play (in-game guide) | H on the menu, or the button on the menu and pause screens | button |
 | Mute | M | ♪ (top-right) |
+
+### Ashfall clock and duel safety
+The phase clock advances at `ZONE_SPEED_BASE_ALIVE / alive` speed (10 alive = 1×, 5 alive = 2×), capped at
+`ZONE_SPEED_MAX` (2.5×) so the ring never closes faster than a survivor can cross to it. The HUD shows the
+multiplier beside the countdown. The ring never kills a duelist: burn is frozen for anyone in combat and for
+`COMBAT_BURN_GRACE` (5 s) after a fight ends, on top of the usual post-fight immunity. The HUD says "held back
+by the duel" or "grace 4s — run!" while that applies.
 
 ## 4. Win / lose conditions
 

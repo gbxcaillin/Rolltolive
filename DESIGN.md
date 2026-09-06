@@ -286,6 +286,9 @@ is keyed out once per class (flood fill from the border over near-black pixels, 
 survives), the cutout is scaled to about half the screen height, mirrored for the right-hand fighter, and a white
 silhouette of it flashes on hits. Name, bars and statuses sit above the portrait; on phones the matchup label and
 medkit count move to their own line. The drawn figure remains the fallback offline or before the portrait loads.
+First load is staged for slow links: the orientation's title painting alone, then the intro video buffers, then
+portraits and the other painting (once the video can play through, six seconds later, or when the menu opens).
+The video gets its source only after the painting is on screen so it never delays the page load event.
 Keying runs in an inline Web Worker, one class at a time, and only once the menu is up, so the title screen
 and the intro video never stall on it. The title's blurred backdrop is a 24-pixel copy of the painting scaled up
 rather than a CSS blur filter, and the canvas is not painted at all behind the title or the intro.

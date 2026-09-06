@@ -155,7 +155,7 @@
 </div>
 
 <div id="intro" class="screen hidden">
-  <video id="introVid" playsinline preload="auto"></video>
+  <video id="introVid" playsinline preload="metadata"></video>
   <div id="introHint">Tap to skip</div>
 </div>
 
@@ -318,6 +318,8 @@ const PORTRAIT_RIM = 0.6;          // alpha of the class-coloured rim drawn behi
 const PORTRAIT_ANIM = { bob:2.4, rock:0.06, lean:0.09, breathe:0.015 }; // single-image animation: walk bounce (px), rock and forward lean (rad), idle breathing (scale)
 const PORTRAIT_KEY_LEVEL = 22;     // portraits: pixels darker than this (0-255) connected to the border are the black backdrop and get keyed out
 const PICKER_MIN_ART = 320;        // px: below this art height the class picker switches to compact text instead of shrinking further
+const ART_REST_DELAY = 6;          // seconds after the title painting before the remaining art loads (unless the video is ready or the menu opens sooner)
+const ART_REST_FALLBACK = 10;      // hard deadline from page load for the remaining art, in case the title painting never arrives
 const INTRO_STALL_SECS = 25;       // give up on the intro (go to the menu) if nothing has played after this long
 const RELAY_URL = '';              // relay for static hosting (GitHub Pages etc.), e.g. 'wss://ashfall.example.com'. Stamped by the Pages workflow from the RELAY_URL repo variable.
 // Default server address in the lobby: an explicit RELAY_URL, else the page's own origin when served by the hosted relay,
@@ -515,7 +517,7 @@ const FAMILIES = ['fighting for a sister in quarantine','fighting for two sons',
 //  Optional external art. Served next to index.html as art/manifest.json (see art/README.md).
 //  When absent (e.g. opened from file://) every draw call falls back to canvas primitives.
 // ============================================================================
-const ART = { sprites:{}, count:0, cutouts:{} };
+const ART = { sprites:{}, count:0, cutouts:{}, restStarted:false, startRest:null };
 // Combat uses the class portraits instead of the drawn figures. Each portrait is painted on solid black, so the
 // background is keyed out once per class: a flood fill from the border over near-black pixels (so black inside the
 // character is kept), stored as a cutout canvas plus a white silhouette for the hit flash. null until the portrait
@@ -550,11 +552,18 @@ function portraitCutout(clsId){ const c=ART.cutouts[clsId]; if(c!==undefined) re
 function loadArt(){
   if(location.protocol==='file:') return;
   const v='?v='+encodeURIComponent(BUILD);
-  fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return;
-    for(const pack of m.packs){ const p=await fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null); if(!p||!p.assets) continue;
-      for(const a of p.assets){ if(!a.file||a.status!=='ready') continue; const img=new Image();
-        img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')) layoutTitle(); if(a.id.startsWith('portrait.')){ pickerRefreshArt(); requestCutout(a.id.slice(9)); } };
-        img.src='art/'+a.file+v; } } }).catch(()=>{});
+  const start=a=>{ const img=new Image();
+    img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')){ layoutTitle(); introBuffer(); } if(a.id.startsWith('portrait.')){ pickerRefreshArt(); requestCutout(a.id.slice(9)); } };
+    img.src='art/'+a.file+v; };
+  fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return; const first=[], rest=[];
+    const packs=await Promise.all(m.packs.map(pack=>fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null)));
+    const want=titleArtFor().id; // the painting for this orientation loads first; the other one waits with the rest
+    for(const p of packs){ if(!p||!p.assets) continue; for(const a of p.assets){ if(!a.file||a.status!=='ready'||a.kind==='video') continue; (a.id===want?first:rest).push(a); } }
+    // Order on a slow link: the title painting alone, then the intro video buffers, and the rest (portraits, the other
+    // painting) start once the video can play through, or ART_REST_DELAY after the painting, or as soon as the menu opens.
+    const go=()=>{ if(ART.restStarted) return; ART.restStarted=true; rest.forEach(start); }; ART.startRest=go; let left=first.length; if(!left) go();
+    first.forEach(a=>{ const img=new Image(); img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; layoutTitle(); introBuffer(); setTimeout(go,ART_REST_DELAY*1000); if(--left<=0){ $('introVid').addEventListener('canplaythrough',go,{once:true}); } }; img.onerror=()=>{ go(); }; img.src='art/'+a.file+v; });
+    setTimeout(go,ART_REST_FALLBACK*1000); }).catch(()=>{});
 }
 const sprite = id=>ART.sprites[id];
 function drawSprite(g,id,x,y,o){ const s=sprite(id); if(!s) return false; o=o||{};
@@ -1550,7 +1559,8 @@ const TITLE_ART = { portrait:{id:'ui.title.portrait', box:[0.30,0.855,0.70,0.935
 function showTitle(){ state='title'; show('title'); layoutTitle(); introPrime(); }
 // Picks the painting whose aspect is closest to the screen and shows it whole (fit inside, bars at the sides on
 // 4:3 tablets and foldables); a blurred copy fills the bars. The START hit zone follows the same fit.
-function layoutTitle(){ if(state!=='title') return; const ar=W/Math.max(1,H); const dl=Math.abs(Math.log(ar/(1672/941))), dp=Math.abs(Math.log(ar/(941/1672))); const a=TITLE_ART[dl<=dp?'landscape':'portrait']; const sp=sprite(a.id); const img=$('titleImg'), bg=$('titleBg'), hit=$('titleStart');
+function titleArtFor(){ const ar=W/Math.max(1,H); const dl=Math.abs(Math.log(ar/(1672/941))), dp=Math.abs(Math.log(ar/(941/1672))); return TITLE_ART[dl<=dp?'landscape':'portrait']; }
+function layoutTitle(){ if(state!=='title') return; const a=titleArtFor(); const sp=sprite(a.id); const img=$('titleImg'), bg=$('titleBg'), hit=$('titleStart');
   if(sp && sp.img.naturalWidth){ if(img.dataset.id!==a.id){ img.src=sp.img.src; img.dataset.id=a.id; try{ const tw=24, th=Math.max(1,Math.round(tw*sp.img.naturalHeight/sp.img.naturalWidth)), tc=document.createElement('canvas'); tc.width=tw; tc.height=th; const tg=tc.getContext('2d'); tg.drawImage(sp.img,0,0,tw,th); tg.fillStyle='rgba(0,0,0,0.55)'; tg.fillRect(0,0,tw,th); bg.src=tc.toDataURL(); }catch(e){ bg.src=sp.img.src; } } img.classList.add('on'); bg.classList.add('on'); $('titleFallback').classList.add('hidden');
     const iw=sp.img.naturalWidth, ih=sp.img.naturalHeight, sc=Math.min(W/iw,H/ih), ox=(W-iw*sc)/2, oy=(H-ih*sc)/2, [x0,y0,x1,y1]=a.box;
     hit.style.left=(ox+x0*iw*sc)+'px'; hit.style.top=(oy+y0*ih*sc)+'px'; hit.style.width=((x1-x0)*iw*sc)+'px'; hit.style.height=((y1-y0)*ih*sc)+'px'; hit.classList.remove('hidden'); }
@@ -1560,13 +1570,16 @@ function startFromTitle(){ if(state!=='title') return; Audio.init(); Audio.sfx.c
 // Preloaded while the title is up. Ends, errors (missing file, unsupported codec) and taps all lead to the menu.
 const Intro = { t:0 };
 function introSrc(){ const url=INTRO_VIDEO[W>=H?'landscape':'portrait']; return url+(location.protocol.startsWith('http')?'?v='+encodeURIComponent(BUILD):''); }
-function introPrime(){ const v=$('introVid'), url=introSrc(); if(v.dataset.src!==url){ v.dataset.src=url; v.src=url; try{ v.load(); }catch(e){} } }
+// The video gets its source only once the title painting is on screen (introBuffer), so it never competes with
+// the first thing the player sees and never holds up the page's load event. Offline it starts at once.
+function introPrime(){ if(location.protocol==='file:') introBuffer(); } // offline there is no title painting to wait for
+function introBuffer(){ const v=$('introVid'), url=introSrc(); if(v.dataset.src!==url){ v.dataset.src=url; v.preload='auto'; v.src=url; try{ v.load(); }catch(e){} } }
 function playIntro(src){ const v=$('introVid'); const url=src||introSrc(); if(v.dataset.src!==url){ v.dataset.src=url; v.src=url; }
-  state='intro'; show('intro'); v.muted=false; try{ v.currentTime=0; }catch(e){}
+  state='intro'; show('intro'); $('introHint').textContent= v.readyState>=3? 'Tap to skip' : 'Loading… tap to skip'; v.muted=false; try{ v.currentTime=0; }catch(e){}
   const p=v.play(); if(p&&p.catch) p.catch(()=>{ v.muted=true; const q=v.play(); if(q&&q.catch) q.catch(()=>endIntro()); });
   clearTimeout(Intro.t); Intro.t=setTimeout(()=>{ if(state==='intro' && !(v.currentTime>0)) endIntro(); }, INTRO_STALL_SECS*1000); }
 function endIntro(){ if(state!=='intro') return; clearTimeout(Intro.t); const v=$('introVid'); try{ v.pause(); }catch(e){} toMenu(); }
-$('introVid').addEventListener('ended',endIntro); $('introVid').addEventListener('error',endIntro);
+$('introVid').addEventListener('ended',endIntro); $('introVid').addEventListener('error',endIntro); $('introVid').addEventListener('playing',()=>{ $('introHint').textContent='Tap to skip'; });
 $('intro').addEventListener('click',endIntro);
 $('title').addEventListener('click',startFromTitle);
 let guideReturn='menu';
@@ -1632,7 +1645,7 @@ ${ring}
 }
 $('guideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('pauseGuideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('guideBack').addEventListener('click',()=>{ Audio.sfx.click(); closeGuide(); });
 function updateTopButtons(){ $('topbtns').classList.toggle('hidden', !(state==='play'||state==='pause'||state==='pass')); $('btnMute').textContent=Audio.muted?'✕':'♪'; }
-function toMenu(){ Net.close(); state='menu'; pumpCutouts(); G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
+function toMenu(){ Net.close(); state='menu'; if(ART.startRest) ART.startRest(); pumpCutouts(); G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
   if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus(NET_DEFAULT_URL? 'Pick a room code and a name, then connect.' : 'This static site has no relay: enter the address of your relay server (wss://...), a room code and a name.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
   state='select'; show('select'); renderSelect(); }

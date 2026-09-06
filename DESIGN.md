@@ -1,6 +1,6 @@
 # ASHFALL (working title) — Design Wireframe
 
-*Formerly "Roll to Live". See §12 for the title review.*
+*Formerly "Roll to Live". See §13 for the title review.*
 
 A browser/mobile survival game. Ten contestants are dropped on a post-apocalyptic island of
 science and magic. The last one standing earns a seat on the extraction barge to the Safe City,
@@ -49,6 +49,7 @@ Online play needs the relay in `server/relay.js` (or your own server speaking `N
 | Pick ability in combat | 1–6 or click | Tap button |
 | Roll the d20 | Space / Enter / click | Tap the ROLL button or the dice |
 | Pause / controls | P or Esc | Tap ⏸ (top-right) |
+| How to play (in-game guide) | H on the menu, or the button on the menu and pause screens | button |
 | Mute | M | ♪ (top-right) |
 
 ## 4. Win / lose conditions
@@ -188,12 +189,27 @@ OVERWORLD                                   COMBAT
 └────────────────────────────────────────┘ └────────────────────────────────────────┘
 ```
 
-## 11. Art
+## 11. Audio
+
+Everything is synthesized with the Web Audio API; no files. Sound effects cover dice, hits, crits,
+misses, fumbles, heals, buffs, debuffs, pickups, the tinker upgrade, deaths, engagements, the barge,
+burning, fleeing, stuns, and win/lose.
+
+The **soundtrack** is a 16-step sequencer scheduled on the audio clock. Tempo is
+`MUSIC_BASE_BPM + MUSIC_BPM_STEP × phase`, 72 BPM at the drop rising in jumps to 156 in the final
+ring, so every time the Ashfall closes the pulse audibly quickens, and the phase sting is a rising
+sweep. Layers stack with the phase: kick and bass at the drop, hats from phase 1, syncopated bass
+from phase 2, off-beat kicks from phase 3, an arpeggio from phase 4, and an urgency tick in the
+final ring. Fights add a snare on 2 and 4 and bring the arpeggio in early. Outside the ring the
+kick turns into a heartbeat. The root note rises a semitone per phase. `MUSIC_VOLUME` at the top of
+the script sets the level (0 disables it).
+
+## 12. Art
 
 Every draw call checks for a sprite before falling back to primitives. `art/*.json` lists all 110
 assets with sizes, frames, anchors and briefs; `art/README.md` explains the pipeline.
 
-## 12. Title review
+## 13. Title review
 
 "Roll to Live" is honest about the two pillars (dice, survival) but it reads like an instruction
 rather than a name: it is generic, hard to own as a brand, and the "roll" pun lands as tabletop
@@ -212,7 +228,7 @@ Options considered:
 Recommendation: ship as **Ashfall** with "Roll to live." as the tagline. The title is a one-line
 constant (`GAME_TITLE`) so it can be switched in seconds.
 
-## 13. Roadmap after v1
+## 14. Roadmap after v1
 
 - Reconnect to reclaim a botified survivor; server-side dice for anti-cheat.
 - Persistent progression: unlock cosmetics and a 7th class.

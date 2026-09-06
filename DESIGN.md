@@ -272,6 +272,14 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Painted UI plates and frames
+Buttons draw their painted plates with CSS `border-image` (nine-slice, `round` middle band) from `art/ui/plate_*.webp`,
+picked by colour class: gold for the primary action, cyan for online, pink for the rest, plain for secondary, and a
+darker gold plate for the pressed state. Panels (`.box`, `.card`) get the iron frame; guide headings get a section
+icon and the chain divider; wide screens put the skull-and-banner frame painting behind the guide. All of it switches
+on only when the art loader has the plates, so the offline build keeps the flat CSS look. Phones use smaller plate
+borders so the hotseat row still fits on one line.
+
 ### Painted menu
 The main menu draws a painting behind the UI (`ui.menu.portrait` / `ui.menu.landscape`, chosen by orientation,
 cover-fit, anchored bottom or right, slow drift). In portrait the wordmark and buttons sit on a plate in the upper

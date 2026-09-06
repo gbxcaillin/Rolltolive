@@ -67,6 +67,133 @@
       "usage": "Main-menu painting on wide screens: cover-fit, anchored to the right so the subject sits beside the left-hand button column."
     },
     {
+      "id": "ui.plate.gold",
+      "file": "ui/plate_gold.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 302,
+      "cssVar": "--plate-gold",
+      "slice": [
+        72,
+        170,
+        75,
+        140
+      ],
+      "usage": "9-slice button plate for .btn.gold (border-image, slices in px of this file)."
+    },
+    {
+      "id": "ui.plate.gold.pressed",
+      "file": "ui/plate_gold_pressed.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 305,
+      "cssVar": "--plate-gold-pressed",
+      "slice": [
+        72,
+        170,
+        75,
+        140
+      ],
+      "usage": "Pressed state for every plate."
+    },
+    {
+      "id": "ui.plate.cyan",
+      "file": "ui/plate_cyan.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 306,
+      "cssVar": "--plate-cyan",
+      "slice": [
+        72,
+        170,
+        75,
+        140
+      ],
+      "usage": "9-slice plate for .btn.cyan."
+    },
+    {
+      "id": "ui.plate.pink",
+      "file": "ui/plate_pink.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 312,
+      "cssVar": "--plate-pink",
+      "slice": [
+        72,
+        170,
+        75,
+        140
+      ],
+      "usage": "9-slice plate for the default .btn."
+    },
+    {
+      "id": "ui.plate.plain",
+      "file": "ui/plate_plain.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 304,
+      "cssVar": "--plate-plain",
+      "slice": [
+        72,
+        170,
+        75,
+        140
+      ],
+      "usage": "9-slice plate for .btn.ghost (secondary buttons)."
+    },
+    {
+      "id": "ui.panel",
+      "file": "ui/panel_frame.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 900,
+      "frameH": 895,
+      "cssVar": "--panel-frame",
+      "slice": [
+        130,
+        130,
+        130,
+        130
+      ],
+      "usage": "9-slice iron frame around .box and .card panels (border-image, centre not filled)."
+    },
+    {
+      "id": "ui.divider",
+      "file": "ui/divider.webp",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1000,
+      "frameH": 220,
+      "cssVar": "--divider",
+      "usage": "Ornamental rule under guide headings."
+    },
+    {
+      "id": "ui.icons.sections",
+      "file": "ui/section_icons.webp",
+      "status": "ready",
+      "kind": "sheet",
+      "frameW": 160,
+      "frameH": 160,
+      "frames": 7,
+      "cssVar": "--section-icons",
+      "usage": "Guide section icons: 0 book, 1 skull, 2 crossed weapons, 3 map, 4 hooded figures, 5 gear, 6 hourglass."
+    },
+    {
+      "id": "ui.guide.landscape",
+      "file": "ui/guide_landscape.jpg",
+      "status": "ready",
+      "kind": "image",
+      "frameW": 1672,
+      "frameH": 941,
+      "cssVar": "--guide-bg",
+      "usage": "How-to-play backdrop on wide screens (cover); portrait uses the panel frame alone."
+    },
+    {
       "id": "ui.intro.portrait",
       "file": "ui/intro_portrait.mp4",
       "status": "ready",

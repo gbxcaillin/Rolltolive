@@ -36,6 +36,19 @@
   .btn.cyan{border-color:var(--cyan)} .btn.cyan:hover{background:var(--cyan);color:#061a1e}
   .btn.gold{border-color:var(--gold)} .btn.gold:hover{background:var(--gold);color:#1a1400}
   .btn.ghost{border-color:var(--line);color:var(--muted)} .btn.ghost:hover{background:var(--line);color:var(--ink)}
+  /* painted UI (art/ui/plate_*.webp etc.): 9-slice plates on buttons, an iron frame on panels, ornaments in the guide */
+  body.uiArt .btn{border:solid transparent;border-width:14px 33px 15px 27px;border-image:var(--plate-pink) 72 170 75 140 fill / 14px 33px 15px 27px / 0 round;background:transparent;border-radius:0;padding:6px 12px;color:var(--ink);text-shadow:0 1px 3px #000,0 0 10px rgba(0,0,0,.9);transition:transform .08s,filter .12s}
+  body.uiArt .btn.gold{border-image-source:var(--plate-gold)} body.uiArt .btn.cyan{border-image-source:var(--plate-cyan)} body.uiArt .btn.ghost{border-image-source:var(--plate-plain);color:#d9dce6}
+  body.uiArt .btn:hover,body.uiArt .btn:focus-visible{background:transparent;color:#fff;filter:brightness(1.25) saturate(1.2);transform:translateY(-1px)}
+  body.uiArt .btn.gold:hover,body.uiArt .btn.gold:focus-visible{color:#fff} body.uiArt .btn.cyan:hover{color:#fff} body.uiArt .btn.ghost:hover{color:#fff}
+  body.uiArt .btn:active,body.uiArt .btn.gold:active{border-image-source:var(--plate-gold-pressed);filter:none;transform:translateY(1px)}
+  body.uiArt .btn:disabled{filter:grayscale(.8) brightness(.6)}
+  body.uiArt .box,body.uiArt .card{border:solid transparent;border-width:22px;border-image:var(--panel-frame) 130 / 22px / 6px round;border-radius:0;background:rgba(8,11,22,.86)}
+  body.uiArt #guide h3{padding:6px 0 34px 44px;background:var(--divider) no-repeat center bottom / auto 26px;position:relative;min-height:32px}
+  body.uiArt #guide h3::before{content:'';position:absolute;left:0;top:0;width:36px;height:36px;background:var(--section-icons) no-repeat 0 0 / 700% 100%}
+  body.uiArt #guide h3:nth-of-type(1)::before{background-position-x:calc(100%/6*0)} body.uiArt #guide h3:nth-of-type(2)::before{background-position-x:calc(100%/6*6)} body.uiArt #guide h3:nth-of-type(3)::before{background-position-x:calc(100%/6*5)} body.uiArt #guide h3:nth-of-type(4)::before{background-position-x:calc(100%/6*2)} body.uiArt #guide h3:nth-of-type(5)::before{background-position-x:calc(100%/6*4)} body.uiArt #guide h3:nth-of-type(6)::before{background-position-x:calc(100%/6*3)} body.uiArt #guide h3:nth-of-type(7)::before{background-position-x:calc(100%/6*2)} body.uiArt #guide h3:nth-of-type(8)::before{background-position-x:calc(100%/6*3)} body.uiArt #guide h3:nth-of-type(9)::before{background-position-x:calc(100%/6*1)} body.uiArt #guide h3:nth-of-type(10)::before{background-position-x:calc(100%/6*4)} body.uiArt #guide h3:nth-of-type(11)::before{background-position-x:calc(100%/6*6)} body.uiArt #guide h3:nth-of-type(12)::before{background-position-x:calc(100%/6*0)}
+  @media (max-width:640px){ body.uiArt .btn{border-width:10px 24px 11px 20px;border-image-width:10px 24px 11px 20px;padding:4px 8px;font-size:13px;letter-spacing:.08em} body.uiArt .row{gap:6px} }
+  @media (orientation:landscape) and (min-width:760px){ body.uiArt #guide{background:var(--guide-bg) center/cover no-repeat,rgba(6,9,18,.82)} body.uiArt #guide .box{max-width:min(900px,76vw)} }
   .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;background:#160c14;color:var(--ink)}
   .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
   .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;max-width:640px;width:100%}
@@ -564,7 +577,7 @@ function loadArt(){
   if(location.protocol==='file:') return;
   const v='?v='+encodeURIComponent(BUILD);
   const start=a=>{ const img=new Image();
-    img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')){ layoutTitle(); introBuffer(); } if(a.id.startsWith('portrait.')){ pickerRefreshArt(); requestCutout(a.id.slice(9)); } };
+    img.onload=()=>{ ART.sprites[a.id]={img,...a}; ART.count++; if(a.id.startsWith('tile.') && tiles) renderMap(); if(a.id.startsWith('ui.title')){ layoutTitle(); introBuffer(); } if(a.id.startsWith('portrait.')){ pickerRefreshArt(); requestCutout(a.id.slice(9)); } if(a.cssVar){ document.documentElement.style.setProperty(a.cssVar,`url("${img.src}")`); if(['ui.plate.gold','ui.plate.cyan','ui.plate.pink','ui.plate.plain'].every(id=>ART.sprites[id])) document.body.classList.add('uiArt'); } };
     img.src='art/'+a.file+v; };
   fetch('art/manifest.json'+v).then(r=>r.ok?r.json():null).then(async m=>{ if(!m||!m.packs) return; const first=[], rest=[];
     const packs=await Promise.all(m.packs.map(pack=>fetch('art/'+pack+v).then(r=>r.ok?r.json():null).catch(()=>null)));

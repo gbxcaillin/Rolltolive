@@ -257,6 +257,13 @@ The picker never scrolls: after each draw it measures its screen and shrinks the
 leave the art under `PICKER_MIN_ART` px tall it switches the screen to a compact text layout instead (smaller stats,
 no family line or jump dots) and lets the art grow back into the freed space.
 
+### Combat portraits
+The encounter scene draws each fighter's class portrait instead of the drawn figure. The portrait's black backdrop
+is keyed out once per class (flood fill from the border over near-black pixels, so black inside the character
+survives), the cutout is scaled to about half the screen height, mirrored for the right-hand fighter, and a white
+silhouette of it flashes on hits. Name, bars and statuses sit above the portrait; on phones the matchup label and
+medkit count move to their own line. The drawn figure remains the fallback offline or before the portrait loads.
+
 ## 13. Title review
 
 "Roll to Live" is honest about the two pillars (dice, survival) but it reads like an instruction

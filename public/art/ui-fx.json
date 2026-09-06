@@ -19,7 +19,7 @@
         0.7,
         0.935
       ],
-      "description": "Title key art, portrait. START plate is baked in; the engine overlays a hit zone at startButton (fractions x0,y0,x1,y1)."
+      "description": "Outborn title key art, portrait. START plate is baked in; the engine overlays a hit zone at startButton (fractions x0,y0,x1,y1)."
     },
     {
       "id": "ui.title.landscape",
@@ -38,7 +38,7 @@
         0.6,
         0.94
       ],
-      "description": "Title key art, landscape. Same rules as the portrait one."
+      "description": "Outborn title key art, landscape. Same rules as the portrait one."
     },
     {
       "id": "dice.d20",
@@ -72,7 +72,7 @@
       "id": "ui.logo",
       "file": "ui/logo.png",
       "status": "needed",
-      "description": "Title wordmark ('Ashfall' by default; see GAME_TITLE in index.html).",
+      "description": "Title wordmark ('Outborn'; see GAME_TITLE in index.html).",
       "kind": "image",
       "frameW": 800,
       "frameH": 240,

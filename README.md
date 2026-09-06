@@ -1,4 +1,4 @@
-# Ashfall — hosted build branch
+# Outborn — hosted build branch
 
 **Generated branch. Do not edit here.** Everything on this branch is built from the source branch
 (`main` → `hosted-main`, `feature/x` → `hosted-feature-x`) by `tools/sync-hosted.sh` and the `sync-hosted`

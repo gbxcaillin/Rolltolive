@@ -1,8 +1,8 @@
 {
   "name": "ashfall-hosted",
-  "version": "0.1.0+7c3458d",
+  "version": "0.1.0+65000f0",
   "private": true,
-  "description": "Ashfall — hosted build: static game + WebSocket relay in one dependency-free Node process. Synced from gbxcaillin/Rolltolive; do not edit here.",
+  "description": "Outborn — hosted build: static game + WebSocket relay in one dependency-free Node process. Synced from gbxcaillin/Rolltolive; do not edit here.",
   "main": "server/relay.js",
   "scripts": { "start": "node server/relay.js" },
   "engines": { "node": ">=18" }

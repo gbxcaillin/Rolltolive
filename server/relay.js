@@ -7,7 +7,7 @@ const http = require('http'), crypto = require('crypto'), fs = require('fs'), pa
 const PORT = parseInt(process.argv[2] || process.env.PORT || '8787', 10);
 // Static hosting: serves PUBLIC_DIR (default ../public next to this file) so one process hosts the game and the relay.
 const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(__dirname, '..', 'public');
-const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.css':'text/css','.md':'text/markdown; charset=utf-8','.ico':'image/x-icon'};
+const MIME = {'.html':'text/html; charset=utf-8','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.webmanifest':'application/manifest+json','.svg':'image/svg+xml','.css':'text/css','.md':'text/markdown; charset=utf-8','.ico':'image/x-icon'};
 const MAX_ROOM = 10, MAX_MSG = 64 * 1024;
 const rooms = new Map();   // room -> { host:id, clients: Map<id, client> }
 let nextId = 1;

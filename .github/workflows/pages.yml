@@ -6,7 +6,7 @@ name: pages
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'art/**', '.github/workflows/pages.yml']
+    paths: ['index.html', 'art/**', 'sw.js', 'manifest.webmanifest', 'icons/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,9 +22,10 @@ jobs:
       - name: Assemble site
         env: { RELAY_URL: "${{ vars.RELAY_URL }}" }
         run: |
-          mkdir -p site && cp index.html site/ && cp -R art site/art
+          mkdir -p site && cp index.html sw.js manifest.webmanifest site/ && cp -R art site/art && cp -R icons site/icons
           SHA=$(git rev-parse --short HEAD); STAMP=$(date -u +%Y%m%d-%H%M)
           sed -i "s/const BUILD = 'dev';/const BUILD = '$SHA $STAMP pages';/" site/index.html
+          sed -i "s/const SW_VERSION = 'dev';/const SW_VERSION = '$SHA-$STAMP';/" site/sw.js
           if [ -n "$RELAY_URL" ]; then sed -i "s#const RELAY_URL = '';#const RELAY_URL = '$RELAY_URL';#" site/index.html; fi
           grep -q "const BUILD = '$SHA" site/index.html
       - uses: actions/configure-pages@v5

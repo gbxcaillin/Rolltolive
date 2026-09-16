@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<link rel="icon" href="data:,">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Outborn">
 <title>Outborn</title>
 <style>
   :root{
@@ -199,7 +205,7 @@
     <button class="btn" data-mode="hotseat" data-humans="3">3P</button>
     <button class="btn" data-mode="hotseat" data-humans="4">4P</button>
   </div>
-  <div class="menuRow2"><button class="btn ghost" id="guideBtn">How to play</button></div>
+  <div class="menuRow2"><button class="btn ghost" id="guideBtn">How to play</button><button class="btn ghost hidden" id="installBtn">Install app</button></div>
   <div class="box">
     <table class="ctl">
       <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows · Touch: left joystick</td></tr>
@@ -1654,6 +1660,18 @@ function endIntro(){ if(state!=='intro') return; clearTimeout(Intro.t); const v=
 $('introVid').addEventListener('ended',endIntro); $('introVid').addEventListener('error',endIntro); $('introVid').addEventListener('playing',()=>{ $('introHint').textContent='Tap to skip'; });
 $('intro').addEventListener('click',endIntro);
 $('title').addEventListener('click',startFromTitle);
+// ---- Installable app: service worker (offline play, home-screen install) and the install button ----
+const App = { prompt:null, waiting:null };
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').then(reg=>{
+    const track=w=>{ if(!w) return; w.addEventListener('statechange',()=>{ if(w.state==='installed' && navigator.serviceWorker.controller){ App.waiting=w; netToast('Update ready — restart the game to apply','cyan',6); } }); };
+    track(reg.waiting); reg.addEventListener('updatefound',()=>track(reg.installing)); }).catch(()=>{}); });
+  let reloading=false; navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(reloading) return; reloading=true; if(state==='menu'||state==='title') location.reload(); });
+}
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); App.prompt=e; $('installBtn').classList.remove('hidden'); });
+window.addEventListener('appinstalled', ()=>{ App.prompt=null; $('installBtn').classList.add('hidden'); netToast('Outborn installed','green',3); });
+$('installBtn').addEventListener('click', async ()=>{ if(!App.prompt) return; App.prompt.prompt(); const r=await App.prompt.userChoice.catch(()=>null); if(r && r.outcome==='accepted'){ App.prompt=null; $('installBtn').classList.add('hidden'); } });
+function applyUpdate(){ if(App.waiting){ App.waiting.postMessage('skipWaiting'); return true; } return false; }
 let guideReturn='menu';
 function openGuide(){ guideReturn = state==='pause'?'pause':'menu'; if(!$('guideBody').innerHTML) renderGuide(); $('guide').classList.remove('hidden'); $('guide').scrollTop=0; if(guideReturn==='menu'){ state='guide'; $('menu').classList.add('hidden'); } else $('pause').classList.add('hidden'); }
 function closeGuide(){ $('guide').classList.add('hidden'); if(guideReturn==='pause') $('pause').classList.remove('hidden'); else { state='menu'; $('menu').classList.remove('hidden'); } }
@@ -1717,7 +1735,7 @@ ${ring}
 }
 $('guideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('pauseGuideBtn').addEventListener('click',()=>{ Audio.sfx.click(); openGuide(); }); $('guideBack').addEventListener('click',()=>{ Audio.sfx.click(); closeGuide(); });
 function updateTopButtons(){ $('topbtns').classList.toggle('hidden', !(state==='play'||state==='pause'||state==='pass')); $('btnMute').textContent=Audio.muted?'✕':'♪'; }
-function toMenu(){ Net.close(); state='menu'; if(ART.startRest) ART.startRest(); pumpCutouts(); G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
+function toMenu(){ Net.close(); state='menu'; applyUpdate(); if(ART.startRest) ART.startRest(); pumpCutouts(); G=null; combats=[]; viewCombat=null; cp.classList.add('hidden'); clearToasts(); show('menu'); $('menuBest').textContent='BEST '+hiScore; if(!mapCanvas) genMap(12345); updateTopButtons(); }
 function beginSetup(mode,h){ Audio.init(); Audio.sfx.click(); setup={mode, humans:h||1, picks:[]};
   if(mode==='online'){ state='lobby'; show('lobby'); $('srvUrl').value=localStorage.getItem('ashfall_srv')||NET_DEFAULT_URL; $('roomCode').value=localStorage.getItem('ashfall_room')||'ASH-1'; $('playerName').value=localStorage.getItem('ashfall_name')||''; $('lobbyForm').classList.remove('hidden'); setLobbyStatus(NET_DEFAULT_URL? 'Pick a room code and a name, then connect.' : 'This static site has no relay: enter the address of your relay server (wss://...), a room code and a name.'); Lobby.players={}; Lobby.myPick=null; renderLobby(); return; }
   state='select'; show('select'); renderSelect(); }
@@ -1887,7 +1905,7 @@ function frame(now){
 }
 $('titleH1').textContent=GAME_TITLE; $('titleH1b').textContent=GAME_TITLE; $('tagline').textContent=GAME_TAGLINE; $('taglineB').textContent=GAME_TAGLINE; document.title=GAME_TITLE; $('buildTag').textContent=(BUILD==='dev'?'offline test build':'build '+BUILD)+(location.protocol.startsWith('http')?' · Online via '+location.host:'');
 loadArt(); if(!mapCanvas) genMap(12345); $('menuBest').textContent='BEST '+hiScore; showTitle(); requestAnimationFrame(frame);
-window.__game = { skipTitle(){ if(state==='title') toMenu(); }, playIntro, endIntro, portraitCutout, ART, simulateCombat, resolveAction, aiChoose, beginTurn, endRound, ABILITIES, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
+window.__game = { skipTitle(){ if(state==='title') toMenu(); }, App, playIntro, endIntro, portraitCutout, ART, simulateCombat, resolveAction, aiChoose, beginTurn, endRound, ABILITIES, step(n){ for(let i=0;i<n;i++) update(STEP); }, get state(){return state;}, set state(v){state=v;}, get G(){return G;}, get combat(){return viewCombat;}, get combats(){return combats;}, get setup(){return setup;}, Net, Lobby,
   beginSetup, pickClass, tryEngage, tryMedkit, tryAction, uiChoose, uiRoll, ABILITIES, CLASSES, startCombat, killContestant, localHuman, abilityList, makeWeapon, hostStartRound };
 </script>
 </body>

@@ -42,6 +42,22 @@ push to a source branch, then rebuilds the matching build branch (`main` → `ho
 `feature/x` → `hosted-feature-x`) using the workflow's own token, so no secrets are needed.
 Locally, `tools/sync-hosted.sh` does the same in one command.
 
+## Install as an app
+
+The game is a Progressive Web App. On the Pages site (or any https host) the browser offers to install it:
+
+- **Android / Chrome, Edge, desktop Chrome**: an **Install app** button appears on the main menu when the
+  browser allows it; otherwise use the browser menu → "Install app" / "Add to Home screen".
+- **iPhone / iPad (Safari)**: Share → **Add to Home Screen**. It launches full-screen with the Outborn icon.
+
+Installed, it runs offline: `sw.js` precaches the page, manifest and icons and caches the art on first use.
+A new deploy is picked up on the next launch (the page is network-first); if you are mid-game when an
+update arrives, a toast says so and it applies the next time you return to the menu. The service worker is
+only registered over http(s), so double-clicking `index.html` still works as the plain offline test build.
+
+For an app-store listing, wrap the Pages URL as a Trusted Web Activity (Android, e.g. with Bubblewrap) or a
+Capacitor shell (iOS); the manifest, icons and offline cache are already in place for that.
+
 ## GitHub Pages
 
 The `pages` workflow publishes `index.html` and `art/` from `main` to GitHub Pages. Enable it once

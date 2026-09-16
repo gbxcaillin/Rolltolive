@@ -342,6 +342,13 @@ Options considered:
 Final: the game is **Outborn** (the contestants are outborn, born outside the walls, fighting for a place inside). "Roll to live." stays as the tagline. The island is **Ashfield** and the storm ring is **the Ashfall**. The title is a one-line
 constant (`GAME_TITLE`) so it can be switched in seconds.
 
+### Installable app
+`manifest.webmanifest` (standalone, any orientation, gold d20 icons incl. a maskable one) plus `sw.js`: shell
+precached on install, art cached on first use (its URLs carry the build stamp, so a new build fetches new files),
+`index.html` network-first with cache fallback. The deploy scripts stamp `SW_VERSION`; a new version drops old
+caches on activate. The menu shows an Install button when the browser fires `beforeinstallprompt`; a waiting
+update is announced with a toast and applied when the player returns to the menu.
+
 ## 14. Roadmap after v1
 
 - Reconnect to reclaim a botified survivor; server-side dice for anti-cheat.

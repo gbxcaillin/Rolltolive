@@ -29,12 +29,16 @@ find "$DEST" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 # --- build ---
 mkdir -p "$DEST/public/art" "$DEST/server"
 cp "$SRC/index.html" "$DEST/public/index.html"
+cp "$SRC/sw.js" "$DEST/public/sw.js"
+cp "$SRC/manifest.webmanifest" "$DEST/public/manifest.webmanifest"
+mkdir -p "$DEST/public/icons" && cp -R "$SRC/icons/." "$DEST/public/icons/"
 cp -R "$SRC/art/." "$DEST/public/art/"
 cp "$SRC/server/relay.js" "$DEST/server/relay.js"
 cp "$SRC/NETWORK.md" "$DEST/NETWORK.md"
 cp -R "$SRC/hosted/." "$DEST/"
 sed -i.bak "s/const BUILD = 'dev';/const BUILD = '$SHA $STAMP';/" "$DEST/public/index.html" && rm -f "$DEST/public/index.html.bak"
 sed -i.bak "s/\"version\": \"[^\"]*\"/\"version\": \"0.1.0+$SHA\"/" "$DEST/package.json" && rm -f "$DEST/package.json.bak"
+sed -i.bak "s/const SW_VERSION = 'dev';/const SW_VERSION = '$SHA $STAMP';/" "$DEST/public/sw.js" && rm -f "$DEST/public/sw.js.bak"
 grep -q "const BUILD = '$SHA" "$DEST/public/index.html"
 node --check "$DEST/server/relay.js"
 
